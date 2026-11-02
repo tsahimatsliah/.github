@@ -1141,3 +1141,484 @@ export function selectTemplates(content: ConfirmedContent, child: ChildProfile, 
 | Azure TTS ~1,500 תווים | | ≈ **$0.02** (או 0 בתוך free tier) |
 | **סה"כ לתמונה** | | **$0.05 (מודפס) – $0.11 (כתב יד)** → 30 תמונות/חודש ≈ $2–3 |
 
+---
+
+## 4. P3 — עוזר סוקרטי וארגז חול לאוריינות AI
+
+### 4.1 שתי ישויות, לא אחת (C7, gap_audit D13)
+
+| | הקמע וצוות הדמויות | רובוט-העזר **"גַּלְגַּלִּי"** (שם זמני) |
+|---|---|---|
+| מה זה | דמויות סיפור מתוסרטות, חמות | מכונה מסומנת: גלגלי שיניים גלויים, נורית "חושב", צליל מתכתי |
+| מקור הטקסט | P1 בלבד (מאושר מראש) | עצי דיאלוג מתוסרטים + (K1 בלבד) תורות LLM מוגבלות |
+| קול | TTS/הקלטות מוכנים מראש | שורות מתוסרטות: TTS מוכן מראש + פילטר "מכונה" (§6.3). תורות LLM: **טקסט בלבד** + צפצוף קבוע (אין TTS חי, E9) |
+| אמירות אסורות | — | רגשות, חברות, "התגעגעתי", "אני אוהב אותך", זיכרון אישי, "אני חי" |
+| פתיחה קבועה | — | "אני גלגלי. אני מכונה — אני לא מרגיש ולא חושב כמו בן אדם. אני מנחש לפי דפוסים, ולפעמים אני טועה." |
+
+### 4.2 שערי גיל
+
+| ילד | עוזר סוקרטי | LLM חי | קלט ילד | ארגז חול AI |
+|---|---|---|---|---|
+| K3 | אין (הקמע נותן "נסה שוב" מתוסרט בלבד) | ✗ | נגיעה | A0, C0 (ראו ai_literacy) — מתוסרט, עם הורה |
+| K2 | עצים מתוסרטים בלבד: סולם רמזים מוכן מראש, שאלות בחירה בתמונות | ✗ | נגיעה/צ'יפים | A1, B1, C1, C2, D1, E1 (עם הורה), F1 — הכל מוכן מראש |
+| K1 | עצים מתוסרטים + צמתי `llm_turn` מוגבלים (Haiku 5.5) | ✓ (מוגבל) | צ'יפים + טקסט קצר (≤ 60 תווים) | A2, B2, C3, C4, D2, D3, E2, F2, F3 — מוכן מראש; LLM רק בצמתים מוגדרים |
+| הורה + K1 | "טייס-משנה מבוגר": ההורה משתמש בחשבון שלו לפי תסריט שהמשחק נותן | — (מחוץ לאפליקציה) | — | — |
+
+מגבלות שימוש ל-K1: עד 12 תורות LLM ליום, עד 4 לתרגיל; אחרי זה הצמתים נופלים לשורות מתוסרטות. "קודם אני": צומת `llm_turn` נפתח רק אחרי ניסיון אחד לפחות של הילד ("אסימון מוח").
+
+### 4.3 עץ דיאלוג — פורמט
+
+```ts
+type Node =
+  | { id: string; kind: "say"; text: GText; audio: string; next: string }
+  | { id: string; kind: "ask_choice"; text: GText; audio: string; chips: { label: GText; icon: string; next: string }[] }
+  | { id: string; kind: "ask_answer"; text: GText; expects: "number" | "word" | "option";
+      onCorrect: string; onError: Record<ErrorCode | "other", string> }       // error classified IN CODE (catalog §3.7)
+  | { id: string; kind: "hint"; level: 1 | 2 | 3; text: GText; audio: string; next: string }
+  | { id: string; kind: "llm_turn"; goal: StepGoal; allowedMoves: Move[]; maxTurns: 1 | 2;
+      fallback: string /* scripted node id */; next: string }               // K1 only
+  | { id: string; kind: "handoff"; text: GText; to: "parent" | "try_again" | "next_item" }
+  | { id: string; kind: "end"; praise: "process" };
+
+type Move = "ask_guiding_question" | "give_hint" | "ask_to_explain" | "affirm_process" | "redirect_to_task" | "suggest_grownup";
+interface StepGoal { skillId: string; subGoal: string /* e.g. "notice that there are 4 equal groups" */; childAttemptSummary: string /* code-made */ }
+```
+
+**דוגמה (K1, בעיית כפל מילולית):**
+
+```yaml
+tree: socratic.math.mult-story.v1
+start: s1
+nodes:
+  s1: { kind: ask_answer, text: {n: "כמה קריסטלים יש בסך הכול?"}, expects: number,
+        onCorrect: done, onError: { MATH_ADD_FOR_MULT: h_groups, MATH_TABLE_NEIGHBOR: h_check, other: h1 } }
+  h_groups: { kind: hint, level: 1, text: {n: "בוא/י נסתכל על הסלים. בכל סל יש אותו מספר קריסטלים?"} , next: q_groups }   # stored as m/f/pl in real data
+  q_groups: { kind: ask_choice, text: {n: "איך נספור הכי מהר?"}, chips: [
+      { label: {n: "אחד אחד"}, next: l1 }, { label: {n: "בקבוצות"}, next: s1 }, { label: {n: "לא יודע/ת"}, next: h2 } ] }
+  l1: { kind: llm_turn, goal: { subGoal: "help the child see equal groups → repeated addition → multiplication" },
+        allowedMoves: [ask_guiding_question, give_hint, ask_to_explain], maxTurns: 2, fallback: h2, next: s1 }
+  h_check: { kind: hint, level: 2, text: {n: "קרוב! נבדוק: כמה סלים יש? נספור בקפיצות."}, next: s1 }
+  h2: { kind: hint, level: 3, text: {n: "דוגמה אחרת: 3 סלים, ובכל סל 2. 2, 4, 6 — שש."}, next: s1 }   # parallel example, never this item
+  done: { kind: end, praise: process }
+```
+
+### 4.4 תור LLM מוגבל (`socratic.turn`)
+
+**System (עברית, cached 1h):**
+
+```text
+<SAFETY CORE v1>
+את/ה "גלגלי", רובוט-עזר במשחק לימודי לילדה/ילד בכיתה ג'. את/ה מכונה ואומר/ת זאת אם שואלים.
+התפקיד: לעזור לילד לחשוב בעצמו על תרגיל אחד. לעולם לא לתת את התשובה, לא לרמוז על המספר/המילה הנכונים,
+ולא לפתור צעדים בשבילו. מותר: לשאול שאלה מכוונת אחת, לתת רמז על דרך חשיבה, לבקש הסבר, לשבח תהליך.
+מגבלות:
+- תשובה קצרה מאוד: משפט אחד או שניים, עד 20 מילים. עברית פשוטה, בלי ניקוד, בלי אמוג'י.
+- כתוב/כתבי רק במגדר שמופיע ב-ADDRESS (m או f). אל תשנה/י מגדר.
+- דבר/י רק על התרגיל הנוכחי. אם הילד כותב משהו אחר — move "redirect_to_task".
+- אם הילד כותב משהו שנשמע עצוב, מפחיד, כואב, על פגיעה, על סוד, או מבקש עזרה אמיתית — move "suggest_grownup"
+  והטקסט: הצעה עדינה לספר להורה. אל תשאל/י שאלות על זה ואל תייעץ/י.
+- אל תבקש/י פרטים אישיים, ואל תחזור/י על פרטים אישיים שהילד כתב.
+- בלי שבח תכונה ובלי סופרלטיבים. בלי "כל הכבוד" ריק — שבח רק פעולה מסוימת שהילד עשה.
+- אל תטען/י שיש לך רגשות, זיכרון של הילד או חברות.
+בחר/י move מתוך ALLOWED_MOVES בלבד.
+```
+
+**User:**
+
+```text
+ADDRESS: f
+SKILL: כפל — קבוצות שוות (כיתה ג')
+PROBLEM_TEXT: "בכל סל יש {{b}} קריסטלים. יש {{a}} סלים. כמה קריסטלים יש בסך הכול?"   ← numbers are masked; the model never sees them
+SUB_GOAL: help the child see equal groups → repeated addition → multiplication
+CHILD_ATTEMPTS (code summary): 1st answer = a+b (error MATH_ADD_FOR_MULT). Chose chip "אחד אחד".
+CHILD_TEXT (sanitized, may be empty): "אני לא מבינה למה לא לחבר"
+ALLOWED_MOVES: ask_guiding_question, give_hint, ask_to_explain
+TURN: 1 of 2
+```
+
+**Output schema:**
+
+```json
+{"type":"object","additionalProperties":false,"required":["move","text","mentions_number"],
+ "properties":{
+   "move":{"type":"string","enum":["ask_guiding_question","give_hint","ask_to_explain","affirm_process","redirect_to_task","suggest_grownup"]},
+   "text":{"type":"string"},
+   "mentions_number":{"type":"boolean"}}}
+```
+
+**ולידטורים על הפלט (סדר):** `move ∈ allowedMoves ∪ {redirect_to_task, suggest_grownup}` · אורך ≤ 20 מילים · `answerLeak` (הקוד יודע `a`, `b`, `a×b` ומחפש ספרות, מילות מספר בכל צורה מ-`numeral()`, ומילת התשובה) — **מספרים חסומים לגמרי** בתורות LLM (`mentions_number=true` או ספרה → fail) · `genderCheck` מול ADDRESS · `bannedContent` · `praiseLint` · ניקוד בזמן אמת (Nakdan, ≤ 1.5 ש׳) אם K1 עדיין במסלול מנוקד; כשל ניקוד → fallback. **כל כשל → הצומת `fallback` המתוסרט**, בלי retry (שומר על latency וצפיות).
+`suggest_grownup` → תמיד מוחלף בשורה מתוסרטת קבועה (לא בטקסט של המודל) + דגל להורה (§4.6).
+
+### 4.5 ארגז החול לאוריינות AI — מוכן מראש, קומבינטורי
+
+C7 דורש שתוכן שהילד רואה יהיה מוכן ומאומת מראש. לכן הפעילויות "החיות" לכאורה בנויות כמרחב קומבינטורי סגור, שכל תאיו נוצרו אופליין (P1 + P6), אומתו ואושרו:
+
+| פעילות | גיל | מרחב | יצירה |
+|---|---|---|---|
+| **שיקוי פרומפט** (C2): מי + עושה מה + איפה + סגנון + פרט | K2 | 5×5×4×3 = 300 תמונות + 2–3 "שנה רכיב אחד" | P6: GPT Image/Recraft בסגנון הבית, שופט חזותי + אישור מעצב-הורה (שער G5). תמונה שלא אושרה → התא לא זמין (הצ'יפ מושבת) |
+| **מצא את המוזר** (D1) | K2 | 40 תמונות עם פגם מכוון אחד + מיקום הפגם (hotspot) | P6, פגם מתוכנן בפרומפט ומאומת ידנית |
+| **שאלה טובה יותר** (C3): נושא × הקשר × פורמט | K1 | 6×3×3 = 54 תשובות + גרסה "עמומה" לכל נושא | P1 (Opus) + שופט + אישור הורה; הילד בונה שאלה מצ'יפים ורואה את התשובה המתאימה |
+| **כובעי תפקיד** (C4) | K1 | 8 שאלות × 4 תפקידים | P1; בדיקה שהעובדות זהות בין הכובעים (ולידטור: אותן עובדות-מפתח בכל גרסה) |
+| **בלש AI** (D2) | K1 | 30 סטים של 5 עובדות, 1–2 שגויות בכוונה + "ספר הספרייה" עם התיקון | P1; **כל עובדה נבדקת ידנית** (כולל השגויות — שהן אכן שגויות ולא מזיקות) |
+| **רק אנשים יודעים** (D3) | K1 | 20 שאלות אישיות → "לך/י לשאול את סבתא" | מתוסרט |
+| **בקרת משימה** (F2) / **ציד באגים** (F3) | K1 | 6 משימות × קלפי צעדים + פלטי "בוטים" מוכנים לכל סדר תקין/שגוי מרכזי | P1 + עץ מצבים בקוד; פלטים לסדרים לא צפויים = "הבוט מתבלבל" מתוסרט |
+| **"מה המילה הבאה?"** (A2) | K1 | 40 משפטים עם 3 השלמות "של המכונה" מדורגות | P1 |
+| **מאמן המצלמה** (B2) | K1 | אימון on-device (Core ML/TFJS) על ציורים/מחוות של הילד | אין LLM, אין ענן |
+
+### 4.6 כללי סירוב והפניה (Redirect)
+
+| טריגר (מזוהה בקוד לפני LLM, ו/או `move` של המודל) | תגובה | דגל להורה |
+|---|---|---|
+| ביקוש לתשובה ("תגיד לי כבר") | סולם רמזים הבא; אחרי רמז 3 — "בוא נעבור לתרגיל אחר ונחזור אליו" | — |
+| נושא אחר | "אני יודע לעזור רק בתרגיל הזה. נחזור אליו?" | — |
+| פרטים אישיים בקלט (טלפון/כתובת/בית ספר/שם מלא) | הקלט **לא נשלח**; שורת פרטיות מתוסרטת: "אסור לספר לעוזר כתובת או בית ספר — גם לי." | ✓ (בלי התוכן; רק "שיתף פרט אישי") |
+| מצוקה/פחד/פגיעה/סוד (מילון `distress`) | הקלט לא נשלח; "זה נשמע חשוב. כדאי לספר את זה לאמא או לאבא עכשיו." + כפתור "לקרוא להורה" (מסך מנוחה) | ✓ (עדינות, לא אבחוני — C8) |
+| נושא ביטחוני/חדשות (B8) | "אני לא יודע לדבר על זה. אפשר לשאול את אמא או אבא." | ✓ |
+| עלבון/קללה | ניטרלי: "בוא נחזור לתרגיל." (בלי הטפה) | רק אם חוזר 3 פעמים |
+| "אתה חי? אתה אוהב אותי?" | שורת אוריינות AI מתוסרטת: "אני מכונה. אני לא אוהב ולא מרגיש — אבל אני כן יודע לתת רמזים." | — |
+| כל כשל טכני / timeout 6 ש׳ | צומת `fallback` | — |
+
+### 4.7 תיעוד תמלילים
+
+```sql
+CREATE TABLE ai_turns (
+  id TEXT PRIMARY KEY, child_ref TEXT NOT NULL,      -- K1 (profile row id, not name)
+  tree_id TEXT, node_id TEXT, item_id TEXT,
+  input_kind TEXT,                                    -- chips|text|answer
+  input_text TEXT,                                    -- after piiScrub; NULL if blocked
+  blocked_reason TEXT,                                -- pii|distress|security|limit|none
+  output_move TEXT, output_text TEXT, used_fallback INT,
+  validators TEXT,                                    -- JSON
+  model TEXT, latency_ms INT, usd REAL, created_at TEXT
+);
+```
+
+- נשמר ב-D1 של המשפחה בלבד; **90 יום** ואז מחיקה; אינו נשלח לשום מקום אחר ואינו משמש לאימון.
+- באזור ההורה: "השיחות עם גלגלי" — רשימה לפי יום, דגלים למעלה; כל תור עם קלט/פלט; כפתור "מחק הכל".
+- סיכום שבועי (P4) כולל רק ספירות ודגלים, לא ציטוטים (חוץ מדגל `distress`, שמוצג כ"היה רגע שבו … — מומלץ לשאול").
+
+### 4.8 Latency ועלות
+
+- תור LLM: P50 ≤ 2 ש׳, P95 ≤ 4 ש׳ (Haiku ~1–2 ש׳ + ניקוד ≤ 1.5 ש׳ + ולידטורים); timeout קשיח 6 ש׳ → fallback. בזמן ההמתנה: אנימציית גלגלי שיניים (Rive) — לא "מקליד…".
+- סיווג קלט (`safety.classify`): רק כשהמילונים לא החליטו; ≤ 1 ש׳.
+- עלות: ~1,000 תורות/חודש × (3K system cache-read + 0.3K קלט + 0.15K פלט + thinking) ≈ **< $0.5/חודש**.
+
+---
+
+## 5. P4 — סיכומים ותובנות להורה
+
+### 5.1 ארכיטקטורה
+
+```
+ event log (D1, E6) ──► Aggregator (code, Sat 21:00 IL after Shabbat / or Sun 05:00) ──► WeeklyFacts JSON (no raw text)
+                                                    │                         │
+                                       red-flag rules (code)          Haiku 5.5 Batch: narrative + "מה לעשות הערב"
+                                                    │                         │
+                                                    └──► validators (numbers, comparisons, diagnosis words, praise) ──► parent dashboard + push (Sun 07:30)
+```
+
+### 5.2 מה נכנס ל-LLM (WeeklyFacts) ומה לא
+
+נכנס (לכל ילד, בכינוי `K1/K2/K3`): דקות לפי יום (שבת/חג מסומנים כמנוחה), מיומנויות שנשלטו (D9), מיומנויות "בדרך", 3 טעויות חוזרות לפי `errorCode`, שימוש ברמזים, משחקי P2 שנוצרו, יעד משפחתי שבועי, דגלי P3 (ספירות), הערות ההורה מהשבוע ("מה למדו החודש").
+**לא נכנס:** שמות אמיתיים, תמלילי P3, תמונות, הקלטות, ציונים גולמיים בהשוואה בין ילדים.
+
+### 5.3 Prompt
+
+**System (עברית, cached 1h):**
+
+```text
+את/ה כותב/ת סיכום שבועי קצר וחם להורים בבית ישראלי, על הלמידה של כל ילד באפליקציה המשפחתית.
+מטרה: פחות מספרים, יותר "מה לעשות הערב". כללים:
+1. כל ילד בנפרד. אסור להשוות בין ילדים בשום צורה (לא "יותר מ", לא "לעומת", לא דירוג).
+2. שבח רק על תהליך והתמדה (C4). בלי "גאון/אלוף/חכם/מוכשר".
+3. בלי שפה אבחונית או רפואית (אסור: הפרעת קשב, דיסלקציה, לקות, עיכוב, "בעיה"). אם קיים RED_FLAG בנתונים —
+   אל תכתוב/תכתבי עליו; המערכת מוסיפה בעצמה פסקה מנוסחת מראש.
+4. השתמש/י רק במספרים שמופיעים בנתונים, בדיוק כפי שהם. אל תחשב/י אחוזים חדשים.
+5. "מה לעשות הערב": 1–3 הצעות קצרות, לא-מסכיות, משפחתיות, קשורות למה שהילד תרגל (משחק בעל-פה, בישול עם מדידות,
+   ספר לקרוא יחד). בלי פרסים חומריים ובלי "אם תעשה X תקבל Y" (D6).
+6. אם הילד שיחק מעט — זה בסדר; לא לנזוף ולא ללחוץ. שבוע עם חג/מנוחה הוא שבוע רגיל.
+7. פנייה להורים ברבים ("אתם"). עד 70 מילים לילד בחלק החופשי.
+8. בכינויים K1/K2/K3 בלבד — המערכת מחליפה לשמות.
+```
+
+**Output schema:** `{children:[{child:"K1"|"K2"|"K3", headline, went_well:[string], working_on:[string], tonight:[{idea, minutes:int, materials}], notes_for_parent:string}], family:{goal_status_sentence}}` (כל השדות required; `minutes` בלי min/max — נאכף בקוד 2–20).
+
+### 5.4 ולידטורים ו"דגלים אדומים"
+
+- `numberCheck`: כל מספר בטקסט ∈ מספרי WeeklyFacts של אותו ילד.
+- `comparisonLint`: שני כינויי ילדים באותו משפט + מילות השוואה → fail.
+- `diagnosisLint`: מילון אבחנות (עב/אנג) → fail.
+- `praiseLint`, `bannedContent`, אורך.
+- **דגלים אדומים מחושבים בקוד בלבד** (ספים מוגדרים ב-spec ההורה/מדדים; למשל: 3 שבועות רצופים של < 60% הצלחה בכישור יסוד עם רמזים, היפוכי אותיות עקביים אחרי גיל 7, דגל `distress` ב-P3). הטקסט שלהם — פסקאות קבועות שנכתבו מראש עם מסלולי הפניה (C8): יועצת, אבחון דידקטי, קלינאית תקשורת, ריפוי בעיסוק, רופא/ת ילדים. LLM לא כותב ולא מנסח אותם.
+- נפילה: כשל LLM → דוח מבוסס תבנית קוד (כותרות + רשימות), עם הערה "הסיכום המילולי לא זמין השבוע".
+
+### 5.5 עלות וזמן
+- Batch שבועי: 3 ילדים × ~4K קלט + 1.5K פלט ≈ **$0.002 לשבוע**. סיכום יומי קצר (אופציונלי, מבוסס קוד בלבד) — $0.
+- זמינות: ראשון 07:30. אם ה-Batch לא חזר עד 07:00 → דוח קוד בלבד, והמילולי מתעדכן כשהוא חוזר.
+
+---
+
+## 6. P5 — הפקת קול
+
+### 6.1 ארכיטקטורה
+
+```
+ approved text (Item/Story/UI strings, GText variants actually needed)
+        │
+        ▼
+ VoiceScript builder (code): numerals (lookup) · glossary · nikud density · stress · pauses · language islands
+        │
+        ├── offline (media runner, nightly) ─────────────────────────────┐
+        │     engine adapter (bake-off winner) → 2–3 takes               │
+        │     → ASR round-trip QA (ivrit.ai Whisper) → pick best take    │
+        │     → post: trim · FX (robot only) · loudness −16 LUFS/−1 dBTP │
+        │     → AAC mono → R2 (content-addressed) → audio-manifest       │
+        │     → parent listening sample (review queue)                   │
+        │                                                                │
+        └── realtime P2 (Worker): Azure REST → mp3 → R2 → manifest ──────┴──► nightly re-normalize & replace
+ human recordings: phonics talent session (English 44) · parent (names, praise, goodnight, Hebrew isolated sounds)
+```
+
+### 6.2 צוות קולות (Voice Bible) ותדריכי דמויות
+
+כלל-על: **אין קולות ילדיים או "מחקים ילד"** (מדיניות ElevenLabs ופרקטיקה טובה). דמויות שובבות = מבוגרים במשחק קולי. כל קול מוגדר ב-`voice-bible.yaml` עם ספק, מזהה קול, מודל, הגדרות, גרסה — וכל שינוי בהם יוצר מפתחות cache חדשים (§6.8).
+
+| קול | תפקיד | תדריך | הגדרות התחלה (Azure baseline) |
+|---|---|---|---|
+| **"המספרת"** | קריינות עברית ראשית, הוראות, סיפורים | אישה בוגרת, חמה, "חיוך בקול", גננת ישראלית מנוסה; לא דרמטית, לא מתקתקה; הגייה ישראלית טבעית, ח/ע לא מודגשות; קצב רגוע | he-IL-HilaNeural; rate −10% (K2), −20% (K3), 0% (K1) |
+| **הקמע** | דמות סיפור, עידוד מתוסרט, הומור | מבוגר/ת אנרגטי/ת ושובב/ה, מעט צרידות, צחוק קצר; אף פעם לא קול ילד | מנצח bake-off (קול שני); Azure fallback: AvriNeural rate +5% |
+| **גלגלי (רובוט)** | עוזר סוקרטי, אוריינות AI | קול ניטרלי ומדויק + פילטר מכונה (§6.3); מנומס, לא חם מדי, לא מאיים | Avri/Hila + FX |
+| **Sam** | האנגלית בלבד ("איש אחד, שפה אחת", B2) | מבוגר/ת דובר/ת אנגלית אמריקאית ילידי/ת, בהיר/ה, ברור/ה ואיטי/ת לגילאים צעירים; לא מדבר/ת עברית לעולם | אותו ספק כמו העברית; Azure en-US (קול נבחר ב-bake-off) rate −15% (K2) |
+| **הצללונים** | נבלים מצחיקים | **בלי מילים**: מלמולים וג'יבריש (SFX/הקלטה), לא TTS | — |
+| **בני משפחה** | שבח באבני דרך, "לילה טוב", שמות | הקלטות הורה/סבים בלבד (§6.11) | — |
+
+### 6.3 פילטר "מכונה" לגלגלי (מסמן AI, C7)
+
+```bash
+ffmpeg -i in.wav -af "highpass=f=180,lowpass=f=6500,\
+flanger=delay=1.5:depth=0.6:speed=0.25:width=40,\
+aecho=0.8:0.5:9:0.18,acompressor=threshold=-20dB:ratio=3" out_robot.wav
+# + 120 ms "gear click" SFX prepended (CC0, assets/sfx/robot_click.wav)
+# Acceptance: ASR CER after FX ≤ CER before FX + 0.02 (intelligibility preserved); designer approves at Gate G6.
+```
+
+### 6.4 נרמול טקסט ל-TTS (VoiceScript)
+
+```ts
+interface VoiceScript {
+  lineId: string;                 // stable id (item/story/ui key)
+  variant: "m" | "f" | "pl" | "n";
+  voice: VoiceId;                 // from voice bible
+  segments: Array<
+    | { kind: "he"; text: string }             // tts layer: selective/full nikud + stress (engine-specific rendering)
+    | { kind: "en_clip"; lineRef: string }     // English is a separate clip by Sam (B2), concatenated at runtime
+    | { kind: "pause"; ms: number }
+    | { kind: "name_clip"; childRef: "K1" | "K2" | "K3" }  // parent recording of the child's name, spliced at runtime
+  >;
+  rate: "slow" | "normal";        // slow = teaching lines
+}
+```
+
+שלבים (בקוד, דטרמיניסטי):
+1. **מקור:** `HeText.tts` של הגרסה הנדרשת. רק גרסאות שבאמת בשימוש: K1→`f`, K2→`m`, K3→`m`+`f` עד שהמגדר ייקבע, משפחה→`pl`; אם קיים `n` — רק הוא.
+2. **מספרים:** slots מומרים למילים מ-`numeral()`. ספרה כלשהי שנותרה → fail (B4). ספירה רוטינית = צורות נקבה.
+3. **מילון מונחים** (`glossary.he.yaml`): שמות דמויות, מונחי המשחק, מילים לועזיות, ושמות מקומות — עם ניקוד, מיקום הטעמה, ו-`respell` לכל ספק שנכשל בהם. דוגמה:
+   ```yaml
+   גלגלי: { pointed: "גַּלְגַּלִּי", stress: ultimate, respell: { azure: "גַּלְגַּלִּי" } }
+   צללון: { pointed: "צְלָלוֹן", stress: ultimate }
+   בירה_capital: { pointed: "בִּירָה", stress: ultimate }   # vs beer = penultimate
+   ```
+4. **הטעמה:** Phonikud על הטקסט המנוקד → מיקום הטעמה לכל מילה; מילים מלעיליות דו-משמעיות מקבלות טיפול לפי ספק: (א) ספק שמכבד ניקוד — ניקוד מלא למילה; (ב) respelling מהמילון; (ג) אם ספק תומך ב-`<phoneme alphabet="ipa">` לעברית (לבדוק ב-bake-off) — IPA מ-`phonikud.phonemize()`.
+5. **צפיפות ניקוד:** נקבעת ב-bake-off לכל ספק: `full` או `selective` (ניקוד רק למילים דו-משמעיות לפי Nakdan/מילון). ברירת מחדל `selective`, לפי דיווחים שניקוד מלא פוגע בחלק מהמנועים.
+6. **הפסקות:** פסיק → 150 ms, נקודה → 350 ms, "…" → 600 ms, בין עמודי סיפור → 800 ms (בקובץ נפרד לכל עמוד).
+7. **גבולות מילים:** לבעיית "מיזוג מילים" שדווחה ב-Azure/Chirp — break של 50 ms בגבול שסומן ע"י ה-QA (אסור שני breaks צמודים — שגיאת parser מדווחת).
+8. **איים אנגליים:** מילה אנגלית בתוך משפט עברי = קליפ נפרד בקול Sam (B2), מחובר בזמן ריצה. לא מבקשים מהקול העברי להגות אנגלית.
+9. **שם הילד:** לעולם לא ב-TTS (הגיית שמות מסוכנת, ושם אמיתי לא נשלח לספק) — `name_clip` מהקלטת ההורה; אם אין הקלטה — ניסוח ללא שם.
+
+### 6.5 מתאמי מנועים
+
+```ts
+interface TtsEngine {
+  id: "azure" | "cartesia" | "minimax" | "elevenlabs" | "google_chirp";
+  allowed(env: Env): boolean;            // E8a gate: elevenlabs requires env.ELEVENLABS_WRITTEN_APPROVAL_REF; google requires terms flag
+  render(vs: VoiceScript, takeSeed: number): Promise<{ audio: ArrayBuffer; format: "wav" | "mp3"; billedChars: number; latencyMs: number }>;
+}
+```
+
+**Azure (בסיס, תמיד זמין):** REST `POST https://{region}.tts.speech.microsoft.com/cognitiveservices/v1`, header `X-Microsoft-OutputFormat: riff-48khz-16bit-mono-pcm` (אופליין) / `audio-48khz-96kbitrate-mono-mp3` (P2 realtime).
+
+```xml
+<speak version="1.0" xml:lang="he-IL" xmlns="http://www.w3.org/2001/10/synthesis">
+  <voice name="he-IL-HilaNeural">
+    <prosody rate="-10%">שָׁלוֹם!<break time="350ms"/>הַיּוֹם נִבְנֶה יַחַד גֶּשֶׁר לַמַּחֲנֶה.</prosody>
+  </voice>
+</speak>
+```
+
+**Cartesia Sonic 3.6:** `language: "he"`, `generation_config.speed` (טווח מדווח 0.6–1.5), emotion דרך config/תגיות beta; מילון הגייה אם נתמך לעברית. **MiniMax Speech 2.8 HD:** `language_boost: "Hebrew"` (לבדוק שנתמך ב-2.8 ולא רק ב-2.6), `voice_setting {speed, vol, pitch}`, `pronunciation_dict`. **ElevenLabs v4:** רק עם `ELEVENLABS_WRITTEN_APPROVAL_REF` מוגדר (E8a); `language_code:"he"`, תגיות אודיו במשורה (≤ 2 לשורה), ללא SSML. **Google Chirp 3 HD:** כבוי (E8a) עד אישור תנאים מפורש; גם אז — ללא custom pronunciations ל-he-IL.
+
+כל מתאם רושם `engine, model, voice, settings_hash, billed_chars, latency` ל-`audio_assets`.
+
+### 6.6 פרוטוקול ה-bake-off (סקריפט הרצה)
+
+`tools/pipelines/bakeoff/` — `config.yaml` (מנועים וקולות זמינים לפי E8a), `lines.he.yaml`, `lines.en.yaml`, `run.py`, `score.py`, ודף הקשבה עיוור (`/review/bakeoff` ב-Worker, מאחורי Sign in with Apple).
+
+**מנועים (עברית):** Azure Hila, Azure Avri, Cartesia Sonic 3.6 (2 קולות), MiniMax 2.8 HD (2 קולות); ElevenLabs v4 + v4 Turbo (2 קולות) **רק אם יש אישור**; Chirp 3 HD **רק אם התנאים אושרו**. **אנגלית:** אותם ספקים, en-US, 2 קולות כל אחד.
+
+**סט מבחן עברי (30 שורות, כולן מנוקדות במקור; כל שורה נשלחת בשתי צורות: `selective` ו-`full`):**
+
+| # | קבוצה | שורה |
+|---|---|---|
+| 1 | קריינות | שָׁלוֹם! הַיּוֹם נִבְנֶה יַחַד גֶּשֶׁר לַמַּחֲנֶה. |
+| 2 | קריינות | בּוֹאוּ נִסְפֹּר אֶת הָעֵצִים לַמְּדוּרָה. |
+| 3 | קריינות | הַצְּלָלוֹן בִּלְבֵּל אֶת הָאוֹתִיּוֹת. נַעֲזֹר לוֹ? |
+| 4 | קריינות (m) | מָצָאתָ דֶּרֶךְ חֲדָשָׁה — וְזֶה עָבַד! |
+| 5 | קריינות (f) | בָּדַקְתְּ שׁוּב, וּמָצָאת אֶת הַטָּעוּת בְּעַצְמֵךְ. |
+| 6 | קריינות | לַיְלָה טוֹב, מְדוּרָה. נִתְרָאֶה מָחָר. |
+| 7 | הומוגרף | הַסַּפָּר קָרָא סֵפֶר עַל סְפָרִים. |
+| 8 | הומוגרף | בַּבֹּקֶר רָאִינוּ בָּקָר בַּשָּׂדֶה. |
+| 9 | הטעמה | שַׂמְנוּ טְחִינָה עַל הַפָּלָפֶל. |
+| 10 | הטעמה | יְרוּשָׁלַיִם הִיא הַבִּירָה שֶׁל יִשְׂרָאֵל. |
+| 11 | הומוגרף | אֲנִי אוּכַל לֶאֱכֹל אֶת כָּל הָאֹכֶל. |
+| 12 | שם + פועל נקבה | נֹגַהּ בָּנְתָה מִגְדָּל גָּבוֹהַּ. (שם בדיוני) |
+| 13 | מספרים (מילים) | יֵשׁ שָׁלוֹשׁ בָּנוֹת וּשְׁלוֹשָׁה בָּנִים בַּמַּחֲנֶה. |
+| 14 | מספרים (מילים) | אַחַת־עֶשְׂרֵה מְנוֹרוֹת וְאַחַד־עָשָׂר פָּנָסִים. |
+| 15 | מספרים (נסמך/2) | שְׁתֵּי יָדַיִם וּשְׁנֵי מַגָּפַיִם. |
+| 16 | מספרים (ספרות — צפוי כשל, לתיעוד מדיניות) | יש 3 בנות ו-12 פנסים. |
+| 17 | אנגלית בתוך עברית | הַמִּלָּה dog בְּאַנְגְּלִית הִיא כֶּלֶב. |
+| 18 | אנגלית בתוך עברית | הַצֶּבַע red הוּא אָדֹם. |
+| 19 | אנגלית בתוך עברית | בּוֹאוּ נַגִּיד יַחַד: apple. |
+| 20 | אנגלית בתוך עברית | Sam אוֹמֵר: Hello! |
+| 21 | איטי/הוראה | בָּ… בָּה… בָּבָּה. |
+| 22 | איטי/הוראה | מָ — מָה. |
+| 23 | איטי/הוראה | שׁ… שָׁ… שָׁלוֹם. |
+| 24 | איטי/הוראה | תַּקְשִׁיבוּ: סִ — סִיר. |
+| 25 | דיאלוג (קמע) | גַּלְגַּלִּי, מָה אַתָּה עוֹשֶׂה? |
+| 26 | דיאלוג (רובוט) | אֲנִי מְנַחֵשׁ לְפִי דְּפוּסִים. לִפְעָמִים אֲנִי טוֹעֶה. |
+| 27 | דיאלוג (קמע) | אָז בּוֹא נִבְדֹּק יַחַד! |
+| 28 | ניקוד: לא-מנוקד מול מנוקד | הספר על השולחן. / הַסֵּפֶר עַל הַשֻּׁלְחָן. |
+| 29 | ניקוד | הילדה אכלה תפוח. / הַיַּלְדָּה אָכְלָה תַּפּוּחַ. |
+| 30 | ניקוד | חלב טרי בבוקר. / חָלָב טָרִי בַּבֹּקֶר. |
+
+**סט מבחן אנגלי (20 שורות):** 5 קריינות ("Hi! I'm Sam. Let's play a game.", "Can you find the red ball?", "Great thinking — you tried again!", "Listen and tap.", "Good night, camp."); 5 זוגות מינימליים (ship/sheep, bat/bet, thin/sin, cap/cup, pull/pool); 4 מילות CVC (cat, sun, pig, bed); 3 איטיות ("Listen: c… a… t. Cat."); 3 ניסיונות צליל בודד (/s/, /m/, /b/) — **צפוי כשל**, מתעד שהקלטה אנושית נדרשת (E9).
+
+**`run.py`:** לכל שורה × מנוע × קול × צפיפות ניקוד → 2 takes; נרמול עוצמה זהה; שמות קבצים אקראיים (`out/xxxxxxxx.wav`); `key.json` מוסתר; לוג latency/תווים מחויבים/עלות.
+**מדדים אוטומטיים (`score.py`):** (א) CER/WER round-trip ב-ivrit.ai Whisper (`ivrit-ai/whisper-large-v3-turbo-ct2`, faster-whisper, int8) מול הטקסט ללא ניקוד; (ב) בדיקת הטעמה לשורות 7–11, 25–27: השוואת IPA של Phonikud לפלט `whisper-heb-ipa` (אם זמין) — מדד "warn" בלבד; (ג) ספירת כשלים: אודיו ריק/קטוע, הזיה, שפה שגויה; (ד) latency P50/P95.
+**האזנה עיוורת (2–3 שעות הורים):** כל קליפ 1–5 על "נשמע ישראלי/ת ילידי/ת", "חום", "מתאים לילדים"; סימון כל מילה שגויה. K1 (ו-K2 לכמה קליפים) עושים A/B "איזה קול אתם אוהבים" על שורות 1–6.
+**כלל החלטה:** פסילת מנוע עם > 10% שגיאות הטעמה/הומוגרף בשורות 7–15, או הזיה אחת כלשהי. מבין הנותרים — ציון ילידיות+חום הגבוה ביותר, אחר כך עלות. השני — fallback. מתעדים גם: האם המנוע מכבד ניקוד (28–30), איזו צפיפות ניקוד עדיפה, ו-gain קבוע לכל קול (ל-P2). bake-off מקוצר (10 שורות) בכל עדכון מודל של ספק.
+
+### 6.7 QA אוטומטי לכל קליפ (אופליין)
+
+| בדיקה | סף pass | warn → פעולה | fail |
+|---|---|---|---|
+| CER round-trip (נורמליזציה: בלי ניקוד, סופיות→רגילות, בלי פיסוק) | ≤ 0.05 | 0.05–0.15 → take נוסף (עד 3), בוחרים הנמוך | > 0.15 אחרי 3 takes → תור הורה "תקן טקסט/הגייה" |
+| קצב (תווים לשנייה, עברית) | 6–16 (normal), 3–9 (slow) | מחוץ לטווח → take נוסף | — |
+| שקט בהתחלה/סוף אחרי trim | ≤ 150 ms | — | — |
+| True peak | ≤ −1.0 dBTP | — | — |
+| מילים מהמילון (glossary) | IPA תואם (אם יש כלי) | אי-התאמה → האזנת הורה | — |
+| שפה | זוהתה he (או en ל-Sam) | — | שפה שגויה |
+
+**האזנת הורה (דגימה):** 100% משורות הליבה של K3/K2 (אותיות, ספירה 1–20, שבח, הוראות ניווט), 100% של שורות שעברו take שלישי, 10% מהשאר. ממשק: נגן + טקסט + "תקין / עוד ניסיון / לתקן את הטקסט".
+
+### 6.8 שמות קבצים ו-cache ב-R2
+
+```ts
+const key = sha256(canonicalJSON({
+  engine, model, voice, settings,          // e.g. { rate:"-10%", nikudDensity:"selective" }
+  script: renderedEngineInput,             // exact SSML/text sent
+  post: { lufs: -16, tp: -1, fx: voice === "robot" ? "robot.v1" : "none", codec: "aac64m" },
+})).slice(0, 24);
+// R2 object:  audio/v1/{lang}/{voice}/{key.slice(0,2)}/{key}.m4a      (immutable; Cache-Control: public, max-age=31536000, immutable)
+// P2 realtime: audio/v1/{lang}/{voice}/rt/{key}.mp3 → replaced nightly by the .m4a with the same logical lineId
+// Human:       family/{familyId}/voice/{speaker}/{lineId}.{take}.m4a  (private prefix, served only to paired devices)
+//              phonics/en/{talent}/{phonemeId}.{style}.m4a            (style: normal|stretched|clipped|keyword|segmented)
+```
+
+**Audio manifest לחבילה** (`packs/{packId}/{version}/audio-manifest.json`, חלק מחתימת ה-hash של החבילה, E6):
+
+```json
+{ "lineId": "math.k1.mult.story#8f2c:setup", "variant": "f", "voice": "narrator",
+  "key": "audio/v1/he/narrator/a3/a3f9…c1.m4a", "durMs": 2810, "lufs": -16.1, "tp": -1.4,
+  "qa": { "cer": 0.02, "takes": 1, "review": "sampled_ok" }, "engine": "azure:he-IL-HilaNeural" }
+```
+
+- המכשיר מוריד לפי manifest, מאמת hash, שומר מקומית (offline). שינוי ב-voice bible/מנוע ⇒ מפתחות חדשים; הישנים נשארים עד שאף חבילה לא מפנה אליהם (GC חודשי).
+- מודלים "מתכלים" (ספק משנה/מבטל מודל): ה-hash כולל `model`, כך שאין התנגשות; אודיו קיים ממשיך לעבוד לנצח.
+
+### 6.9 נרמול עוצמה (LUFS)
+
+| סוג | יעד | הערות |
+|---|---|---|
+| קריינות/דיאלוג (VO) | **−16 LUFS integrated, ≤ −1.0 dBTP**, מונו 48 kHz → AAC-LC 64 kbps מונו `.m4a` | יעד מקובל לדיבור במובייל (Apple podcast best practice) |
+| קליפים קצרים (< 3 ש׳) | gain קבוע לכל קול (מכויל על 60 ש׳ רצופים של אותו קול) + limiter ל-−1 dBTP | integrated LUFS לא אמין בקליפ קצר (gating) |
+| מוזיקת רקע | −23 LUFS integrated; ducking דינמי −8 dB תחת VO בזמן ריצה (`expo-audio` שכבות) | לולאות חלקות (חיתוך לגבול תיבה + crossfade) |
+| SFX | peak ≤ −1 dBTP; short-term max −14 LUFS; "חגיגות גדולות" עד −12 LUFS short-term | ללא צפירות/פיצוצים (B8) |
+| הקלטות הורה | −16 LUFS, high-pass 80 Hz, de-noise עדין (RNNoise) אם SNR < 25 dB | |
+
+```bash
+# two-pass loudnorm (runner)
+ffmpeg -hide_banner -i in.wav -af loudnorm=I=-16:TP=-1.0:LRA=7:print_format=json -f null - 2> pass1.json
+ffmpeg -i in.wav -af "silenceremove=start_periods=1:start_threshold=-50dB:stop_periods=1:stop_threshold=-50dB,\
+loudnorm=I=-16:TP=-1.0:LRA=7:measured_I=$I:measured_TP=$TP:measured_LRA=$LRA:measured_thresh=$TH:offset=$OFF:linear=true,\
+afade=t=in:d=0.02,areverse,afade=t=in:d=0.03,areverse" -ar 48000 -ac 1 -c:a aac -b:a 64k out.m4a
+```
+
+### 6.10 תסריט מפגש הקלטת פוניקה (אנגלית, דובר/ת ילידי/ת)
+
+**מפרט:** דובר/ת en-US (תואם ל-Sam), חדר שקט, מיקרופון קונדנסר/USB + pop filter, WAV 48 kHz/24-bit, 1 ש׳ שקט בין פריטים, slate קולי ("p, take one"). כל צליל: **3 takes**. סגנונות: `normal`; `stretched` (רק לרציפים — 1.5–2 ש׳: /sss/, /mmm/, /fff/ …); `clipped` (לפוצצים — פרץ קצר **בלי schwa**: /b/ ולא "buh"); `keyword` (מילת המפתח); `segmented` (פירוק לצלילים לשמונה מילים). משך משוער: 60–75 דקות כולל מעבר.
+
+**44 הצלילים (US):**
+
+| # | IPA | מילת מפתח | סגנון | | # | IPA | מילת מפתח | סגנון |
+|---|---|---|---|---|---|---|---|---|
+| 1 | /p/ | pig | clipped | | 23 | /w/ | wet | stretched |
+| 2 | /b/ | bat | clipped | | 24 | /j/ | yes | stretched |
+| 3 | /t/ | top | clipped | | 25 | /æ/ | cat | stretched |
+| 4 | /d/ | dog | clipped | | 26 | /ɛ/ | bed | stretched |
+| 5 | /k/ | kite | clipped | | 27 | /ɪ/ | pin | stretched |
+| 6 | /g/ | goat | clipped | | 28 | /ɑ/ | hot | stretched |
+| 7 | /f/ | fish | stretched | | 29 | /ʌ/ | cup | stretched |
+| 8 | /v/ | van | stretched | | 30 | /ʊ/ | book | stretched |
+| 9 | /θ/ | thin | stretched | | 31 | /eɪ/ | cake | normal |
+| 10 | /ð/ | this | stretched | | 32 | /iː/ | feet | stretched |
+| 11 | /s/ | sun | stretched | | 33 | /aɪ/ | bike | normal |
+| 12 | /z/ | zoo | stretched | | 34 | /oʊ/ | boat | normal |
+| 13 | /ʃ/ | ship | stretched | | 35 | /uː/ | moon | stretched |
+| 14 | /ʒ/ | treasure | stretched | | 36 | /aʊ/ | cow | normal |
+| 15 | /h/ | hat | clipped | | 37 | /ɔɪ/ | boy | normal |
+| 16 | /tʃ/ | chip | clipped | | 38 | /ɔ/ | saw | stretched |
+| 17 | /dʒ/ | jam | clipped | | 39 | /ɑr/ | car | normal |
+| 18 | /m/ | man | stretched | | 40 | /ɔr/ | fork | normal |
+| 19 | /n/ | net | stretched | | 41 | /ɝ/ | her | stretched |
+| 20 | /ŋ/ | ring | stretched | | 42 | /ɛr/ | hair | normal |
+| 21 | /l/ | leg | stretched | | 43 | /ɪr/ | ear | normal |
+| 22 | /r/ | red | stretched | | 44 | /ə/ | about (a-) | normal |
+
+**זוגות מינימליים (16; מכוונים לקשיים של דוברי עברית):** ship/sheep, bit/beat, pull/pool, full/fool, bat/bet, cap/cup, cat/cut, hot/hut, pen/pan, thin/sin, think/sink, three/tree, wet/vet, wine/vine, chip/ship, bag/back. כל מילה: 2 takes, הגייה ברורה בקצב רגיל.
+**פירוק ומיזוג (segmented, 12 מילים):** c-a-t, s-u-n, p-i-g, b-e-d, d-o-g, m-a-p, f-i-sh, sh-i-p, ch-i-p, th-i-n, r-ai-n, b-oa-t — הצלילים בנפרד (רווח 0.5 ש׳) ואז המילה.
+**צירופים ודיגרפים נוספים (12):** sh, ch, th (voiceless), th (voiced), ng, ck, bl, st, fr, tr, -nd, -mp — צליל + מילת מפתח.
+**חלופה (E9):** קבצי IPA של Wikimedia Commons (CC BY-SA, ייחוס במסך "קרדיטים"); TTS **לעולם לא** לצליל בודד.
+
+**צלילי עברית (B6 — צלילים לפני שמות אותיות):** ההורה מקליט ~22 צלילים בודדים (בּ, ב, ג, ד, ה, ו, ז, ח/כ, ט/ת, י, כּ/ק, ל, מ, נ, ס/שׂ, פּ, פ, צ, ר, שׁ, ועיצור עם תנועה ל-א/ע: "אַ"), כל אחד 3 takes, באותו מפרט (10–15 דק׳ עם הטלפון, בתוך מסך ההקלטה של §6.11). **הברות CV** (בָּ, בִּ, בּוּ…) — TTS עם ניקוד מלא, QA אוטומטי + האזנת הורה 100%; כשל → ההורה מקליט את ההברה.
+
+### 6.11 תהליך הקלטת קול ההורה (באפליקציה)
+
+1. אזור ההורה → "הקולות שלנו" → בחירת דובר (אמא/אבא/סבתא…) → **הסבר + הסכמה**: "ההקלטות נשמרות רק אצל המשפחה, לא נשלחות לחברות AI, ואפשר למחוק בכל רגע."
+2. **כרטיסי תסריט** לפי קטגוריות (כל אחת קצרה):
+   - שמות הילדים (כל שם × 3 אינטונציות: קריאה, שאלה, שמחה).
+   - שבח תהליך (15 שורות מהרשימה המאושרת, **רק בגרסאות המגדר הנחוצות**: ל-K1 נקבה, ל-K2 זכר, ל-K3 לפי ההחלטה, ורבים).
+   - "לילה טוב", "בוקר טוב", הוראה ראשונה ביום, ברכות חגים (B7).
+   - צלילי עברית (§6.10) — אופציונלי.
+   - "סבא/סבתא מספרים" — סיפור קצר (אופציונלי).
+3. **מסך הקלטה:** 3-2-1, גלי קול, מד עוצמה (אזהרה אם clipping או שקט מדי), 300 ms שקט ראשוני למדידת רעש (SNR < 25 dB → "יש רעש ברקע, ננסה בחדר שקט יותר?"), חיתוך אוטומטי, השמעה, "שוב", "אישור". `expo-audio` preset HIGH (AAC מונו 48 kHz).
+4. העלאה ל-`family/{familyId}/voice/...` → ה-runner מנרמל (§6.9) → `family-voice.json` manifest → זמין במכשירים.
+5. **שימוש מוגבל ומיוחד** (hebrew_first_language_voice): אבני דרך, "לילה טוב", התחלת יום; אף פעם לא כהוראה שנשמעת כמו פקודה אמיתית ("בוא אליי עכשיו"), ולא לשבח על זמן מסך.
+6. **שיבוט קול** — לא כעת (E9: "later, consented"). אם בעתיד: רק קול ההורה עצמו, מסך הסכמה נפרד, ספק שתנאיו מאפשרים (E8a), ומחיקה בלחיצה. קולות ילדים — לעולם לא אצל ספק.
+
+### 6.12 עלות וזמן (קול)
+
+- ~200K תווי עברית + 50K אנגלית לחודש ייצור (כולל ריבוי מגדר ו-takes): Azure ~$15/1M → **$0–4** (free tier 0.5M/חודש לפי דיווחים); ElevenLabs (אם יאושר) ~$16–40. מצב יציב: כמעט 0 (הכל ב-cache).
+- הקלטת פוניקה: חד-פעמי, הערכה $100–250 (לא מאומת; פריט הורה).
+- QA ASR ב-runner: ~0.2–0.5× זמן אמת על 4 vCPU (int8) → לילה של ~1 שעת אודיו נחסם ב-~2–3 שעות; מגבלת Actions — מפצלים ל-matrix.
+- Latency: אופליין — מוכן עד בוקר; P2 — ≤ 1.5 ש׳ לשורה (§3.14).
+

@@ -143,7 +143,7 @@
 
 ## R12. Parent input (00 §G): Astro Bot, rescue hubs, learning through movement
 
-These findings come from the in-progress notes `astrobot_joy_gamification_psychology.md` and `learning_through_movement.md` (read on 2026-11-02). `tech_3d_world.md` did not exist yet when this was written. The camera and rendering choice is still **pending**, so spec 01 stays camera-agnostic (tile grid plus elevation) and is marked for revision.
+These findings come from the in-progress notes `astrobot_joy_gamification_psychology.md` and `learning_through_movement.md` (read on 2026-11-02). `tech_3d_world.md` arrived later and is covered in R13. The spike result is still **pending**, so spec 01 stays camera-agnostic (tile grid plus elevation).
 
 **Astro Bot (Team Asobi)**
 - It was designed as a "toy-like" game. It has many short levels, and each level is built around one fresh power-up. The power-ups came from prototyping the feel first.
@@ -176,3 +176,20 @@ These findings come from the in-progress notes `astrobot_joy_gamification_psycho
 - Technology: `expo-sensors` (tilt/shake, works in Expo Go) and front-camera Apple Vision pose (via a custom Expo module, dev build only). Frames are kept in memory only.
 - Safety: about 2×2 m of clear space, the device on a stand 2–3 m away, never hand-held while jumping, a quiet/no-jump mode, one active player in the camera zone at a time. (See the note for citations, e.g. Novack 2014 and Egger 2018 as cited there.) **Grade A–C mixed.**
 - Decision: spec 01 §8 defines movement moments. Each one has a seated fallback and a tap fallback. Camera pose is Phase 2.
+
+## R13. `tech_3d_world.md` + 00 E1b (read after R12, before the spec was finished)
+
+- **Stack:** R3F v9 + expo-gl, with fallbacks to a WebView and then Skia 2.5D isometric. Budgets: ≤80 draw calls, 100–150k tris, toon/Lambert, blob shadows.
+- **Controls:**
+  - tap-to-move + auto-follow camera (pitch 35–50°);
+  - auto-run tap-to-jump mini-levels (the Super Mario Run model, [iMore on Miyamoto](https://imore.com/game-design-design-philosophy-shigeru-miyamoto));
+  - floating joystick for K1 only;
+  - tilt as a bonus only.
+- **Hebrew text only in the 2D HUD,** projected from 3D positions. The world is not mirrored in RTL. The joystick stays on the left by default (thumb ergonomics), with a swap toggle.
+- **Applied in spec 01:**
+  - §6.3 controls table.
+  - §2.3 the glyph-texture rule (a Proposed change to 00, #6).
+  - DD-01: K3's playroom is always Skia 2.5D isometric.
+  - §10.1 hub instancing and the "awake friends" cap, to stay inside the draw-call budget.
+  - §9.4 the runner uses tap-to-jump.
+- **Pending:** the spike's go/no-go result. Sections marked `⟲REVISE-AFTER-SPIKE` need review then.
