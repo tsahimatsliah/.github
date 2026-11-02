@@ -143,3 +143,20 @@
 3. No validated Israeli norms for fact fluency (RT). The 3-second threshold is a BK convention (Kling & Bay-Williams / Van de Walle) and must be tuned on data.
 4. Clements & Sarama ages: BK, needs checking against the book.
 5. No Hebrew-specific research found on misconceptions or dyscalculia.
+
+## R14. Alignment with sibling specs (written in parallel, read 2026-11-02)
+- **`08-assessment-engine-child-model.md`** is authoritative for generic parameters. Spec 03 was aligned to it:
+  - levels `new…master` (`L0`–`L4` are shorthand only);
+  - ladders K1 1/3/7/14/30/60, K2 1/3/7/14/30, K3 1/2/4/7/14;
+  - `targetP`, with the K1 dial at 0.85/0.80/0.75;
+  - response time enters scoring only in the opt-in HSHS speed round (08 §4.5);
+  - class-topic phases `upcoming`/`teaching`/`taught`;
+  - item priors `β = b_k + δ` with `b_k = anchor` in grade-years;
+  - the boss and benchmark windows.
+- **Math-specific requests to 08** (spec 03 §17.2):
+  - `extraGates` (`O.REP`);
+  - fractional step scoring (`O.STEP`);
+  - 5 new strands;
+  - 2 additional flag rules;
+  - an ID alias map for the questionnaire placeholders.
+- **`01-game-design.md` §7.1 mechanics** (`MX-M01`…`MX-M12`, `MX-X03`, `MX-X04`) are mapped from the logical `MECH.*` IDs (spec 03 §5.4). Mechanics with no 01 equivalent are proposed to 01.
