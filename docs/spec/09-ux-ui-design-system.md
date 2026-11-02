@@ -1185,7 +1185,7 @@ SCR-03 בגרסת `time.night` ← אייקון "מדורה" ← SCR-13 לובי
 
 **`SCR-03` Hub: המחנה** (`region.camp`)
 - **iPad landscape:** המחנה בתלת-ממד במבט דיורמה.
-  - **מרכז:** המדורה (גובה הלהבה = התקדמות היעד השבועי המשפחתי, D1 של C5). אף פעם לא כבויה; לכל היותר "מנמנמת".
+  - **מרכז:** המדורה (גובה הלהבה = התקדמות היעד השבועי המשפחתי, C5). אף פעם לא כבויה; לכל היותר "מנמנמת".
   - **סביב המדורה:**
     - אוהל הגיבור (ל-SCR-09)
     - מבנים שנפתחים בספים (חדר אוצרות SCR-12, חנות SCR-08, סדנה SCR-10, פינת חיה SCR-11, תיאטרון סיפורים)
@@ -1483,3 +1483,213 @@ SCR-03 בגרסת `time.night` ← אייקון "מדורה" ← SCR-13 לובי
 `UX-AC-13`: בכל build של dev מוצג overlay ביצועים (fps, draw calls, זיכרון), וב-web הוא נחשף כ-`window.__perf`. מבחני Playwright נכשלים כשמדד חורג מהתקציב בווב (בקירוב). המדידה הסופית במכשיר, בשער.
 
 ---
+## 12. צ'קליסט ליטוש (לכל מסך, לפני מיזוג)
+
+1. **טוקנים בלבד:** אין ערכים גולמיים (lint).
+2. **תגובה בפריים:** כל מגע מקבל V תוך ≤16ms, גם על מושבת (`CHOREO-01b`).
+3. **אין מצב מת:**
+   - לולאת סרק.
+   - מעל 300ms יש loader משחקי.
+   - מעל 2s יש משהו לעשות.
+   - במחנה ובעולם יש סוד בטווח 10s.
+4. **טעינה מוקדמת:** הפעילות הבאה, השמע, החלקיקים וה-Rive נטענים בזמן החגיגה. הפריים הראשון של התגמול לא מגמגם.
+5. **דילוג וקטיעה:**
+   - חגיגות ניתנות לדילוג אחרי הצפייה הראשונה.
+   - קפיצים מתכוונים מחדש באמצע.
+   - יציאה לרקע באמצע חגיגה ← חזרה למצב הסופי (המטבעות כבר נספרו).
+6. **סיבה ותוצאה:** צליל ומגע ההצלחה לא משמשים לשום דבר אחר.
+7. **צבע + צורה:** סימולציית CVD עברה.
+8. **RTL:**
+   - "חזור" מצביע ימינה.
+   - פסים מתמלאים מימין.
+   - מספרים ומשוואות LTR.
+   - ג'ויסטיק לא משתקף.
+   - אין `left/right`.
+9. **מגדר:** צילומים לכל פרופיל, ושמע נפרד להומוגרפים.
+10. **ניקוד:**
+    - אין חיתוך.
+    - גובה שורה לפי הטוקן.
+    - לא נעשה שימוש בגופן אסור.
+11. **מגע (touch):** כל המטרות ≥ `touch.hit.min`, ומרוחקות מהקצוות.
+12. **מקרי קצה של ילדים:**
+    - מעיכה (mashing), כף יד, 3 אצבעות.
+    - הקשה כפולה מהירה על "קנה" או "המשך".
+    - סיבוב מכשיר באמצע.
+    - מתג שקט.
+    - אוזניות Bluetooth.
+    - Guided Access.
+    - כיבוי מסך באמצע פרק.
+13. **תקציב חגיגה:** ≤15% בפרק המבחן.
+14. **איפוק:** כל אפקט עונה על "מה הוא מתקשר?". ברגעי קריאה אין חלקיקים ואין מוזיקה מלודית.
+15. **דארק-פטרנס:** סקירת טקסונומיית Radesky:
+    - אין לחץ זמן.
+    - אין דמות שמתחננת.
+    - אין "פרס כניסה".
+    - אין פריט שנעלם.
+    - אין מחיר מוכרז מראש.
+16. **ביצועים:** אין blur או צל רך על שכבה זזה. ה-overlay מראה fps תקין.
+
+---
+
+## 13. תהליך Design QA
+
+### 13.1 שכבות
+1. **אוטומטי ב-CI** (Linux, E4): lint, Jest, ייצוא ווב, Playwright (צילומים + בדיקות מדידה). מתבצע בכל PR.
+2. **ביקורת עצמית של הסוכן:** הסוכן קורא את צילומי ה-PR כתמונות ועובר על §12. ממצאים נרשמים בתיאור ה-PR.
+3. **גיליון קשר שבועי להורה:** עמוד ארטיפקט (ווב) עם רשת צילומים לכל מסך × פרופיל × מכשיר + סרטוני GIF קצרים של כוריאוגרפיות. ההורה מסמן ✓ או הערה. זו נקודת ביקורת של I1.
+4. **QA במכשיר (הורה, בשערים):** מגע, Rive, ניקוד ב-CoreText, מיקס שמע, תחושת 120fps, מצלמה, תנועה, חום. טופס צ'קליסט קצר.
+5. **בדיקה עם הילדים** (practitioner_wisdom §4):
+   - **כמה:** שבועי. K3 5-10 דק', K2 10-15, K1 15-20.
+   - **איך:** תצפית בלי ללמד. רושמים היסוסים, הקשות אקראיות, מבטים הצידה וחזרות לא מבוקשות.
+   - **מתי לעשות זוג:** מדי פעם K1+K2 ביחד.
+   - **אתיקה:** לילד מותר לסרב, והבדיקה לא קשורה לזמן מסך.
+
+### 13.2 מטריצת צילומי Playwright
+**Viewports** (CSS px = pt):
+| מזהה | גודל | DPR | מייצג |
+|---|---|---|---|
+| `iphone-16-p` / `-l` | 393×852 / 852×393 | 3 | iPhone 6.1" |
+| `iphone-se-p` | 375×667 | 2 | מסך קטן (מקרה קצה) |
+| `ipad-11-l` / `-p` | 1180×820 / 820×1180 | 2 | iPad / Air (העיקרי) |
+| `ipad-mini-l` | 1133×744 | 2 | iPad mini (ptPerMm 6.42) |
+| `ipad-pro-13-l` | 1376×1032 | 2 | מסך גדול |
+
+**ממדים:**
+- **פרופיל:** `K1-f`, `K2-m`, `K3-n` (ניטרלי), `K3-f`, `K3-m`. וריאנטי K3 נבדקים בעיקר כתמונת טקסט, ומצולמים רק במסכים עם טקסט להורה.
+- **מצב עולם:** day/night.
+- **תנועה:** רגיל או RM.
+- **גודל טקסט:** 100/135 (K1).
+- **שפה:** עברית או אי אנגלית.
+- **רשת:** online/offline (מסכי מצב).
+
+**דרגות ריצה:**
+- **PR smoke (≤5 דק'):** `iphone-16-p`, `iphone-16-l`, `ipad-11-l`, `ipad-11-p` × `K1-f`, `K2-m`, `K3-n` × 15 מסכים ומצבים מרכזיים (רק צירופים תקפים, ≈120 צילומים).
+- **Nightly:** כל ה-viewports × כל הפרופילים × כל SCR × day/night × RM (≈1,500). בנוסף "filmstrip" לכל `CHOREO`: צילום ב-t = 0, 100, 300, 650, 1000ms בעזרת `page.clock.runFor`.
+
+**דטרמיניזם** (מצב `?qa=1`):
+- שעון מוקפא (Playwright clock), seed אקראי קבוע, שמע מוחלף ב-stub שרושם קריאות (לבדיקת "איזה SFX ומתי").
+- המתנה ל-`LoadSkiaWeb()` ולאירוע `window.__app.ready`.
+- Rive מוחלף בפריים הראשון של ספרייט הגיבוי.
+- תלת-ממד: DPR=1, מצלמה דטרמיניסטית, ו-`window.__game.moveTo(x,z)`.
+- **סף השוואה:** `maxDiffPixelRatio` 0.002 (2D), 0.01 (3D).
+
+**בדיקות מדידה (לא צילום):**
+| מזהה | בדיקה |
+|---|---|
+| `UX-AC-01` | axe-core: ניגודיות ושמות נגישים |
+| `UX-AC-03` | כיסוי גליפים: כל מחרוזת תוכן מרונדרת בלי `.notdef` (בדיקת cmap מול הגופן, ב-Node) |
+| `UX-AC-05` | ESLint: אין `left/right/marginLeft/...`; `Text` ילדים חייב `textAlign` ו-`writingDirection` |
+| `UX-AC-06` | גודל ומרחק מטרות מגע לפי פרופיל ו-`ptPerMm` |
+| `UX-AC-07` | מגדר: כל מחרוזת לילד היא `{m,f,pl}` או מסומנת `neutral:true`; הומוגרף ⇒ קבצי שמע נפרדים; צילומי K1-f לא מכילים צורות זכר בגוף שני (מילון צורות) |
+| `UX-AC-08` | תקציב חגיגה ≤15% בפרק סימולציה |
+| `UX-AC-09` | כל קובץ שמע מתויג `approved`, וללא סאב-בס או glissando מחזורי |
+| `UX-AC-10` | אין `Pressable` או `TouchableOpacity` גולמי במסכי ילדים |
+| `UX-AC-11` | לינטר מילים אסורות (§9.3) על כל התוכן והקופי |
+| `UX-AC-12` | לכל פעילות תנועה יש `seatedVariant` ו-`safetyCard` |
+| `UX-AC-13` | תקציבי ביצועים (`window.__perf`) |
+| `UX-AC-14` | מניפסט אייקונים: `mirrorInRTL` מוגדר לכל אייקון, ואייקוני חץ/ניווט מסומנים `true` |
+| `UX-AC-15` | אין צבע `parent.alert` או `notificationAsync(Error/Warning)` בקוד של מסכי ילדים |
+| `UX-AC-16` | טקסט K2: ≥95% מהאותיות העבריות נושאות סימן ניקוד (חוץ מאמות קריאה מותרות; הכללים ב-spec התוכן) |
+
+---
+
+## 14. שערי אישור הורה ומה נדרש מההורה
+
+**עקרון (F2, I1):** כל שער מגיע כארטיפקט קצר עם החלטות סגורות ככל האפשר. אם אין תשובה, ממשיכים עם ברירת המחדל ולא נעצרים. בכל שער יש לכל היותר 5 שאלות.
+
+| שער | מה ההורה מקבל | מה מחליטים | ברירת מחדל אם אין תשובה | חוסם? |
+|---|---|---|---|---|
+| `GATE-UX-1` כיוון אמנותי | עמוד לוח השראה (MB-1…MB-12), דוגמיות אזורים, רגיסטר hero מול calm | כיוון A/B; מצב רוח לכל אזור; מידת "Supercell" ל-K1 | הכיוון במסמך | לא |
+| `GATE-UX-2` גופנים וניקוד במכשיר | עמוד דוגמה (ווב + dev build): כל אות × כל תנועה + דגש ושין/שׂין בגדלי K2/K1, ב-3 מועמדים; זוגות מבלבלים | גופן קריאה (Noto / Fredoka / Frank Ruhl) ל-K2 ול-K1 | Noto Sans Hebrew | **כן לתוכן קריאה** (רק אחרי בדיקת CoreText) |
+| `GATE-UX-3` ערכת רכיבים ותנועה | ערכה אינטראקטיבית: כפתורים, אריחים, משוב, תיבה, חילוץ; מחווני קפיץ חיים; מסנני CVD; ציר זמן בגרפים | "תחושה" של קפיצים ומשכים; כיוון ציר הזמן בגרפים | הטבלאות במסמך | לא |
+| `GATE-UX-4` גיבור וצוות | גיליונות דמות (MB-1/2/3/12) + שילוב ציורי הילדים; ההבחנה בין גיבור למכונה | עיצוב הגיבור, שם, "חתימות" מהילדים | המלצה + חלקים מהציורים | כן לעיצוב הסופי (לא ל-spike) |
+| `GATE-UX-5` חלקי אווטאר | גיליון חלקים + ההורה בונה את 3 האווטארים | מאגר חלקים, דיוק דמיון | המאגר במסמך | לא |
+| `GATE-UX-6` ריגים | Rive או ספרייטים ב-dev build, כל מצבי `CMP-09` | איכות תנועה ופה | — | לא |
+| `GATE-UX-7` שמע | עמוד האזנה: כל ה-SFX, סטמים לכל אזור, דוגמת מיקס | אישור כל צליל (בדיקת B8), עוצמות | ההורה חייב לאשר צלילים חדשים לפני שילדים שומעים | **כן לצלילים** |
+| `GATE-UX-8` קול ושבח | תוצאת ה-bake-off (E9), קבצי שבח לכל ילד, הקלטת שם הילד בקול ההורה | קול, ניסוח השבחים במשפחה | המנצח ב-bake-off + רשימה §9.2 | כן לקול הסופי |
+| `GATE-UX-9` מבחן מראה תלת-ממדי | סצנת אי אחת בטון במכשיר (מתוך ה-spike, E1b) | toon vs 2.5D, כיוון מצלמה | לפי תוצאות ה-spike | לא |
+| `GATE-UX-10` vertical slice עם 3 הילדים | פרוטוקול תצפית + סרטון | מה עובד ומה מבלבל | — | — |
+
+**מה צריך מההורה (רשימה מרוכזת, לבקש פעם אחת):**
+1. **דגמי המכשירים** (כל iPad ו-iPhone, כולל הוותיק ביותר): לחישוב `ptPerMm` ולתקציבי ביצועים.
+2. **מגדר דקדוקי של K3,** שמות או כינויים, והקלטת שם כל ילד ו"כל הכבוד" בקול ההורה (E9).
+3. **ציורים של הילדים:** גיבור, חברים, "מה יש במחנה". תמונה של כל ציור.
+4. **תמונות מספרי הלימוד של K1:** עמוד עם ציר מספרים (לאימות LTR) ועמוד קריאה מנוקד (סגנון גופן).
+5. **האם יש בקר DualSense או MFi** שאפשר לחבר ל-iPad (הצעה §16).
+6. **מעמד ל-iPad** ושטח פנוי למשחקי תנועה (2×2 מ').
+7. **צבע אישי** שכל ילד בוחר (אפשר בתוך ה-FTUE).
+8. **רגישויות:** פחד מחושך, מרעשים חזקים או מחיות מסוימות.
+9. **מידת השמירה** להצגת שבת (נרות?) ולתוכן החגים (B7).
+10. **ביטויים משפחתיים** לשבח או לפרידה שהילדים מכירים ואוהבים (לבדיקה מול §9.3).
+
+---
+
+## 15. הערות מימוש (Expo/RN, למפתח)
+
+**RTL:**
+- `expo-localization` plugin עם `supportsRTL:true, forcesRTL:true` (נכנס ב-dev build, E1a).
+- בארטיפקטים בווב: `<html dir="rtl" lang="he">`.
+- **בכל `Text`:** `textAlign:'right'|'left'` מפורש + `writingDirection`.
+- מכל אנגלית: `direction:'ltr'`.
+- **אסור:**
+  - slider סטנדרטי.
+  - כותרות native של react-native-screens. כל הכותרות הן רכיבים שלנו.
+- **רגרסיה:** צילום ייעודי לבאג ScrollView/FlatList ב-RTL במסך שנכנסים אליו פעמיים, ולגלילה אופקית התחלתית (R6).
+
+**גופנים:**
+- קבצי TTF סטטיים דרך config plugin של `expo-font` (מוטמעים בבנייה).
+- `fontFamily` לפי משקל: `Rubik-800`, `NotoSansHebrew-600`. **לא** `fontWeight` על משפחה וריאבילית.
+- בווב: `@font-face` מאותם קבצים.
+
+**טוקנים ומידות:**
+- `useTouch(profile)` מחזיר pt מחושבים לפי `ptPerMm`.
+- `useHitSlop`.
+- `dirX`, `rtlMatrix`, `isolate()`.
+
+**דמויות:** `CharacterRig` עם שני מימושים (`.native.tsx` Rive, ו-`.web.tsx`/`fallback` Skia sprite או Lottie). הבחירה לפי יכולת זמינה.
+
+**שמע:**
+- `AudioDirector` יחיד (zustand store): נגנים, בריכות, ducking, פרופיל, שעות שקט.
+- ה-API לרכיבים הוא `play('sfx.ans.correct', {comboStep})`.
+
+**מגע:** `haptic('hap.success')`. בודק פרופיל, מתג, מגבלת קצב, ומכשיר (iPad → `fx.impactRing` + שכבת "תאד").
+
+**Reduce Motion:** `useMotionPrefs()` = `useReducedMotion()` של Reanimated ‖ הגדרת הפרופיל "רגוע". כל `CHOREO` מקבל את הערך הזה.
+
+**עולם תלת-ממדי ושכבת 2D:**
+- Canvas R3F מלא מתחת, ומעליו `View` עם `pointerEvents="box-none"`.
+- עוגנים: הטלה ב-`useFrame` שכותבת ל-shared values.
+- Canvas ב-`frameloop="never"` כשגיליון 2D פתוח (tech_3d_world Q6).
+
+**מבנה קבצים** (בתוך E11):
+- `packages/ui/{tokens,components,choreo,audio,haptics,rtl}`
+- `apps/mobile/app/(kid)/…`, `(parent)/…`
+- Storybook-web ב-`packages/ui/.storybook`.
+
+---
+
+## 16. הצעות לשינוי ב-00 (Proposed changes to 00)
+
+| # | סעיף | הצעה | ראיות/נימוק |
+|---|---|---|---|
+| PC-1 | E3 | להוסיף במפורש את `expo-sensors` (DeviceMotion: הטיה, נענוע וזיהוי "המכשיר ביד" לפני קפיצה). מצלמת pose דרך מודול Vision ב-dev build, בשלב מאוחר | G6, `learning_through_movement.md` §3; נדרש לבטיחות SCR-19 |
+| PC-2 | E (חדש) | **תמיכה אופציונלית בבקר משחק** (iOS GameController: DualSense/MFi) דרך מודול Expo קטן, אחרי ה-vertical slice. מיפוי: מקל = תנועה, X = קפיצה, מפת מגע ← רטט הבקר | K2 סיים Astro Bot ומכיר את הבקר; Apple HIG: iPad מנגן מגע רק דרך בקרים; גם נגישות מוטורית |
+| PC-3 | B5 | לקבע גופנים: **Noto Sans Hebrew** (קריאה), **Rubik** (תצוגה), **Andika** (אנגלית), כולם OFL; ולהחריג את Open Sans, Heebo ו-Varela Round לטקסט מנוקד | מדידה בסשן הזה (research log R1): כיסוי סימנים, GPOS, רינדור HarfBuzz, באג ךָ ב-Open Sans |
+| PC-4 | G4 | להבהיר: הגיבור הוא **"צעצוע-חליפה עם ניצוץ חי"**, לא נקרא "רובוט" ולא "AI", ובלי גלגלי שיניים או מסך-פנים. מוטיב גלגל השיניים שמור למשפחת המכונה (`ROBOT`/`BOTS`, 07) | C7/D13 דורשים הפרדה מוחלטת בין דמות סיפור למכונה מסומנת; 07 מגדיר את ROBOT "בלי רגשות", ואילו גיבור-רובוט אוהב ומרגיש מטשטש את זה |
+| PC-5 | C (חדש) | **תקציב חגיגה:** חגיגות + מעברים ≤15% מזמן הפרק (טלמטריה); משוב לתשובה ≤0.8s ולא חוסם | gap_audit #5 ו-D7 |
+| PC-6 | A/E (חדש) | **מטרות מגע במ"מ** לפי ילד (20/15/10 מ"מ חזותי), מומרות לפי דגם מכשיר. iPad mini מתנהג כמו iPhone | gap_audit #7 + R10 |
+| PC-7 | — (תיעוד) | לרשום שההמלצה ל"מכונת קפסולות עם קוסמטיקה אקראית" ב-`astrobot_joy_gamification_psychology.md` §Q6 **נדחית** בגלל D2 | D2: התוכן נקבע ברגע ההשגה |
+| PC-8 | E1a | ארטיפקטים בווב לאב-טיפוס (לפני dev build) חייבים `dir="rtl"`, גופנים מוטמעים ו-Rive בגיבוי ספרייט, אחרת ההורה יראה אב-טיפוס שגוי בניקוד ובכיוון | R1, R6, R7 |
+
+---
+
+## 17. מקורות עיקריים
+- Apple HIG: [Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility) · [Right to left](https://developer.apple.com/design/human-interface-guidelines/right-to-left) · [Playing haptics](https://developer.apple.com/design/human-interface-guidelines/playing-haptics) · [WWDC23 Animate with springs](https://developer.apple.com/videos/play/wwdc2023/10158/)
+- [NN/g: Children's UX, physical development](https://www.nngroup.com/articles/children-ux-physical-development/) · Anthony et al. (miss rate 46% vs 32%) דרך `coop_economy_ios.md`
+- [Duolingo illustration guide](https://design.duolingo.com/illustration) · [Duolingo character visemes](https://blog.duolingo.com/world-character-visemes) · [Reach Capital: Mazal on the path](https://www.reachcapital.com/?p=5907)
+- [Open Siddur: open-source Hebrew fonts](https://opensiddur.org/help/fonts/) · Google Fonts CSS2 API (קבצים שנמדדו בסשן, research log R1)
+- [Supercell careers: UI artist](https://supercell.com/en/careers/senior-ui-artist/66476c5d-30b6-4772-aa41-94d251e3d73c/) · [GameJuice: Juice it or lose it](https://gamejuice.pages.dev/articles/juice-it-or-lose-it-lessons)
+- [Michigan Medicine on Radesky 2022](https://www.michiganmedicine.org/health-lab/design-tricks-commonly-used-monetize-young-childrens-app-use) · [Mueller & Dweck](https://www.columbia.edu/cu/psychology/courses/3615/Readings/Mueller_Dweck.pdf) · [Gunderson 2013](https://pmc.ncbi.nlm.nih.gov/articles/PMC3655123) · [Brummelman (OSU)](https://artsandsciences.osu.edu/news/high-praise-could-backfire-kids-low-self-esteem)
+- Astro Bot: [PowerPyx thresholds](https://powerpyx.com/astro-bot-trophy-guide-roadmap) · [TechRadar: Doucet on haptics](https://www.techradar.com/gaming/astro-bot-nicolas-doucet-interview) · [iMore: Miyamoto on Super Mario Run](https://imore.com/game-design-design-philosophy-shigeru-miyamoto)
+- Machado, Oliveira & Fernandes (2009), מטריצות סימולציית CVD (מומשו בסקריפט, research log R5) · WCAG 2.x 1.4.3, 1.4.11, 2.3.1
+- כל שאר הממצאים: דרך הרשימות שבראש המסמך, עם ציטוטים שם.
