@@ -796,9 +796,11 @@ It's a no-op on iPad (no Taptic Engine) and on web. Per-child toggle. Rate-limit
 
 ### 4.7 Asset loader and caching
 
-- **Bundled:** fonts, core Rive files, core audio and hub GLBs come via `expo-asset`. Fonts are loaded
-  before the splash screen hides (`useFonts`); the splash stays until fonts, DB migration and config
-  are ready, max 3 s.
+- **Bundled:** core Rive files, core audio and hub GLBs come via `expo-asset`. **Fonts are embedded at
+  build time by the `expo-font` config plugin (static TTFs, 09 §15 / 14 PQ-R-41) — no runtime
+  `useFonts`**; the splash stays until DB migration (incl. the §6.3 ladder), the config cache and the
+  picker assets are ready: target 3 s, hard timeout 4 s (`app.boot_timeout` telemetry, then the
+  picker renders with whatever is ready).
 - **Downloaded:** pack files go to `documentDirectory` (persistent; not `cacheDirectory`, which iOS may
   purge).
 - **Images:** `expo-image` with `cachePolicy:'disk'` for remote, plus `recyclingKey` in lists.
