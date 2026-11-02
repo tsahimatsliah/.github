@@ -1911,7 +1911,7 @@ export const DEFAULT_CONFIG: EngineConfig = {
 | U-ABS-2 | `profile.paused` 40 יום | ימי ההשהיה לא נספרים; חזרה = כמו 10.4 (לא 10.5.8) אם ימי המשחק הפעילים שחלפו < 90 |
 | U-CEIL-1 | ציר שבו כל המיומנויות ≥ proficient | `contentExhausted[strand]` = today; חלק ה-new עובר לצירים אחרים |
 | U-CEIL-2 | מקצוע שלם מוצה | משקל מתחלק; בלוק fun = MP.X/פרויקט; אין פריט לא מאושר |
-| U-FLG-11 | `EMO_CHECKIN`: עצוב ב-3 מ-5 ימי צ'ק-אין, `checkinNudge=true` | `parent_note` מיד; payload = `{ruleId, status, dayKey}` בלבד |
+| U-FLG-11 | `EMO_CHECKIN`: 5/7 "סערה" על 5 ימים ב-14 יום (סף 07 §10), `checkinNudge=true` | `parent_note` מיד; payload = `{ruleId, status, week}` בלבד; שום תווית לא נשמרת מעבר למונה |
 | U-FLG-12 | כנ"ל, `checkinNudge=false` | כלום. ה-mood לא יוצא מהמכשיר (בדיקת sync pusher) |
 | U-FLG-13 | `MATH_K1_FACT_PACE` מתקיים 10 שבועות, `maxStatus='watch'` | `watch` בלבד, `notify=false`; אחרי `flag_action` אישור → `parent_note` |
 | U-FLG-14 | `notRelevant` על `HEB_K1_LETTER_CONFUSION` | `dismissed` 8 שבועות; סף 25%→30%; `calibration[]` נרשם |
@@ -2001,7 +2001,7 @@ export const DEFAULT_CONFIG: EngineConfig = {
 * **§1.2, §4.1, §5.1, §6.5 — בקשות 03 §17.2 התקבלו:** `Skill.extraGates` (`O.REP`, `O.STEP`); ניקוד שלבים `x = correctSteps/steps` כולל תיקון עצמי ו-BKT צל; שער ייצוגים ל-`proficient` (≥2 pictorial + ≥2 abstract ב-last8) עם ולידציית חבילה ובורר פריטים שמעדיף את הייצוג החסר.
 * **§1.1, §3.2, §3.7 — 5 צירי מתמטיקה חדשים** (03): `math.facts` נכנס ל-E1 (עובדות מייצגות), `math.fractions` ל-E3 (3 פריטים), והשאר הם צירי `continuation` עם **מיקום עצל** (3 פריטי probe בבלוק new הראשון), כדי לשמור על תקרת 25 הפריטים למקצוע.
 * **§3.3א — מפת מזהי השאלון** (03 §6.0א, 05 §17): המזהים הזמניים הם `questionId` וממופים ב-`questionnaire-map.json` ל-`M.*` ו-`E.*`; 04/06 ⟂VERIFY. `english.listening_vocab` → `english.listening`.
-* **§6.8 — משקלי מקצועות:** התקבלה בקשת 05 (K1 אנגלית 25, K2 15) עם נימוק ושני סייגים: עברית ≥ אנגלית (B1; ב-K2 הירידה מהחשבון), ואנגלית ≤ 5 עד פתיחת האי האנגלי. נוסף כלל למקצוע כבוי/מוצה.
+* **§6.8 — משקלי מקצועות:** בגרסת הביניים התקבלה בקשת 05 ל-25% (K1); **הוחלפה** בטבלת התקציב האחת של 05/06/07 (K1 אנגלית 20, ראו "יישור ל-F4"), עם הסייגים: עברית ≥ אנגלית (B1), ואנגלית ≤ 5 עד פתיחת האי האנגלי. נוסף כלל למקצוע כבוי/מוצה.
 * **§9.2 — שלושה כללים חדשים:** `EMO_CHECKIN` (בקשת 10, opt-in T4b/`consent.checkinNudge`, מחושב במכשיר, רק בוליאני יוצא, פעם ב-14 יום, בלי הפניה); `MATH_K1_FACT_PACE` ו-`MATH_K1_READ_VS_LISTEN` (03 §14.3) ב-`maxStatus:'watch'` עד אישור הורה. נוסף מנגנון `maxStatus`.
 * **§9.6–9.7 — התרעות שווא:** אפקט מדויק לכל פעולת הורה ("לא רלוונטי" = השהיה 8 שבועות + החמרת סף 20%; "דיברנו עם המורה" = 4 שבועות חסד), כלל "אותו סמן ברצף", `minWeeklyExposure` כדי שילד שמשחק מעט לא יקבל דגל מרעש, וכללי ייצוא.
 * **§1.4, §1.9, §1.9א, §1.10, §1.11 — טיפוסים:** `Attempt.steps/representation` (ו-`item.answered` v2 על החוט), `behavior.signal` על החוט, **`ParentInput` הוגדר לראשונה** (היה מוזכר בלי טיפוס), `Session.attributedTo/anomaly`, **`SessionEndReason` קנוני** (מאחד את 08/10/11), `modelEpoch`, `PlacementStatus.quality/resumable`, נקודות ביקורת מוגדרות (כל 200 אירועים, 30 נשמרות).
