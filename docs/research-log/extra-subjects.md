@@ -106,7 +106,7 @@
   - Background (L): children under about 7-8 do not reliably recognize the persuasive intent of ads (APA Task Force 2004).
   - Earlier note: there is no evidence on teaching financial literacy through an in-game economy.
 - Sources: [2021 National Standards PDF (KSDE)](https://www.ksde.gov/Portals/0/CSAS/CSAS%20Home/Financial%20Literacy/2021%20National%20Standards%20for%20Personal%20Financial%20Education.pdf); [KSDE summary](https://www.ksde.gov/Portals/0/CSAS/CSAS%20Home/Financial%20Literacy/Summary%20of%20National%20Standards%20for%20Personal%20Financial%20Education.pdf); [KSDE crosswalk](https://www.ksde.gov/Portals/0/CSAS/CSAS%20Home/Financial%20Literacy/Financial%20Literacy%20Crosswalk.pdf); [WA draft standards](https://ospi.k12.wa.us/sites/default/files/2025-11/draft-wa-learning-standards-financial-education.docx); [Yahoo on MAS 2013](https://ca.finance.yahoo.com/blogs/pay-day-/kids-develop-money-habits-age-seven-study-200000613.html)
-- **Change to the spec:** F uses 4 of the 6 topics for G/S (earning, spending, saving, risk) plus giving and ad literacy. Investing and credit get only a "savings tree" simulation for K1. **No interest on the in-game wallet** (D1: coins come from mastery and effort, not time). F claims are graded C.
+- **Change to the spec:** F uses 4 of the 6 topics for G/S (earning, spending, saving, risk) plus giving and ad literacy. Investing and credit get only a "savings tree" simulation for K1. **Apart from 02's capped weekly savings bonus, the wallet does not grow with time** (D1: coins come from mastery and effort, not time). F claims are graded C.
 
 ## X12. Science museums and Israeli places
 - **Finding (M):** the Bloomfield Science Museum (Jerusalem, Givat Ram; sessions for kindergarten through high school; per the extract, closed on Sundays), MadaTech (Haifa, the national museum of science, technology and space; 20+ exhibitions; recommended by parents for ages 4-9; a science park on 4 dunams), the Clore Garden of Science (Weizmann Institute, Rehovot) and the Carasso Science Park (Be'er Sheva). As of 2016 these were the "four science museums in Israel".
@@ -134,7 +134,7 @@
 ## Decisions logged (to `docs/decisions/` at build time)
 - **ADR-06-01** code-direction convention (X13).
 - **ADR-06-02** knowledge packs = thematic series of 3-4 packs; 5-7 target words; ≥4 exposures per word (X7).
-- **ADR-06-03** no interest or time-based growth in the in-game wallet; a separate "savings tree" simulation (X11, D1).
+- **ADR-06-03** the only time-based wallet growth is the capped weekly savings bonus in spec 02 §7.5, which F.BANK.01 uses as its "interest" lesson. 06 adds no other growth. Compound interest is taught in a separate "savings tree" simulation that uses play money (X11, D1).
 - **ADR-06-04** EF games = play and calibration only, no mastery or claims (X10).
 - **ADR-06-05** curriculum bands T/G/S (aligned with 07), not age-based IDs, so the graph works over years as the children grow.
 
