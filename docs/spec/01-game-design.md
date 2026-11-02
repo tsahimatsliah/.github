@@ -1452,6 +1452,9 @@ That is 51 mechanics; ≥25 are required. The **MVP** (first vertical slice) is:
 
 ### 11.2 Default numbers (tunable in `economy.config.ts`)
 
+> **Precedence:** `02-economy-progression.md` is the canonical owner of currency amounts, caps, chest tiers (wood/silver/gold/legendary), chest triggers, the capsule machine and XP. Where the numbers in this section differ from 02, **02 wins**. They are kept here only as the game-design intent: payment for mastery and not time; sparks are not a currency; nothing is announced in advance. A reconciliation pass should align the tables.
+
+
 | Event | K2 coins | K1 coins | K1 gems | Notes |
 |---|---|---|---|---|
 | New item correct on the first try (first time) | 2 | 2 | — | Diminishing returns on repeats: 0 after the item is mastered |
@@ -1790,6 +1793,9 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 - **Error sound:** a soft low "בּוֹפּ" of 150ms, **never a buzzer** and never a red X for K2/K3.
 
 ### 16.2 Treasure reveal choreography (deterministic, 00 D2, R3)
+
+> **Precedence:** the chest tiers, the taps per tier and the per-tap timings in `02-economy-progression.md` (§ chest reveal) are canonical. This section keeps two game-design requirements that 02 must satisfy (or, if it doesn't, record a decision in `docs/decisions/`): (a) the contents are fixed and previewed before opening; (b) the total reveal time is ≤3.0s excluding the child's taps (T2 budget). The "effort marks" idea below is a *proposal* for how extra taps can mean something. Adopt it only if 02 agrees.
+
 
 - **The frame type is known when it's earned and shown in advance:**
   - `bronze` = a level/episode
