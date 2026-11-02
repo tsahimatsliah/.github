@@ -77,6 +77,20 @@ Inputs: `reports/אפליקציית למידה משחקית לילדים.md` (v1
 | E10 | **Assets:** Recraft (SVG icons/UI), Nano Banana / GPT Image (scenes, characters), Rive for rigging/animation, Kenney.nl CC0 + ElevenLabs SFX/Music for audio. Designer approval gates: moodboard, character sheets, avatar parts sheet, Rive rigs, audio review. Asset provenance/license log. |
 | E11 | Repo: monorepo in this repository's branch or a new repo (parent to choose; default new private repo `family-learning-game`), pnpm workspaces: `apps/mobile`, `workers/api`, `packages/engine` (adaptive engine, pure TS), `packages/content` (schemas, packs, generators), `packages/ui` (design system), `tools/` (pipelines). |
 
+## G. Experience pillars (creative direction — added 2026-11-02 after parent input)
+
+K2 finished Astro Bot (PS5) + DLC and adores it; all kids love 99 Nights in the Forest. The game must feel like a joyful, explorable adventure — not an app with exercises.
+
+| ID | Decision |
+|---|---|
+| G1 | **Joy of discovery first.** An explorable world (3D or convincing 2.5D — decided by the tech spike in `tech_3d_world.md`) with dense hidden secrets: puzzle pieces, lost friends to **rescue**, hidden rooms, secret levels. Curiosity is always rewarded within seconds. |
+| G2 | **Rescue & collect loop:** each level hides N lost friends (original characters) + collectible pieces; finding/freeing them requires a learning action (solve, read, count, say in English, sort). Rescued friends return to the **hub**, which visibly fills with life (they build, play, cheer) — the hub is the trophy room. Collection display room with silhouettes of missing items (endowed progress / goal-gradient, never FOMO). |
+| G3 | **One gimmick per level:** short levels (K2: 3–6 min) each built around one fresh power-up/gimmick tied to a skill (e.g., a "number-jet" that flies exactly N tiles, a "letter-magnet" that pulls only the right sound). Variety > length. Kishōtenketsu: introduce → develop → twist → conclude. |
+| G4 | **Original hero:** a lovable small robot-like hero (or hero family) — original IP, never Astro Bot or any existing character. Each child's avatar can "pilot"/customize their hero; co-designed with the kids (their drawings/ideas become parts). |
+| G5 | **Day/night co-op (99-Nights-inspired, non-scary):** day = explore, gather, rescue; evening = family defends/upgrades the campfire together with learning-powered abilities. Lost friends to find in the forest. |
+| G6 | **Learning through movement:** regular embodied moments (jump/lean/clap/act-out/hop a floor number line, tilt to steer), device-sensor and (later) on-device camera pose, always with a seated alternative and safety rules. See `learning_through_movement.md`. |
+| G7 | **Feel ("juice") like a console game:** tight controls, satisfying physics, haptics on iPhone, layered sound, playful animation; every interaction delightful. Gamification grounded in SDT, flow, curiosity, goal-gradient, collection, ownership — white-hat drives only (see `astrobot_joy_gamification_psychology.md`). |
+
 ## F. Autonomy protocol (how the developer decides)
 
 | ID | Decision |
