@@ -14,7 +14,7 @@
 | GAP-04 | §15.1 | Bedtime defaults (K2 19:30) differ from 10 §6.13 (K2 20:00). | Adopt 10's defaults (K3 19:30 · K2 20:00 · K1 20:30). | UC-040 |
 | GAP-08 | §16.2 | "Taps = 1 + effort marks" is a proposal; 02 §6.5 tier-based taps is canonical; keep only the "effort badge" idea if 02 adopts. | Reference 02 §6.1/6.5 explicitly; drop the tap formula or mark it `⟲ADOPTED-IF-02`. | UC-017 |
 | GAP-12 | §14.2–14.3 | "No explicit placement test" contradicts 08 §3 (explicit story-wrapped expeditions) and 10 ON-12. | State that expeditions exist (08 structure, 08 §3.6 UI rules give the "no test feel"); allocate expedition slots in the week-1 table (K2 Sun–Tue, K1 Sun–Wed). | UC-009 |
-| GAP-13 | §6.6 level schema | No `mode` field to tell economy/collection that a level is a placement/boss/event level. | Add `mode: 'placement'|'normal'|'review'|'boss'|'event'` to the level schema. | UC-009 |
+| GAP-13 | §6.6 level schema | No `mode` field to tell economy/collection that a level is a placement/boss/event level. | Add `mode` ∈ {placement, normal, review, boss, event} to the level schema. | UC-009 |
 | GAP-14b | §9.3 | Weekly boss "K1: 2 gems" vs. 02 §6.2 silver chest + 1 gem. | 02 wins (review brief item 1): silver + 1 gem. | UC-029 |
 | GAP-14c | §15.4 | Candle-lighting offset Tel Aviv 20 min vs. 10 SET-01 (18 min, Haifa 30, Jerusalem 40). | Use `@hebcal/core` city defaults + manual override. | UC-045 |
 | GAP-14d | §15.4 | Shabbat-soft starting mid-episode: are the episode's receipts paid? | Episode started before lighting is paid in full; freeze applies to sessions started after lighting. | UC-045 |
@@ -63,7 +63,7 @@
 | GAP-02 | §6.10 | 60-s grace vs. 01 "finish the beat ≤1:30". | Grace applies inside `closing`; beat completion rule from 01 applies before closing. | UC-040 |
 | GAP-06 | §6.10 | Idle 5 min → picker (11 §4.16): session end reason, cap accounting, checkpoint not defined. | `session.ended{reason:'idle'}`; idle minutes excluded from caps; level resumes from checkpoint. | UC-010 |
 | GAP-13 | §3 | Expedition levels must not pay; define `plan.mode='placement'` consumed by economy. | Add `mode` to `EpisodePlan` (§1.10). | UC-009 |
-| GAP-24 | §1.10 Session | `endReason` values used across specs are inconsistent. | Adopt the shared enum `natural|cap|childQuit|switch|idle|bedtime|parentStop|crash|coopEnd|shabbat` (11 `events.ts`). | UC-039 |
+| GAP-24 | §1.10 Session | `endReason` values used across specs are inconsistent. | Adopt the shared enum {natural, cap, childQuit, switch, idle, bedtime, parentStop, crash, coopEnd, shabbat} (11 `events.ts`). | UC-039 |
 | GAP-32 | §9.2 | Emotional rules split across 07/10/08. | Own one `EMO_CHECKIN` rule (see 07 row). | UC-062 |
 | GAP-44 | §6.10 | Daily cap "day" boundary undefined. | Day = 04:00–04:00 family timezone (caps, surprises); week stays Sunday 00:00. | UC-040 |
 | GAP-66 | §6.3 | Settings changed while a child is mid-episode. | Caps/bedtime immediate; content settings from the next episode. | UC-066 |
