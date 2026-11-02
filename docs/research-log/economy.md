@@ -254,9 +254,10 @@ this repo, **[BK]** background knowledge, not verified this session, **[D]** des
 - [BK] Rosh Hashana 5787 was 12–13 Sep 2026; Tu BiShvat 23 Jan 2027; Yom HaShoah 4 May 2027 (verify).
 
 **Implications [D]**
-- Six seasons of 8–9 weeks, each starting on a Sunday and anchored on a holiday. The launch season is **S2
-  "עונת האור"** (1 Nov 2026 – 2 Jan 2027). Dates live in config, not in code. Holiday dates come from a bundled,
-  hand-checked table (Hebcal-generated at build time, then reviewed), mirroring 00-B4's lookup-table principle.
+- The season and event calendar is owned by `01-game-design.md` §13.2: S0 "המחנה מתעורר" from launch on 8 Nov
+  2026, then S1–S6 of 5–9 weeks each. Spec 02 scales tier XP to each season's length. Dates live in config, not in
+  code. Holiday dates come from a bundled, hand-checked table (Hebcal-generated at build time, then reviewed),
+  mirroring 00-B4's lookup-table principle.
 
 ## 11. Astro Bot rescue/collection model (search budget exhausted — background only)
 
@@ -270,6 +271,7 @@ this repo, **[BK]** background knowledge, not verified this session, **[D]** des
   neared the free coffee. Endowed progress: Nunes & Drèze 2006 found that a 10-stamp card with 2 stamps
   pre-filled was completed more often than an 8-stamp blank card (≈34% vs 19%). Not re-verified this session.
 - [N] 00-G1/G2 (parent input): dense hidden secrets, rescue loop, hub as trophy room, silhouettes, no FOMO.
+- [N] `docs/spec/01-game-design.md` (written in parallel) owns the counts: 3/5/7 friends and 0/3/5 pieces per level, a 30–40 piece mosaic per region, per-child neighborhood thresholds, and the S0–S6 season calendar. Spec 02 adopts these and adds the economy layer (spec 02 §17).
 
 **Implications [D]**
 - Rescues and puzzle pieces are **non-spendable progress counts**. They are the hub's primary progression and they
