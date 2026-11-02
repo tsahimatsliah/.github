@@ -73,8 +73,8 @@ Findings
 - **Dashboard literacy:** teachers with lower visualization literacy relied on single charts. Some guidance helped and too much backfired (JLA 2025). Simpler visuals were liked but led to lower recall of the main takeaway (SFU thesis). No parent-specific study was found. — [JLA 8471](https://learning-analytics.info/index.php/JLA/article/view/8471); [SFU thesis](https://summit.sfu.ca/_flysystem/fedora/2022-08/input_data/21422/etd21348.pdf)
 
 Decisions
-- Line and sparkline charts are **not mirrored**: time runs left→right. The latest point is a dot with a label next to it.
-- **Calendars are mirrored** (Sunday on the right, as in Israeli calendars). This is a deliberate, documented exception.
+- Evidence is split: current Material/Codex say do not mirror charts, while Apple HIG (adopted by `09-ux-ui-design-system.md` RTL rule 10) mirrors time (old on the right). Spec 10 therefore uses a single token `chart.timeDirection`, default `'rtl'` per 09, and the parent decides at GATE-UX-3. The `'ltr'` option stays available.
+- Calendars are always mirrored (Sunday on the right, as in Israeli calendars).
 - Every chart has a one-sentence Hebrew "takeaway" headline above it. That is the guidance layer, and it states the gist so the simplicity trade-off does not cost recall.
 - Small multiples share a 0–100% y-axis and show the **target band** shaded. In an adaptive system accuracy is *held* near the target band by design, so the band explains why "flat ≈ healthy".
 
