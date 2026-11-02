@@ -1104,7 +1104,9 @@ Story נחשבת גמורה **רק** כשכל הסעיפים הרלוונטיי�
 | רכיבים | Testing Library | רכיבי UI, שער הורה, בורר פרופילים | כל PR |
 | ויזואלי ו-E2E בווב | Playwright (תמונת Docker נעוצה, E4) | צילומי RTL לפי 09 §13.2, זרימות onboarding וסשן, מסלול דטרמיניסטי בעולם (`window.__olam.world.moveTo`, `window.__olam.ready`), איסוף מדדי `window.__olam.perf`, layout-shift = 0 (14 `PQ-B-26`) | כל PR |
 | ‏Maestro (Simulator על ה-Mac) | Maestro 10 זרימות (14 §5) | מסלול זהב נייטיב, בדיקת layout-shift בצילום כפול (`PQ-T-06`) | כל build ל-`family` |
-| מכשיר | build `dev` / `family` דרך ה-Mac, ‏Instruments | §10.3 | כל build ל-`family`, ולפחות פעם בשבוע |
+| מכשיר | build `dev` / `family` דרך ה-Mac, ‏Instruments (14 §8 `PQ-DEV-01..13`) | §10.3 | כל build ל-`family`, ולפחות פעם בשבוע |
+| **חבילת מקרי קצה `E-01…E-24`** (11 §4.18, `tools/ci/edge-matrix.mjs`) | vitest / Playwright / Maestro לפי המזהה | התקנה ראשונה אופליין (E-01), פקיעת חתימה (E-06), OTA באמצע פרק (E-05), אחסון מלא (E-04), הפרעות (E-16), Split View (E-13), Low Power/חום (E-17/18)… | **לפני C4: לפחות E-01/02/03/05/06/16; לפני MVP: כולן** |
+| **קריטריוני קבלה של המפרטים** | vitest סימולציות | 03 `MATH-AC-20…25` (קצה, probe נייר, החלפת פרופיל, מיפוי רצועה/רמה, numerals משותף), 04 `HEB-AC-19…30` (רגרסיית דהייה, החלפת פרופיל, probe), 05 AC1–AC17, 12 §10 | בספרינט שמנחית `packages/engine` + `packages/content` (VS-E8, VS-E13, MVP-E3/E4) |
 | ילדים | playtest | §11 | שבועי |
 | למידה | probes על נייר | §12 | פעמיים בשבוע |
 
