@@ -1363,6 +1363,8 @@ export interface StrengthsNarrativeInput {
 | `EMO_CHECKIN` (בקשת 10 §6.9; 00 C8a) | K2, K1 | רק עם `consent.checkinNudge` (T4b, ברירת מחדל כבוי) | **מונה מקומי ל-14 יום** (C8a): לכל `dayKey` נשמר רק `{checkins: n, sadOrScared: m}`, בלי התוויות עצמן, ונמחק אחרי 14 יום. הכלל: "עצוב"/"מפחד" ב-**≥3 מתוך 5 ימי הצ'ק-אין האחרונים** בתוך החלון (ימים עם צ'ק-אין, לא ימים קלנדריים). מחושב **במכשיר שבו נעשה הצ'ק-אין** בלבד; יוצא ממנו **רק** `{ruleId, status:'parent_note', dayKey}` (בוליאני אחד, C8a) למכשירי ההורים, מוצפן | **מיד** (זה לא דגל RTI אלא "דחיפה עדינה"): "אולי זה זמן טוב לשיחה" + CL-10. לא נכנס למדרג `watch`. קצב: לכל היותר פעם ב-**14 יום**, ולא נספר במכסת 28 הימים של שאר הדגלים | **אין.** לעולם לא `referral_suggested` מצ'ק-אין לבד. אם במקביל `EMO_DISTRESS` פעיל, ההודעה מאוחדת |
 | `MATH_K1_FACT_PACE` (בקשת 03 §14.3) | K1 | מיד, `maxStatus:'watch'` עד אישור ההורה בנקודת הבדיקה (I1) | אחרי ≥10 שבועות של תרגול עובדות: < 30% מעובדות הכפל (`M.FACT.MUL.*`) ב-`proficient`+, **בזמן ש**דיוק במושגי הכפל (`M.MUL.*`) ≥ 85% ב-≥30 פריטים | 10 שבועות, ≥12 מפגשים עם עובדות. **זה קצב, לא קושי:** ההודעה מציעה לשוחח עם המורה על יעד לוח הכפל (03 §16) | **אין** (לעולם לא `referral_suggested`) |
 | `MATH_K1_READ_VS_LISTEN` (בקשת 03 §14.3) | K1 | מיד, `maxStatus:'watch'` עד אישור | בבעיות מילוליות: דיוק נמוך ב-≥15 נקודות כש-`audioPrompt` כבוי (קוראת לבד) לעומת מופעל, ≥20 פריטים בכל מצב, ב-28 יום | **אין הודעה משלו.** הסמן מזין את `HEB_K1_LISTEN_READ_GAP` כראיה נוספת (נספר כ"שבוע מתקיים" גם אם ה-θ-gap קטן מ-1.0 אבל ≥ 0.7). המנוע ב-`watch`: בעיות מילוליות עם הקראה כברירת מחדל | דרך `HEB_K1_LISTEN_READ_GAP` בלבד |
+| `HEB_K1_FADE_STALL` (בקשת 04 §13.4) | K1 | מיד, `maxStatus:'watch'`, `provisional` | מסלול דעיכת הניקוד (B5, 04 §6): ≥3 נסיגות (F_n → F_{n−1}) ב-8 שבועות, **או** פער דיוק מנוקד/לא-מנוקד > 10 נק' אחרי 4 שבועות של `fadeHold` | 6 שבועות: "הקריאה בלי ניקוד עוד מתייצבת; המשחק מחזיק ניקוד מלא" | **אין** (זה קצב; אם יחד עם `HEB_K1_RATE`, ההודעה מאוחדת והפניה לפי RATE) |
+| `HEB_K1_HANDWRITING` (בקשת 04 §13.4) | K1 | מיד, `maxStatus:'watch'`, `provisional` | מדפי עבודה שצולמו/דווחו (10 PA-PROBE): אי-קריאוּת ≥30% ב-3 דפים רצופים, **או** אותיות/דקה ≥40% מתחת לשיא האישי במשך 6 שבועות, **או** היפוכי ראי ≥20% בכיתה ג' | 6 שבועות | 10 שבועות → מחנכת, ו**ריפוי בעיסוק** דרך רופא/ת ילדים (C8) |
 
 **הערה:** פענוח חלש בגיל 5.5 **אינו** דגל, כי פענוח פורמלי מתחיל בכיתה א'.
 
@@ -1502,16 +1504,21 @@ function evaluateFlags(state, childId, ctx): FlagState[] {
 לפי §3.8: `finish('inconsistent')`, אתחול `uncertain`, מסע קצר חוזר פעם אחת. **בדיקה:** U-RAND-1..3.
 
 #### 10.5.3 אח ששיחק בפרופיל של אח (זיהוי ותיקון)
-* **זיהוי (היוריסטי, בסיום כל מפגש, `anomaly.identity_suspect`).** ציון = סכום:
-  * +2 אם `firstTryRate` של המפגש (≥10 פריטים מנוקדים) רחוק מ-`ewmaSuccess` של הילד ב-≥0.35 **לכל כיוון**.
+גלאי **אחד** לכל המקצועות, ב-`packages/engine/compose/identity.ts`. השם הקנוני: `identity_suspect`; `possible_profile_swap` של 03 §14.4 / 04 §13.4 הוא שם נרדף לאותו דבר (F3 #5), והספים אוחדו כאן.
+* **זיהוי (רץ אחרי כל פריט מנוקד מהפריט ה-10 במפגש, ושוב בסיום).** ציון = סכום:
+  * +2 אם דיוק ניסיון-ראשון במפגש ≤ 0.35 **או** ≥ 0.98 כשה-P̂ הממוצע של הפריטים היה בתוך הרצועה (0.70–0.92) (≥10 פריטים מנוקדים) — 03/04.
   * +2 אם `mean(x − P)` במפגש ≥ +0.35 או ≤ −0.35 (≥10 פריטים): הילד "הרבה יותר טוב/גרוע מהתחזית" בבת אחת.
-  * +1 אם חציון `responseMs` במפגש נמוך מ-0.5× או גבוה מ-2× מחציון הילד (≥10 תצפיות, אחרי סינון RT).
-  * +1 אם המפגש החל תוך 3 דקות מ-`session.ended{reason:'parent_exit'|'inactivity'}` של **אח אחר** באותו מכשיר (11 §4.16).
+  * +1 אם חציון `responseMs` במפגש נמוך מ-**0.4×** או גבוה מ-**2.5×** מחציון הילד (≥10 תצפיות, אחרי סינון RT) — 03/04.
+  * +1 אם המפגש החל תוך **10 דקות** מ-`session.ended` של **אח אחר** באותו מכשיר (11 §4.16) — 03/04.
   * +1 אם בחירות הנושא במפגש כולן מחוץ ל-5 הנושאים המובילים של הילד (≥3 בחירות).
-  * ציון ≥ 4 → `identity_suspect`. ציון ≥ 3 במפגש **ראשון אחרי מיקום** לא נספר (ירח דבש משנה את ההתנהגות).
-* **מה המנוע עושה לבד:** במפגש חשוד, העדכונים **כן נכנסים** (אין ראיה מספיקה לחסום), אבל `u` של המיומנויות המעורבות לא יורד (K לא קטן), כדי שמפגש אחד לא "ינעל" θ שגוי. אותות עניין מהמפגש נכנסים במשקל ×0.5. דגלים (§9) לא סופרים את המפגש הזה בשבוע. **לא נשלחת התראה לילד**, ולא נעשה שום דבר גלוי בזמן המשחק (C5).
-* **כלי התיקון להורה (10 PA-LOG, W-LOG-05):** בשורת המפגש "לא {name} {שיחק|שיחקה}?" → בחירה: אח אחר / "לא יודע" → `ParentInput.session_reattribute {sessionId, to}`. המנוע: (1) `Session.attributedTo = to`; (2) כל ה-`Attempt` וה-`BehaviorSignal` של המפגש מוחרגים (`excluded:'reattributed'`) **אצל הילד המקורי**; (3) חישוב מחדש מנקודת הביקורת שלפני המפגש (§1.11), כך ש-θ, u, רמות, כרטיסי חזרה, עניין ונטיות חוזרים למצב "כאילו המפגש לא קרה" (זה מה ש-event sourcing נותן בחינם); (4) אם `to` הוא אח, האירועים **לא** מועברים אליו אוטומטית (ה-DAG, הרמות והקושי שלו שונים; הניסיונות על פריטים שלא מתאימים לו היו מטים את ה-Elo שלו). הם נשארים ביומן תחת `attributedTo` לצורך שקיפות בלבד. (5) `skill.mastered` ו-`skill.level_changed` שנפלטו במפגש מקבלים אירוע `skill.level_reverted` (02 **לא** לוקח חזרה מטבעות/תגים, C5; 02 §4.1 `badgeNeverDowngrades`). (6) ההחלטה הפוכה אפשרית ("בעצם כן {name}") עד 30 יום; שני הקלטים ביומן, האחרון לפי hlc קובע.
-* **מניעה:** תמונת-PIN (H3, ברירת מחדל ל-K1); הצעה אוטומטית להורה להפעיל תמונת-PIN גם ל-K2 אחרי 2 מפגשים `identity_suspect` ב-14 יום (10 AL-15).
+  * ציון ≥ 4 → `identity_suspect`. ציון ≥ 3 במפגש **ראשון אחרי מיקום** לא נספר (ירח דבש משנה את ההתנהגות). ילד **עם** תמונת-PIN פעילה: הסף 5 (הזדהות שגויה פחות סבירה).
+* **מה המנוע עושה לבד (מצב `pending_attribution`):**
+  1. מרגע הזיהוי, שאר הפריטים במפגש מנוקדים ל-UI (משוב, חגיגות) אבל **לא נכנסים ל-Elo/שליטה/חזרות/עניין** (`excluded:'identity_pending'`, בדומה ל-`disengaged_block`). הפריטים שלפני הזיהוי נשארים בינתיים. הקושי לא משתנה (`pTarget` קפוא). **כלום לא גלוי לילד** (C5).
+  2. בסיום המפגש: `Session.anomaly = {kind:'identity_suspect', …}` ו-`attributedTo = 'pending'`. דגלים (§9) ואותות עניין לא סופרים את המפגש. ההורה מקבל כרטיס אישור (10 AL-15, בסיום הפרק או בכניסה הבאה לאזור ההורה).
+  3. **✓ "כן, מישהו אחר"** → `ParentInput.session_reattribute{to: siblingId | 'unknown'}` (המשך למטה). **✗ "לא, זה היה {name}"** → `session_reattribute{to:'confirmed_self'}`: **כל** פריטי המפגש, כולל אלה שהוחרגו בסעיף 1, נכנסים לקיפול (חישוב מחדש), ו-`anomaly` נשאר לתיעוד. **בלי תשובה 48 שעות** → כמו ✓ עם `to:'unknown'` (שמרני: ראיה מפוקפקת לא מזיזה את המודל), וההורה עדיין יכול להפוך את זה 30 יום.
+  4. **תמונת-PIN:** אחרי **2 אישורי ✓ ב-30 יום** לילד בלי תמונת-PIN, מוצעת הפעלה (10 AL-15 שלב ב'). לא מופעלת אוטומטית (H3: ההורה מחליט).
+* **כלי התיקון להורה (10 PA-LOG, W-LOG-05, גם בלי חשד של המנוע):** בשורת המפגש "לא {name} {שיחק|שיחקה}?" → בחירה: אח אחר / "לא יודע" → `ParentInput.session_reattribute {sessionId, to}`. המנוע: (1) `Session.attributedTo = to`; (2) כל ה-`Attempt` וה-`BehaviorSignal` של המפגש מוחרגים (`excluded:'reattributed'`) **אצל הילד המקורי**; (3) חישוב מחדש מנקודת הביקורת שלפני המפגש (§1.11), כך ש-θ, u, רמות, כרטיסי חזרה, עניין ונטיות חוזרים למצב "כאילו המפגש לא קרה" (זה מה ש-event sourcing נותן בחינם); (4) אם `to` הוא אח, האירועים **לא** מועברים אליו אוטומטית (ה-DAG, הרמות והקושי שלו שונים; הניסיונות על פריטים שלא מתאימים לו היו מטים את ה-Elo שלו). הם נשארים ביומן תחת `attributedTo` לצורך שקיפות בלבד. (5) `skill.mastered` ו-`skill.level_changed` שנפלטו במפגש מקבלים אירוע `skill.level_reverted` (02 **לא** לוקח חזרה מטבעות/תגים, C5; 02 §4.1 `badgeNeverDowngrades`). (6) ההחלטה הפוכה אפשרית ("בעצם כן {name}") עד 30 יום; שני הקלטים ביומן, האחרון לפי hlc קובע.
+* **מניעה:** תמונת-PIN (H3, ברירת מחדל ל-K1); ההצעה ל-K2 לפי סעיף 4 למעלה. **משחק משותף על אותו אייפד** (03 §13.7, 01): הקשות מאזור המגע של אח מתויגות `assisted:'sibling'` (w × 0.3) ולא מפעילות את הגלאי.
 
 #### 10.5.4 נתונים משני מכשירים שסותרים
 * **אירועים לא סותרים** (11 §6.5): אותו ילד ששיחק על שני מכשירים (גם במקביל, גם offline) נותן שני רצפי אירועים, והמצב הוא הקיפול שלהם בסדר הקנוני `(ts, deviceId, eventId)`. שני המכשירים מגיעים לאותו `EngineState` אחרי סנכרון (S-3).
@@ -1609,7 +1616,9 @@ export const DEFAULT_CONFIG: EngineConfig = {
   lazyPlacement: { probeItems: 3, placedAtMinObs: 8, placedAtMaxSe: 0.6 },            // §3.7
   placementResume: { resumeDays: 14, restartSdFloor: 0.7, forceCloseDays: 21, episodesBeforeRestart: 3 },   // §3.6 כלל 6
   inconsistency: { guttmanGap: 1.0, sdStallItems: 4, sdStallDelta: 0.05, fastShare: 0.5, retryAfterDays: 2 },  // §3.8
-  anomaly: { rateDelta: 0.35, residualDelta: 0.35, rtRatioLow: 0.5, rtRatioHigh: 2.0, siblingSwitchMin: 3, minScored: 10, threshold: 4, interestWeight: 0.5 },  // §10.5.3
+  anomaly: { accLow: 0.35, accHigh: 0.98, bandP: [0.70, 0.92], residualDelta: 0.35, rtRatioLow: 0.4, rtRatioHigh: 2.5, siblingSwitchMin: 10, minScored: 10,
+             threshold: 4, thresholdWithPin: 5, autoResolveHours: 48, pinOfferConfirmed: 2, pinOfferWindowDays: 30 },  // §10.5.3
+  breakMode: { minSchoolDays: 5, composition: { K1: { warmup: .15, new: .25, review: .50, stretch: 0, fun: .10 }, K2: { warmup: .20, new: .30, review: .30, stretch: 0, fun: .20 } }, maxReviewsAfterReentry: 6 },  // §6.2א
   flags: { minNoticeGapDays: 28, minWeeklyExposure: 15, notRelevantSnoozeWeeks: 8, notRelevantTighten: 0.2, teacherGraceWeeks: 4,
            checkin: { window: 5, hits: 3, cooldownDays: 14 },
            maxStatus: { MATH_K1_FACT_PACE: 'watch', MATH_K1_READ_VS_LISTEN: 'watch', EMO_CHECKIN: 'parent_note' /* השאר: 'referral_suggested' */ },
@@ -1843,8 +1852,14 @@ export const DEFAULT_CONFIG: EngineConfig = {
 | U-RAND-1 | ✓ ב-b=1.5, ✓ ב-b=1.0, ✗ ב-b=−0.5, ✗ ב-b=0 אחרי minItems | `finish('inconsistent')`, se ≥ 0.7, כל המיומנויות `uncertain`, u=0.8 |
 | U-RAND-2 | 60% מהפריטים מתחת לרצפת RT (לא ברצף) | `inconsistent` |
 | U-RAND-3 | מסע קצר חוזר אחרי יומיים גם `inconsistent` | `quality:'low'`, אין מסע שלישי |
-| U-ANM-1 | ילד עם ewma 0.80, מפגש 12 פריטים ב-0.33, חציון RT 0.4× | ציון 2+2+1=5 → `identity_suspect`; u לא יורד במיומנויות המפגש |
+| U-ANM-1 | ילד עם P̂ ממוצע 0.80, מפגש 12 פריטים בדיוק 0.33, חציון RT 0.35× | ציון 2+2+1=5 → `identity_suspect` אחרי הפריט ה-10; פריטים 11–12 `excluded:'identity_pending'`; `attributedTo='pending'` |
+| U-ANM-1b | כנ"ל, ההורה עונה ✗ | כל 12 הפריטים בקיפול; `anomaly` נשאר |
+| U-ANM-1c | כנ"ל, אין תשובה 48 ש' | `attributedTo='unknown'`, כל המפגש מוחרג |
+| U-ANM-1d | כנ"ל, לילד עם תמונת-PIN | ציון 5 = סף 5 → `identity_suspect` (ציון 4 לא היה מספיק) |
 | U-ANM-2 | מפגש ראשון אחרי מיקום, ציון 3 | אין anomaly |
+| U-BRK-1 | `breakMode='auto'`, היום בתוך חופשת פסח (≥5 ימי לימוד) | הרכב K1 {15,25,50,0,10}; `monthAlign` קפוא |
+| U-BRK-2 | חופשה של 3 ימי לימוד | הרכב רגיל |
+| U-BRK-3 | reentry בתוך חופשה, 9 חזרות שהגיע זמנן, 36 פריטים | ≤6 חזרות בפרק |
 | U-ANM-3 | `session_reattribute` למפגש שהעלה מיומנות ל-`proficient` | אחרי חישוב מחדש: הרמה כפי שהייתה לפני המפגש; אירוע `skill.level_reverted`; θ זהה למצב "בלי המפגש" (בתים-לבתים מול fold ללא המפגש) |
 | U-ANM-4 | reattribute ל-K2, ואז "בעצם כן" אחרי 10 ימים | שני הקלטים ביומן; המצב הסופי שווה למצב בלי reattribute |
 | U-ANM-5 | מפגש reattributed | אותות עניין ודגלים לא סופרים אותו |
@@ -1946,6 +1961,7 @@ export const DEFAULT_CONFIG: EngineConfig = {
 סקירת F5 (2026-11-02). כל השינויים בתוך המסמך, בלי שינוי מבנה. בקשות למסמכים אחרים ב-`docs/review/fable-issues-F5.md`.
 
 * **יישור ל-00 גרסה 2 (F1):** `Band` + `bandOf` ו-`Skill.band` (A6); המיפוי ל-02 בדיוק לפי C15 (`introduced→new`, `practicing→beginner|advancing`; `locked/ready` קדם-מצבים) והחזרת שמות הצמיחה לילד (זרע…עץ פורח) ש-C15 קובע; `EMO_CHECKIN` על מונה מקומי ל-14 יום (C8a); מצבי שבת `soft/full/off` וימים שקטים במנוע (B7/B7a, §6.10, §10.2); ספירה כפולה של TPR (F1 #11); §14 מסומן "התקבל ב-00".
+* **יישור ל-F3 (03/04):** `Skill.subBand`, `ChildProfile.handedness` (UI בלבד, מחוץ ל-`EngineChildView`), `StrandMeta` עם `priorFrom` ו-`scoring:'wcpm'` (ל-`hebrew.fluency`) וארבעת צירי ההמשך של 04; פריסת שאלון דרך `aliases`; **גלאי אחד** לאח-בפרופיל (`identity_suspect` = `possible_profile_swap`) עם ספי 03/04 (0.35/0.98, RT 0.4×/2.5×, 10 דק') ותהליך `pending_attribution` (✓/✗/48 ש', תמונת-PIN אחרי 2 אישורים ב-30 יום); `Plan.breakMode` ו-§6.2א "מצב חופשה"; `HEB_K1_FADE_STALL` ו-`HEB_K1_HANDWRITING` ב-`watch`; `itemKey` לפי lexId.
 * **§1.1 — `SubjectId` סגור, רשימת צירים קנונית.** הוחלט **לא** להוסיף `coding`/`finance` (הערת 06): ההבחנה נשמרת בציר (`logic.coding`, `world.finance`), והדשבורד מקבץ לפי ציר. נוספה טבלת כל הצירים לפי מקצוע (כולל 5 הצירים החדשים של 03) ובדיקת טעינה. הצירים של 04 מסומנים ⟂VERIFY.
 * **§1.1א — שמות שלבים: ההגדרה הקנונית והמיפוי ל-02** (בעיה חוצת-מסמכים 3 בבריף). 08 נשאר המקור (`new…master`); 7 מצבי 02 ממופים כנגזרות (`locked/ready` = גרף, `retained` = rung 30), עם `packages/shared/levels.ts` (`toEconomyState`/`fromEconomyState`). עמודת "תצוגה לילד" הועברה ל-02 §4.2 (הבעלים של המיפוי החזותי) במקום שני סולמות צמיחה סותרים.
 * **§1.2, §4.1, §5.1, §6.5 — בקשות 03 §17.2 התקבלו:** `Skill.extraGates` (`O.REP`, `O.STEP`); ניקוד שלבים `x = correctSteps/steps` כולל תיקון עצמי ו-BKT צל; שער ייצוגים ל-`proficient` (≥2 pictorial + ≥2 abstract ב-last8) עם ולידציית חבילה ובורר פריטים שמעדיף את הייצוג החסר.

@@ -1766,6 +1766,11 @@ The roles are **different, not ranked**. Each has a heroic name and an equally i
 3. K3 taps the fire so that the light is strong enough.
 4. If K3 isn't there, the fire is lit automatically at the base level (the game doesn't wait for anyone).
 
+**Touch zones and `assisted` tagging (03 §13.7, 04 tutor mode; binding for CO-1/CO-2):**
+- Every same-device co-op layout gives each child a **separate touch zone** (CO-1: the rotated half; CO-2: a named region ≥1/3 of the screen with a 12 mm dead strip between zones; K3's zone is always the one nearest the fire). A tap outside a child's own zone is **not an answer** for anyone: K3's taps on K2's items are ignored (they only feed K3's own glow targets), and K1's taps on K2's items are ignored unless K1 is in guide mode (and even then only hint tokens, §12.6).
+- An item answered with help is tagged in its `item_answered` event: `assisted: 'parent' | 'sibling' | 'none'`. `sibling` is set only when the **parent marks it** on the co-play prompt ("עזרתי לו / אחותו עזרה"), never inferred from touch; `parent` is set by the parent's own tap on "I answered". The engine weights assisted items (08 §4.1, w ×0.3) and the economy pays them as `itemRecovered` (02: no penalty, no bonus). No flag is ever shown to a child.
+- In `MX-B02` the shared light meter sums each child's own-zone correct answers only (§12.4); a child outside their zone contributes nothing and loses nothing.
+
 ### 12.3 Co-op in the runner (CO-2)
 
 - **K2 = the runner** (tap-to-jump).
@@ -2167,6 +2172,9 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 - **AC-MX-7:** Brain-token gate: in every mechanic that exposes גלגלון's ladder, `hintAvailable === false` until a deposit event exists for that item (engine test across the catalog, implements 07 AC-07).
 - **AC-MX-8:** MX-E01 `pairs`: no pronunciation score is ever computed or stored; the speaker pool rotates among the 4 adult voices + the human recording (test).
 - **AC-MX-9:** Tool belt: `toolState` transitions follow 07 §2.2 (`chosen` requires ≥3 independent choices over ≥2 weeks; `transferred` requires a parent confirmation event).
+- **AC-CO-7:** Touch zones: in CO-1/CO-2 a tap outside a child's own zone never produces an `item_answered` for another child (gesture test with synthetic taps per zone); `assisted:'sibling'` appears only after a parent mark event (engine test).
+- **AC-MX-10:** MX-H12: PA items (`H.PA.*`) render sound buttons only, never letter text (snapshot); every isolated phoneme comes from the HREC recording list (test, as AC-MX-3 for Hebrew). MX-H13: a pair is served only when both letters are ≥70% known; errors are logged per pair (`E.VIS.<PAIR>`). MX-H14: no accuracy score is computed for `H.SP.INV`/`H.WC.EM.*` items (`E.SPL.PHON` logged as expected). MX-H15: K2 items show no text (snapshot).
+- **AC-MX-11:** MX-H06 emits `hint:lens` on every lend; the engine's lens-tap rate per 100 words is derivable from the log (test).
 - **AC-CTRL-1:** Every mechanic is completable with touch only; the optional controller never appears in any tutorial or prompt (snapshot).
 - **AC-STOP-4:** Every offline mission card has ≥1 safety tag from 00 C13; the small-parts rule is enforced while `youngestChildAge < 3` (content lint).
 - **AC-SHAB-3:** All Shabbat/holiday window checks go through `packages/shared/calendar.ts` (`@hebcal/core`); a grep test finds no other sunset/zmanim computation.
@@ -2381,4 +2389,5 @@ export const celebration = {
 - **Guide mode** (§12.6): parent-enabled first (10 default off), cap behaviour mid-session, brain-token link.
 - **Endowed progress must be real rescues** (§14.3, per 02 §5.2 rule 8).
 - **New §21 use-case/edge-case matrix** (24 scenarios) with binding rules and AC-UC-nn; new DD-26..DD-40; new ACs (AC-ECO-3/4/5, AC-HERO-1, AC-REG-1, AC-FIRE-1, AC-PET-1, AC-MX-6..9, AC-CTRL-1, AC-STOP-4, AC-SHAB-3).
+- **F3 (04 Hebrew) items processed:** MX-H12 `rune-splitter` (the key K2 predictor `H.PA.PH.SPLIT`, Tier B shipped in S0), MX-H13 `twin-detective`, MX-H14 `writing-studio` (parent-mediated, not tracing), MX-H15 `word-machine` added with full cards (§7.3); variants syllable-clap (H05), summary-chest/story-campfire (H07), readers-theater/echo-cave/phrase-bridge (H08), prefix-peeler (H11) recorded; 04 §7.3א mapping onto MX-H01…H11 confirmed (§7.1); `hint:lens` event on MX-H06 (AC-MX-11); co-op touch zones + `assisted:'parent'|'sibling'|'none'` tagging rule (§12.2, AC-CO-7); catalog now 68, Tier B 23. 03 §5.4's eight math proposals were already adopted as MX-M13…M20 (F3 #17).
 - **Still unverified (`⟂VERIFY`):** DD-37 — whether a re-signed build installed over the existing bundle keeps the SQLite container (test with `devicectl` on one device before relying on it).

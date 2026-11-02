@@ -421,6 +421,8 @@ export function numeral(n: number, gender: NGender, form: NForm): { plain: strin
 | `V18 piiResidual` | שמות מרשימת "לא-משפחה" / טלפון / כתובת | P2, P4 | fail (מוחלף בממלא מקום) |
 | `V19 payloadPiiLint` | **לפני שליחה לספק:** אין שם/כינוי/גן/בית ספר/מורה מ-`private/family-names.json`, אין טלפון/כתובת/ת"ז/אימייל, אין base64 של תמונה שלא עברה את §3.3 (hash רשום) | כל קריאת LLM/TTS/תמונה | fail (הבקשה לא נשלחת; נרשם `failure:"pii_guard"`) |
 | `V20 answerKeyGuard` | במצב `homework_practice`: אף פריט/תשובה מקוריים לא נכנסים לחבילת הילד; במצב `exam_page`: אין פריט מקורי בכלל (§3.10) | P2 | fail (החבילה לא נבנית) |
+| `V22 genericVoFallback` | חבילת הליבה המצורפת ל-build מכילה `vo.generic.<intent>` לכל `intent` ברשימת 11 §4.11 (instruction, praise, retry, hint, goodnight…), ב-m/f/pl, עם אודיו תקין; חסר → build נכשל | חבילת ליבה | fail |
+| `V23 heroWording` | פרומפטים ל-P6 ושורות דמות: "soft toy lantern / חליפת-צעצוע עם ניצוץ" לפנסון; המילים robot/רובוט/gears/גלגלי שיניים/screen-face מותרות **רק** לדמויות המכונה (גלגלי, `ROBOT`/`BOTS` של 07) — 00 G4, 01 AC-HERO-1; רץ גם על `tools/` ו-`assets/prompts/` | P6, P1 | fail |
 | `V21 audioFormat` | פורמט ותקציב לפי 14 `PQ-R-36`/`PQ-B-24` (אותו כלל ב-`content:validate` וב-`lint:assets`): SFX ≤ 1 ש׳ = WAV/CAF PCM 44.1 kHz מונו אם ≤ 150 KB, אחרת AAC-LC; VO = AAC-LC 64–96 kbps מונו 48 kHz; מוזיקה = AAC 128 kbps סטריאו; עוצמה לפי §6.9 (VO −18 LUFS ±1, שיא ≤ −1 dBTP); **חבילת 2D ≤ 8 MB בדיסק** (יעד 5 MB) — חבילה גדולה יותר מפוצלת לפי `skillId` | כל חבילה / נכס שמע | fail |
 
 #### 1.6.1 חישוב מתמטי מחדש (V02)
@@ -1043,10 +1045,12 @@ export interface ErrorRule { code: string; applies(item: Item, ctx: ChildCtx): b
 // Ranking: prefer codes the child actually produced recently (engine error log), then catalog priority, then random.
 ```
 
-| תחום | קודים (פירוט ב-§12.2) |
+**קטלוגי האמת הם 03 §4.2 (מתמטיקה, `E.*`) ו-04 §2.3 (עברית, `E.*`).** הקודים `MATH_*`/`HE_*`/`NIK_*` כאן הם **כינויים** שנשמרים ב-`packages/content/errors/aliases.json` (טבלאות המיפוי: 03 §4.2א, 04 §2.3ט); `classifyError()` מקבל את שני השמות ומחזיר תמיד את ה-`E.*` הקנוני (03 `MATH-AC-22`, 04 #24). תיקונים שנובעים מהמיפוי: `MATH_PLACE_VALUE` **מפוצל** ל-`E.PV_CONCAT` (25+7→95, שרשור) ו-`E.NO_CARRY` (47+38→75); `MATH_CARRY_OMIT` = `E.NO_CARRY`; `MATH_BORROW_OMIT` = `E.SUB_SMALL_FROM_LARGE` ("קטן מגדול"), והווריאנט "פרט ולא הוריד" הוא `E.BORROW_NO_DEC`; `MATH_HALF_DOUBLE` = `E.HALF_DOUBLE` (נוסף ל-03); `HE_SOUNDALIKE_K` **מפוצל** ל-כ/ק (`E.SPL.K_Q`) ו-כ/ח (`E.SPL.K_CH`) כי התיקון שונה; `HE_VISUAL` הוא תמיד **זוג-ספציפי** `E.VIS.<PAIR>` (BK, DR, HCT, VZN, SM…) ומוצג כמסיח רק כששתי האותיות בזוג ≥ 70% נלמדו (04 P12). קוד חדש נולד רק ב-03/04; 12 מוסיף כינוי.
+
+| תחום | קודים (כינויי 12 → `E.*` קנוני; פירוט ב-§12.2) |
 |---|---|
-| חשבון | `MATH_OP_SWAP` (חיבור↔חיסור), `MATH_OFF_BY_ONE`, `MATH_DIGIT_REVERSAL` (12↔21), `MATH_PLACE_VALUE` (25+7→22/95), `MATH_CARRY_OMIT`, `MATH_BORROW_OMIT` (כולל "קטן מגדול"), `MATH_TABLE_NEIGHBOR` (7×8→49/63), `MATH_ADD_FOR_MULT` (7×8→15), `MATH_COUNT_ALL_AGAIN` (K2 counting-on), `MATH_HALF_DOUBLE` |
-| כתיב עברי | `HE_SOUNDALIKE_T` (ט/ת), `HE_SOUNDALIKE_K` (כ/ק/ח), `HE_SOUNDALIKE_S` (ס/שׂ), `HE_SOUNDALIKE_V` (ב/ו), `HE_GUTTURAL` (א/ע, ה/א בסוף), `HE_FINAL_FORM` (מ/ם, נ/ן, צ/ץ, פ/ף, כ/ך), `HE_MATER_OMIT` (חסר י/ו), `HE_MATER_EXTRA`, `HE_VISUAL` (ב/כ, ד/ר, ה/ח, ו/ז, ס/ם) |
+| חשבון | `MATH_OP_SWAP`→`E.OP_SWAP`, `MATH_OFF_BY_ONE`→`E.NEAR`, `MATH_DIGIT_REVERSAL`→`E.REVERSE_DIGITS`, `MATH_PLACE_VALUE`→`E.PV_CONCAT` **או** `E.NO_CARRY` (לפי הערך), `MATH_CARRY_OMIT`→`E.NO_CARRY`, `MATH_BORROW_OMIT`→`E.SUB_SMALL_FROM_LARGE` (+`E.BORROW_NO_DEC`), `MATH_TABLE_NEIGHBOR`→`E.TABLE_NEIGHBOR`, `MATH_ADD_FOR_MULT`→`E.ADD_FOR_MULT`, `MATH_COUNT_ALL_AGAIN`→`E.COUNT_ALL`, `MATH_HALF_DOUBLE`→`E.HALF_DOUBLE` (שמות היעד המדויקים לפי 03 §4.2א — ⟂VERIFY ב-P0-E1-S6 מול `errors.math.json`) |
+| כתיב עברי | `HE_SOUNDALIKE_T`→`E.SPL.T_TET`, `HE_SOUNDALIKE_K`→`E.SPL.K_Q` / `E.SPL.K_CH`, `HE_SOUNDALIKE_S`→`E.SPL.S_SIN`, `HE_SOUNDALIKE_V`→`E.SPL.B_V`, `HE_GUTTURAL`→`E.SPL.ALEF_AYIN`, `HE_FINAL_FORM`→`E.FIN.*`, `HE_MATER_OMIT`/`HE_MATER_EXTRA`→`E.SPL.KM_*`, `HE_VISUAL`→`E.VIS.<PAIR>` (שמות היעד לפי 04 §2.3ט — ⟂VERIFY ב-P0-E1-S6 מול `errors.he.json`) |
 | אנגלית | `EN_BD_REVERSAL`, `EN_SHORT_VOWEL_SWAP` (bat/bet), `EN_SILENT_E`, `EN_DIGRAPH_SPLIT` (sh→s), `EN_HE_TRANSFER` (ת׳ /th/ → s/z) |
 | אוצר מילים | `VOC_SAME_CATEGORY`, `VOC_SAME_FIRST_SOUND`, `VOC_PICTURE_SIMILAR` |
 | ניקוד (K2) | `NIK_KAMATZ_PATACH_OK` (לא מסיח! שניהם /a/ — אסור להשתמש בהם כמסיח זה לזה), `NIK_A_I` (בָּ/בִּ), `NIK_E_A` |
@@ -1106,6 +1110,7 @@ export function selectTemplates(content: ConfirmedContent, child: ChildProfile, 
 ```
 
 - אם `meetsMinimum` נכשל רק במספר פריטים: **הרחבה** — שכפול פריטי מתמטיקה באותו כישור (AIG), או הוספת מילים ממאגר הילד באותה קטגוריה (מסומנות "מילה נוספת"), עד המינימום; אחרת התבנית נופלת.
+- **כשל שכפול** (אין `ItemModel` תואם לפריט במצב `homework_practice`/`exam_page`): הפריט מדולג **לילד**, ולהורה מוצג במסך האישור: "לא הצלחנו לשכפל פריט N — יוצג רק להורה" (עם הפריט המקורי, להורה בלבד); אם < מינימום אחרי דילוגים → הצעת הקלדה של פריט דומה.
 - אחד מתוך 3 מוצג כ"המשחק המומלץ" ונפתח מיד; השניים האחרים זמינים ב"עוד דרך לשחק".
 - אותו מקור יכול להפיק מילוי שונה לכל ילד (§3.12): דף אוצר מילים של K1 → K1 `spell_builder`, K2 `first_sound` + `memory_pairs`, K3 `tap_heard_picture`.
 
@@ -1168,7 +1173,7 @@ export function selectTemplates(content: ConfirmedContent, child: ChildProfile, 
 
 - שורות חדשות (מילים, משפטים, הנחיות) מרונדרות **בשרת** אחרי האישור: Azure he-IL (או מנצח ה-bake-off אם ה-latency שלו ≤ 1.5 ש׳ לשורה), מקביליות 8, SSML לפי §6.5; מילים שכבר קיימות ב-cache (hash זהה, §6.8) לא מרונדרות.
 - עוצמה: בזמן אמת מוחל gain קבוע לכל קול (נמדד ב-bake-off); נרמול LUFS מדויק בלילה ע"י ה-runner, והקובץ מוחלף ב-R2 (גרסת manifest עולה, המכשיר מוריד שקט).
-- אם ה-TTS לא זמין: K1 משחקת בתבניות טקסט בלבד (בתצוגה לפי רמת ניקוד); K2/K3 ממתינים (הודעה להורה: "הקול יהיה מוכן בעוד כמה דקות").
+- אם ה-TTS לא זמין: K1 משחקת בתבניות טקסט בלבד (בתצוגה לפי רמת ניקוד); K2/K3 ממתינים (הודעה להורה: "הקול יהיה מוכן בעוד כמה דקות"). **קובץ VO חסר בזמן משחק** (כל חבילה, לא רק P2): הנגן נופל ל-`vo.generic.<intent>` מחבילת הליבה המצורפת ל-build (11 §4.11) — ולידטור `V22` (§1.6) מבטיח שלכל `intent` יש שורה גנרית אחת לפחות ב-3 גרסאות מגדר.
 
 ### 3.14 יעד "זמן עד משחק" (< 60 ש׳ אחרי "צור משחק")
 
@@ -1713,6 +1718,8 @@ afade=t=in:d=0.02,areverse,afade=t=in:d=0.03,areverse" -ar 48000 -ac 1 -c:a aac 
 **זוגות מינימליים (16; מכוונים לקשיים של דוברי עברית):** ship/sheep, bit/beat, pull/pool, full/fool, bat/bet, cap/cup, cat/cut, hot/hut, pen/pan, thin/sin, think/sink, three/tree, wet/vet, wine/vine, chip/ship, bag/back. כל מילה: 2 takes, הגייה ברורה בקצב רגיל.
 **פירוק ומיזוג (segmented, 12 מילים):** c-a-t, s-u-n, p-i-g, b-e-d, d-o-g, m-a-p, f-i-sh, sh-i-p, ch-i-p, th-i-n, r-ai-n, b-oa-t — הצלילים בנפרד (רווח 0.5 ש׳) ואז המילה.
 **צירופים ודיגרפים נוספים (12):** sh, ch, th (voiceless), th (voiced), ng, ck, bl, st, fr, tr, -nd, -mp — צליל + מילת מפתח.
+**בנק זוגות מינימליים רב-דוברים (HVPT, 05 §12.2/§12.6, 01 `MX-E01:pairs`):** ~70 מילות הזוגות של 05 §5.4 × **4 קולות TTS en-US בוגרים** (2 נשים, 2 גברים, אותו ספק, מגוון גובה מתועד; בלי קול "ילדותי") **+ הדובר/ת האנושי/ת** מהמפגש = 5 דוברים לכל מילה; מניפסט `en-minimal-pairs.json`; 05 AC10 דורש ≥ 4 דוברים לכל זוג. נוצר ב-P5 (TTS) + מפגש A (אנושי).
+**תוכן אנגלי נוסף מ-01 (F2 #25):** גיליון דמות ל-**Pip הסרטן (CH-11, שותק)** ב-G2; **"בקבוקים מהים"** (~15 בקבוקים ל-S0: שיר קצר של Sunny + 2–3 מילים לכל בקבוק, TTS Sunny + שירה מהמפגש); קליפי "מילת לב" ל-`MX-E05`; עמודי קריאה פענוחיים ל-`MX-E06` (P1, בודק פענוחיות 05 §5.6); עצי דיאלוג ל-`MX-E07` (P3 מתוסרט, Sunny + קול "חבר"). כולם ב-`packages/content/en/` עם רשומת רישוי.
 **חלופה (E9):** קבצי IPA של Wikimedia Commons (CC BY-SA, ייחוס במסך "קרדיטים"); TTS **לעולם לא** לצליל בודד.
 
 (הטבלה מונה 44 צלילים; ה-ID ה-45 של 05 §6 הוא /ks/ "x" (box), מוקלט `clip`. ⟂VERIFY: להשוות את רשימת ה-IDs ב-`phonemes.json` מול 05 §6 לפני המפגש.)
@@ -1943,6 +1950,8 @@ GPT Image ~300 תמונות ≈ $10–25 (מחירים מאגרגטורים, ל�
 
 **כלל תפעולי:** כל ספק ב-`workers/api/src/ai/vendors.ts` עם `enabled` + `termsCheckedAt` + `termsRef`. CI נכשל אם `termsCheckedAt` ישן מ-180 יום לספק פעיל (תזכורת לבדיקה מחדש, E8a "Re-verify terms at build time").
 
+**ספק נופל ותקרת $ — חלוקת בעלות:** ה**ערכים** (תקרות $3/$40, מצבים, override) שייכים למסמך הזה (§1.9, 00 J1) ו-11 §8.4 מאמץ אותם (`ai_daily_cap_cents = 300`); **המנגנון** (timeout 20 ש׳ לתור סוקרטי, 529 → שורה מתוסרטת, `ai_log.flagged='vendor_down'`, kill switch ב-config, התראת 80%) מוגדר ב-11 §4.11/§8.4 ולא משוכפל כאן. §0.5 ו-§3.15 מתארים רק את מה שהילד וההורה רואים.
+
 ---
 
 ## 9. יעדי ביצועים ועלויות (ריכוז)
@@ -2067,7 +2076,7 @@ GPT Image ~300 תמונות ≈ $10–25 (מחירים מאגרגטורים, ל�
 | 13 | שְׁלוֹשׁ־עֶשְׂרֵה | | | שְׁלוֹשָׁה־עָשָׂר | | |
 | 20 | עֶשְׂרִים | עֶשְׂרִים | | עֶשְׂרִים | עֶשְׂרִים | |
 
-הטבלה חייבת לעבור **בדיקה ידנית של דובר/ת עברית** לפני שימוש (קבלה); צורות הנסמך מסומנות בה כ-`verified:false` עד אז. ספירה רוטינית (B4): עמודת "ספירה/נקבה עצמאי".
+הטבלה חייבת לעבור **בדיקה ידנית של דובר/ת עברית** לפני שימוש (קבלה; OPD-31); צורות הנסמך מסומנות בה כ-`verified:false` עד אז. ספירה רוטינית (B4): עמודת "ספירה/נקבה עצמאי". **זהו קטע מתוך `numerals.json` — הקובץ הוא המקור היחיד גם ל-03 §10.4** (כללי ההרכבה: עשרות, מאות, אלפים, ו' החיבור, סודרים, שברים, שעון — ב-§1.5.3). שינוי בטבלה = PR `shared:` + הרצת `MATH-AC-25`.
 
 ### 12.2 קטלוג טעויות — פירוט נבחר
 
