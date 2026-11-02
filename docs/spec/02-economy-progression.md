@@ -71,7 +71,8 @@
 ```ts
 type LearnEvent =
   | { t: 'item_answered'; itemId; skillId; firstTry: boolean; correct: boolean; hintUsed: boolean;
-      workedExample: boolean; isReview: boolean; level: LevelId /* 08, via packages/shared/levels.ts */; rtMs: number | null;
+      workedExample: boolean; isReview: boolean; level: LevelId /* 08, via packages/shared/levels.ts */;
+      rtMs: number; rtMsScored: number | null /* 08 §1.4: null כש-rtPolicy='ignore' (גן); §2.6 קורא רק את rtMsScored */;
       stretch: boolean; embodied: boolean /* G6: movement item */;
       provenance?: 'placement' | 'benchmark' | 'paper'; levelMode?: 'normal'|'placement'|'benchmark'|'review'|'boss'|'event' /* 01 §6.6 */;
       assisted?: 'parent' | 'sibling' | 'none' }
@@ -102,7 +103,10 @@ applyEvent(state: EconomyState, ev: LearnEvent, cfg: EconomyConfig, cal: Calenda
 ```
 
 - **`DayKey` של כל אירוע** (לתקרות יומיות, לתשואה הפוחתת ולשבוע) נגזר מ-`ts + tzOffsetMin` של האירוע עצמו (11 §6.5),
-  ולא משעון המכשיר בזמן ה-fold. כך אותו יומן נותן אותו מצב בכל מכשיר.
+  ולא משעון המכשיר בזמן ה-fold. כך אותו יומן נותן אותו מצב בכל מכשיר. **`tzOffsetMin` הוא ההיסט של אזור הזמן של עיר
+  המשפחה** (`family.tz`; או של "עיר הנסיעה" `family_prefs.travel.city` כל עוד היא מוגדרת, 10 SET-01 / 01 DD-31) **בזמן
+  האירוע, מחושב על המכשיר** — לא ההיסט של המכשיר (00-C3 גרסה 3: הגדרת יום אחת לכל האפליקציה, יום קלנדרי בעיר המשפחה,
+  חצות; אותו `DayKey` משמש את 08 לתקרות ולכלל C11). המימוש היחיד: `packages/shared/dayKey.ts` (11).
 - **`DayKey` מונוטוני לכל מכשיר** (`max(DayKey(ev), lastDayKeyOnDevice)`): הזזת שעון אחורה לא פותחת יום חדש ולא
   מאפסת תקרה (§18 UC-15).
 
@@ -212,7 +216,7 @@ coinsK2(episode) = episodeComplete(2) + min(chunksPerEpisodeMax(2), floor(correc
 | תקרה רכה יומית, מטבעות item (K1) | 120 | מ-120 עד 160 ×0.25; מעל 160 = 0. אבני דרך (תיבות) לא כפופות לתקרה |
 | תקרה רכה יומית (K2) | 12 / 16 | אותו מבנה |
 | תקרה יומית ל-XP | 1,500 רכה, 2,500 קשה | ×0.5 בין שתיהן |
-| ניחוש מהיר (K1 בלבד) | `rtMs < 800` ותשובה שגויה | הפריט משלם 0. לא חל על מיומנויות שטף (fluency). אף פעם לא מוצג כעונש; המנוע מוריד קושי |
+| ניחוש מהיר (K1 בלבד) | `rtMsScored < 800` ותשובה שגויה (`rtMsScored` הוא `null` מתחת לכיתה א', 08 §1.4, ולכן הכלל כבוי שם מעצמו) | הפריט משלם 0. לא חל על מיומנויות שטף (fluency). אף פעם לא מוצג כעונש; המנוע מוריד קושי |
 | שברים | נצברים ב-`fractionalCarry` | משולמים בקבלה כמספר שלם, והשארית נשמרת |
 
 התקרות הן **רשת ביטחון ולא חוויה**. בשימוש טיפוסי, וגם בשימוש כבד במסגרת התקרה היומית שההורה קובע (K1 ≤ 40
@@ -378,11 +382,13 @@ locked → ready → introduced → practicing → proficient → mastered → r
 | `practicing` | `beginner` או `advancing` | לפי 08 §5.1 (advancing: ≥5 תצפיות, דיוק ≥0.70) |
 | `proficient` | `proficient` | 08 §5.1 |
 | `mastered` | `master` | 08 §5.1 + בדיקה מושהית (D9) |
-| `retained` | `master` + דגל `retained` | `master` **וגם** שלב 30 הימים בסולם החזרות (C11: 1/3/7/14/30/60) עבר. 08 פולט `review_rung_passed{skillId, rungDays:30}`; הכלכלה מסמנת `retained` ומשלמת פעם אחת |
+| `retained` | `master` + דגל `retained` | `master` **וגם** חזרה במרווח של **≥30 יום עברה בפועל** (`ReviewCard.maxPassedDays ≥ 30`, 08 §1.6). 08 פולט `review_rung_passed{skillId, rungDays}` בכל מעבר אמיתי (§5.4); הכלכלה מסמנת `retained` על הראשון עם **`rungDays ≥ 30`** ומשלמת פעם אחת. **לא** לפי ה-rung הנוכחי של הכרטיס: ב-K2 הסולם נגמר ב-30, ולכן "rung = 30" מתקיים כבר אחרי חזרת 14 הימים (באג שתוקן ב-08) |
 
 - `skill_level_changed{from, to}` (§2.1) נושא את **רמות 08** (`LevelId`); הכלכלה **לא מחשבת מצבים בעצמה** אלא מייבאת
-  `toEconomyState(level, { firstSeenAt, rung30Passed })` מ-`packages/shared/levels.ts` (08 §1.1א) וגוזרת ממנו את הטריגר
-  (`rungUp` / `skillMastered` / `skillRetained`). **אין שני סולמות בשום מסך** (C15).
+  `toEconomyState(level, ready, seen, maxPassedDays)` מ-`packages/shared/levels.ts` (08 §1.1א) וגוזרת ממנו את הטריגר
+  (`rungUp` / `skillMastered` / `skillRetained`). `skillRetained` מופעל על `review_rung_passed{rungDays ≥ 30}` (ב-`reviewMode:'item'`
+  08 פולט לכל כרטיס; 02 מצרף לפי `skillId`). `paysOncePerSkill` נבדק לפי `(childId, skillId, trigger)`, ול-`review_rung_passed`
+  לפי `(childId, skillId, rungDays)` — כל ערך `rungDays` משלם לכל היותר פעם אחת. **אין שני סולמות בשום מסך** (C15).
 - `skill_level_reverted` (08 §10.5.3, אחרי "זה לא היה {name}"): הרמה יורדת במודל של 08, **והכלכלה לא לוקחת דבר בחזרה** —
   לא מטבעות, לא יהלומים, לא תג, לא XP (C5, `badgeNeverDowngrades`). הטריגר נשאר "שולם" (`paysOncePerSkill`), ולכן עלייה
   חוזרת אחר כך לא משלמת פעם שנייה. נבדק ב-§14.1.
@@ -923,8 +929,8 @@ Arrival + התיבה על מדף האוצרות בשלב המחנה. לא מופ
 ### 10.1 נוסחה
 
 ```
-DayKey(ev)    = date(ev.ts + ev.tzOffsetMin − dayRolloverHour(04:00))   // §2.1; יום "כלכלי" מתחיל ב-04:00, לא בחצות
-week          = DayKeys Sunday → Saturday (בפועל: ראשון 04:00 → ראשון 04:00 הבא)
+DayKey(ev)    = calendarDate(ev.ts, family city tz)   // §2.1 / 00-C3: יום קלנדרי (חצות) בעיר המשפחה או בעיר הנסיעה; אין גבול "04:00"
+week          = Sunday 00:00 → Saturday 23:59 (family city tz)
 availableDays = 7 − |{Shabbat}| − |{yom tov in week}| − |{parent-declared rest days}|
 effTarget(c)  = (availableDays == 0 || c.paused || c.excludedFromGoal) ? 0 : min(target(c), ceil(availableDays × 0.6))
 adventureDay(c, d) = c completed ≥1 episode on day d   (K3: ≥1 lap episode; co-op episode counts for every participant)
@@ -937,10 +943,10 @@ met      = goal > 0 && progress ≥ goal
 - **יעדים:** K1 3, K2 3, K3 2. אם ההורה מוציא את K3 מהיעד, היעד שלו 0. **ילד מושהה** (`profile.paused`, 08 §10.5.8, 10 FAM-03)
   מקבל `effTarget = 0` בדיוק כמו ילד שהוצא מהיעד (F5 #3): הוא לא נספר ב-`goal`, ימי משחק שלו (אם ישנם) נספרים כבונוס, ואין
   לו תיבת יעד; חזרה מהשהיה באמצע שבוע → היעד שלו מצטרף מהשבוע הבא.
-- **גבול היום 04:00 (F9 GAP-44):** `DayKey` (§2.1) מתגלגל ב-**04:00** באזור הזמן של האירוע (`tzOffsetMin`), כך שמשחק ב-23:30 וב-00:30
-  הוא יום אחד לתקרות, לתשואה הפוחתת, להפתעה היומית ול-`adventureDay`. השבוע נגזר מ-`DayKey` (ראשון→שבת), כלומר מוצאי שבת
-  אחרי חצות עדיין שייך לשבוע שמסתיים. במקרה הביתי (המכשיר בעיר המשפחה) זה זהה ל-`DayKey` Asia/Jerusalem של 00-C11; בנסיעה
-  (01 DD-31) היום הוא יום המכשיר. המימוש היחיד: `packages/shared/dayKey.ts` (11), שגם 08 (תקרות) משתמש בו.
+- **גבול היום (00-C3 גרסה 3; F9 GAP-44 נדחה):** הגדרת יום **אחת** לכל האפליקציה: `DayKey` = יום קלנדרי בחצות **בעיר המשפחה**
+  (או בעיר הנסיעה כשהוגדרה, 01 DD-31), מחושב מ-`ts + tzOffsetMin` של האירוע (§2.1), מונוטוני לכל מכשיר. אותו `DayKey` משמש
+  לתקרות של 08, לתשואה הפוחתת, להפתעה היומית, ל-`adventureDay` ולכלל "≥2 ימים" של C11. אין גבול 04:00: נעילת השינה (01 §15.1)
+  הופכת את פער חצות ללא-רלוונטי לילדים. המימוש היחיד: `packages/shared/dayKey.ts` (11).
 - **המשמעות של `overshootAllowance = 1`:** אח שמשחק יום נוסף יכול "לפצות" על יום אחד של אח חולה, אבל לא יותר. כך
   היעד נשאר משפחתי, ואף ילד לא סוחב לבד.
 - **ימים שמשחקים בהם בשבת או בחג** (אם המשפחה ביטלה את הנעילה, B7) נספרים כבונוס להתקדמות, ולא נדרשים.
