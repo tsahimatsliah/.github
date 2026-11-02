@@ -49,7 +49,7 @@
  ┌──────────────────────────── Cloudflare (Workers Paid $5) ──────────────────────────────┐
  │ Worker olam-api (Hono)                                                                 │
  │   /v1/auth/* /v1/family/* /v1/devices/* /v1/pairings/* /v1/sync /v1/content/*          │
- │   /v1/ai/* /v1/tts/* /v1/photos/* /v1/reports/* /v1/admin/* /v1/coop/*                 │
+ │   /v1/ai/* /v1/tts/* /v1/photo-jobs/* /v1/voice-clips/* /v1/fs/* /v1/reports/* /v1/admin/* /v1/coop/* │
  │ D1 olam-db (Time Travel 30d) · R2 olam-content (packs, audio) · R2 olam-private        │
  │ (photos 30d, backups) · DO CoopRoom · Rate Limiting · Cron (02:10 nightly; every 15 min:  │
  │   alert queue, Friday report send_at check, batch polling, expiry nudges)                │
@@ -1102,9 +1102,17 @@ Data-binding property names are shared with the designer in `assets/rive/contrac
   | Network | timeout, 5xx, DNS | retry with exponential backoff (0.5 s → 30 s, jitter, cap 15 min for sync), queue. Every call: 10 s timeout + `AbortController`. The child never sees a network error (09 §9.4: silence); the parent area shows `ParentToast` |
   | Worker down (E-09) | 502/503/522/530 from Cloudflare, or `/v1/health` failing | same as Network; the app is local-first so play continues. Parent area tabs that are server-only show the last snapshot with "מעודכן לפני N דק׳". After 24 h without a successful sync `AL-11` is raised by the Worker when it is back (device `last_seen_at`) and locally as a parent-gate banner |
   | AI vendor down (E-09) | Anthropic 529 overloaded / 5xx / timeout 20 s | companion: scripted hint from the pack immediately (no spinner > 1 s), `ai_log.flagged='vendor_down'`; photo extract: job `queued` with retry at 1, 5, 15 min then `failed` + `AL-08b` text "ננסה שוב מאוחר יותר"; batch: next 15-min poll retries `batches.create` up to 3× per night, then the night is skipped and logged |
-  | $ cap hit (E-09) | 503 `cap_reached` | companion → scripted hints for the rest of the day (child unaware); parent area + email at 80 % and 100 % (`AL-11`); batch submit skipped until midnight Israel; `PATCH /admin/limits` raises the cap (owner) |
+  | $ cap hit (E-09) | 503 `cap_reached` (12 §1.9 `costGuard` state machine, §8.4) | **80–100 % of the daily cap:** new batch jobs are deferred to the next night, everything else runs, PA-HOME shows "AI: 80% מהתקציב היומי". **≥ 100 %:** companion (P3) → scripted hints for the rest of the day (child unaware); photo-to-game (P2) → "המשחק יוכן מחר בבוקר (06:00)" + "להכין עכשיו" (Face ID, `OVERRIDE_USD` $5, ≤ 3/month) and the job goes to the `deferred` queue; batch skipped until 00:00 Israel; one PA-INBOX notice, email after 3 consecutive days (`AL-11{variant:'ai_cap'}`). **Monthly ≥ 100 %:** batch off until the 1st, P2 only with override, P3 scripted. **Kill switch** `killSwitches.ai`: everything scripted/code-only, "לא זמין כרגע" for the parent. `PATCH /admin/limits` changes the caps within 12 §1.9's ranges (owner) |
 | Auth | 401 | refresh once, then re-pair prompt (parent only) |
-  | Integrity | hash mismatch, **R2 object missing (404) for a catalogued file** (E-10) | discard + refetch ×3 with backoff; a 404 marks the pack version `failed{reason:'asset_missing'}`, keeps the previous version active, and raises `ops/notify {kind:'asset_missing', packId, path}` so the agent republishes the pack. A **VO file missing at play time** (should be impossible after verification) plays the bundled generic line for that message key (`vo.generic.<intent>`) and shows the text; `app.error{kind:'vo_missing'}` |
+  | Integrity | hash mismatch, **R2 object missing (404) for a catalogued file** (E-10) | discard + refetch ×3 with backoff; a 404 marks the pack version `failed{reason:'asset_missing'}`, keeps the previous version active, and raises `ops/notify {kind:'asset_missing', packId, path}` so the agent republishes the pack. A **VO file missing at play time** (should be impossible after verification) plays the bundled generic line for that message key (`vo.generic.<intent>`) and shows the text; `app.error{kind:'vo_missing'}` plus the learn-class `asset.missing{assetId, kind:'vo'\|'image'\|'level_chunk'\|'rive'\|'glb'}` (01 DD-38) |
+
+- **`VoIntent` (closed enum, `packages/shared/vo.ts`; 12 V22 and the player agree on it):**
+  `'instruction' | 'replay' | 'praise' | 'retry' | 'hint' | 'worked_example' | 'reveal' | 'greeting' |
+  'transition' | 'goodnight' | 'safety' | 'calm' | 'coop' | 'english_enter' | 'english_exit' |
+  'name_call'`. Every `voice: true` message key declares its `intent`; the bundled core pack must
+  contain `vo.generic.<intent>` for every member × `{m, f, pl}` (content validator `V22`, build
+  fails otherwise); `name_call` falls back to the companion's two-note signature, never to a name
+  spoken by TTS. Adding a member is a `packages/shared` PR that also adds the three generic lines.
   | Local DB (E-02/E-03) | migration failure, `SQLITE_CORRUPT`, `quick_check` ≠ ok | §6.3 recovery ladder: retry → restore from server copy; the child sees the picker a few seconds later, never a stack trace |
   | Storage | `SQLITE_FULL`, disk < 200 MB | §4.7 storage-full rule |
   | Programming | bug | boundary + `app.error` event |
@@ -1289,24 +1297,51 @@ polyfill if that fails.
 - Device mode `shared-kids` shows the picker of **allowed children for this device** (H1).
 - Selecting a child opens a `play_session` event (`session.started`). All events carry `childId` and
   `sessionId`.
-- Per-child **resume state** (last zone, last hero position, pending chest) is a doc
-  `child_resume/<childId>`, saved on every background/switch **and every ≤ 20 s checkpoint during
-  play**. Each save also writes the previous good copy as `kind='child_resume_bak'` in the same
+- Per-child **resume state** (last zone, last hero position, pending chest, **`ftueCompletedAt`**) is a
+  doc `child_resume/<childId>`, saved on every background/switch **and every ≤ 20 s checkpoint during
+  play**. The FTUE overlay (SCR-02) runs only while `ftueCompletedAt` is `null`; it is set when the
+  first rescue lands (01 §14.2), so a second or restored device never replays the 60-s opening
+  (GAP-01; the doc syncs like any other). Each save also writes the previous good copy as `kind='child_resume_bak'` in the same
   transaction (14 PQ-P-11). Fallback order on resume: `child_resume` (zod-valid) → `child_resume_bak`
   → hub spawn with the episode's earned items intact (`app.resume_fallback` telemetry). A resume doc
   is never blank-reset.
 - **Switching** has three entry points:
   - Long-press (1.5 s) on the avatar badge → "החלפת שחקן" → back to the picker. This saves resume and
-    closes the session (`session.ended{reason:'switch'}`).
-  - Inactivity of 5 min also returns to the picker.
-  - An episode cap reached → the wind-down screen, then the picker.
+    closes the session (`session.ended{reason:'parent_exit'}` — 08 §1.10 maps the old `'switch'`
+    to `parent_exit`; the whole `SessionEndReason` enum is in §5.8).
+  - Inactivity of 5 min also returns to the picker (`reason:'inactivity'`; GAP-06). The idle gap is
+    **not charged to the cap**: caps count `focusedMs` (08 `Session.focusedMs`, from `focus.span`),
+    not wall time, so a child who walks away loses no minutes and the level resumes from the
+    ≤ 20 s checkpoint next time.
+  - An episode cap reached → the wind-down screen, then the picker (`reason:'daily_cap'`).
 - **Picture-PIN** (H3): optional per child (default on for K1). A 3-picture sequence from a 3×3 grid,
   stored as `scrypt(sequence, salt)` in the child doc. Verified locally; after 3 misses it says "אפשר
-  לבקש עזרה מאמא או אבא" (no lockout timer, no punishment).
-- **K3 lap mode:** launching K3 needs a parent-present confirmation: the parent gate or a parent
-  "hold for 2 s" button on a device paired to a guardian session. Episode cap 3–5 min (C3).
+  לבקש עזרה מאמא או אבא" and **the grid is hidden for 60 s** (no visible countdown, no sound; the
+  4th tap just re-shows the message), telemetry `picturepin.miss{childId}` (cls telemetry, feeds 10
+  M-14 "sibling access attempts"). **Reset:** the parent clears it in the child's settings
+  (`PUT /children/:id/picture-pin {clear:true}`) → at the child's next launch a one-time "בחרי/בחר 3
+  תמונות" step runs (GAP-07). No lockout beyond the 60 s, no punishment.
+- **K3 lap mode / launch policy (GAP-11b, 01 DD-18):** `child_settings.launchMode ∈ {'lap',
+  'coplayFirst', 'solo'}` (defaults by tier: K3 `lap`, K2 `coplayFirst`, K1 `solo`; parent-editable in
+  10 §6.13). `lap`: every launch needs a parent-present confirmation (the parent gate, or the parent's
+  "hold for 2 s" button on a device paired to a guardian session) and a lap segment with no parent
+  prompt answered within 60 s switches to the playroom (01 UC-07). `coplayFirst`: the first segment
+  of the day needs the parent's "אני כאן" hold, the rest is solo. `solo`: picker tap only. Episode
+  cap 3–5 min for K3 (C3).
 - **Caps** are per child per day, enforced on the device from local events plus a server-merged total
   (cross-device usage is merged at sync; offline overrun is tolerated and never punished).
+  - The cap and the "day" are **02 `DayKey`** (device local day, monotonic per device, §6.4; 00
+    OPD-26 names the cap values). `packages/shared/dayKey.ts` has one constant `DAY_START_HOUR`
+    (default 0); if 02/08 ever adopt a 04:00 boundary (15 GAP-44) it changes there only.
+  - **Device-local override (RBAC L, GAP-22):** a parent at the local gate without a guardian session
+    writes `device_settings.childOverrides[childId].{dailyCapMin, quietHours}` (field-level LWW,
+    this device only). Effective cap = `min(child_settings.dailyCapMin, override)`; effective quiet
+    hours = the union. The child's screen in 10 shows "הוגדר במכשיר {device}" next to such a value.
+  - **"+10 דקות" (01 DD-09, GAP-02):** `POST /children/:id/cap-bonus` (guardian, parent gate; or the
+    same action offline from the gate, queued in `outbox_request`) writes the admin event
+    `cap.bonus_granted{childId, minutes:10, guardianId}`; the server (and the local fold) reject a
+    second grant for the same `DayKey` (422 `bonus_used`); audit row; it extends minutes only — never
+    an episode, never a reward (02).
 
 ### 4.17 Motion input (G6)
 
@@ -1360,6 +1395,9 @@ parent area).
 | E-22 | Pack approved while the child is mid-episode | catalog pull after the episode only (`ContentPackLoader` holds downloads while `useSession().active`); the atomic switch happens at the picker | nothing mid-episode | approvals → "יורד למכשירים" | unit: loader paused during session |
 | E-23 | Guardian removed / role downgraded while signed in on a device | next API call → 403 `forbidden` → app clears the guardian session on that device (device token stays), parent area falls back to local mode L | — | "ההרשאה שונתה" | worker + client test |
 | E-24 | Shabbat window / quiet day starts mid-episode | `RestGate` lets the current episode finish (≤ 20 min); from the window start the engine runs `frozen` (no coins/counters, B7 `soft`) and celebrations drop to the `calm` register; in `full` mode the next episode is blocked by `rest.tsx`; a quiet day (B7a) applies T1 caps immediately | wind-down as usual; Shabbat scenery or rest screen | — | unit with fake clock around candle lighting, all three modes |
+| E-25 | Pack revoked (S0 content) while installed, even mid-episode | §4.4 #7: unselectable on the next catalog pull (≤ 5 min online), current item finishes, files deleted at the picker, map node gone | nothing (the next item is from another pack) | approvals tab: pack `revoked` + reason | worker test: catalog returns `revoked` → device projection has no selectable item within one sync |
+| E-26 | Family deletion in its 7-day grace (owner pressed DELETE /family) | §7.3: every device call answers 410 `family_deleting`; the app switches to **offline-only** (play continues locally, sync paused, parent gate banner "המשפחה נמחקת ב-{date}; ביטול באתר"); after the purge the next call is 401 → setup screen and local data is deleted on the parent's confirmation | plays as usual | banner + cancel link (web) | worker test with fake clock: 410 during grace, 401 after; client test: no push during grace |
+| E-27 | Pairing claimed on a device that already holds another family's data | §5.3 S3: the app compares the local `device_self.family_id` with the claim result; on mismatch it refuses to store the new token until the parent confirms "למחוק את הנתונים של {old family} במכשיר הזה" by typing the old family name; unsynced events of the old family are pushed first if the old token still works | setup screen only | confirmation dialog | client test: mismatch → no token written without confirm |
 
 ---
 
@@ -1375,7 +1413,11 @@ Family (tenant, exactly 1 in practice; schema supports N)
  ├─ Child (profile, no credentials)   grammatical_gender f|m|n(pending) · birthdate · grade · avatar
  ├─ Device                 type ipad|iphone|web · mode shared_kids|single_child|parent_only
  │    ├─ DeviceChild (allowed children per device)
- │    ├─ DeviceCommand (bedtime_lock|unlock|unpair|wipe|refresh|resync)  queued → acked
+ │    ├─ DeviceCommand (bedtime_lock|unlock|unpair|wipe|refresh_content|resync|child_remove)  queued → acked
+ │    │     resync = "push everything unpushed now, then pull from cursor 0 and rebuild projections"
+ │    │     child_remove{childId} = drop the child from this device's picker, delete its local projections
+ │    │       and resume docs (events stay until pushed; GAP-51), ack; sent on child soft-delete and on
+ │    │       removal from device_children
  │    └─ device token (hashed)  · install expiry (free signing) · last_seen · app/runtime version
  ├─ Pairing (one-time code/QR to attach a new Device; 10 min TTL)
  ├─ AuditLog (append-only admin actions)
@@ -1402,7 +1444,7 @@ Authorization for any API call follows these rules:
 
 | Provider | Phase | Flow | Notes |
 |---|---|---|---|
-| `bootstrap` | 1 (day 0) | the agent runs `pnpm ops bootstrap-owner --email <owner>` (wrangler D1 via CI) → prints a one-time **setup code** `XXXX-XXXX-XXXX` (**24 h TTL, single use**, scrypt-hashed in `bootstrap_codes`) → owner enters it in the app → owner guardian + family created | lets the family start before any email domain exists. **Revocation (00 E7 / F1 #27):** the code row is marked `used_at` on redeem; any unused code for that email is revoked the moment an `email_code` sign-in for the same email succeeds, and the nightly cron deletes expired rows. 5 redeem attempts per IP per hour (RL_AUTH); a wrong code answers 404 `code_invalid` without revealing whether the email exists |
+| `bootstrap` | 1 (day 0) | the agent runs `pnpm ops bootstrap-owner --email <owner>` (wrangler D1 via CI) → prints a one-time **setup code** `XXXX-XXXX-XXXX` (**24 h TTL, single use**, scrypt-hashed in `bootstrap_codes`) → owner enters it in the app → owner guardian + family created. **Co-admin without a sending domain (00 H2, GAP-36):** `pnpm ops bootstrap-guardian --role coadmin --email <email>` (same table, `role` column, `family_id` set) prints a code the co-admin enters in `(setup)/sign-in` → "יש לי קוד הקמה" → guardian created with that role, same session rules as S2 | lets the family start before any email domain exists. **Revocation (00 E7 / F1 #27):** the code row is marked `used_at` on redeem; any unused code for that email is revoked the moment an `email_code` sign-in for the same email succeeds, and the nightly cron deletes expired rows. 5 redeem attempts per IP per hour (RL_AUTH); a wrong code answers 404 `code_invalid` without revealing whether the email exists |
 | `email_code` | 1 (primary) | `POST /v1/auth/email/start {email}` → 6-digit code + web link by email (Resend) → `POST /v1/auth/email/verify {email, code}` → session | needs a verified sending domain (~$10/yr). 10-min TTL, 5 attempts per code, 5 starts/hour/email, 20/hour/IP. Always answers 202 (no account enumeration). Only emails of existing guardians/invites receive codes. |
 | `apple` | 2 (paid program) | native `expo-apple-authentication` → `identityToken` + raw nonce → `POST /v1/auth/apple {identityToken, nonce, fullName?}` → verify with `jose` (`createRemoteJWKSet('https://appleid.apple.com/auth/keys')`, `iss=https://appleid.apple.com`, `aud=<bundle id>` or the web Services ID, `nonce=sha256(raw)`) → link by `sub` | web uses Sign in with Apple JS + Services ID (paid). Linking an Apple id to an existing guardian requires being signed in (no auto-merge by email: private-relay addresses differ). |
 | `passkey` | later (web only) | WebAuthn on the dashboard origin | optional |
@@ -1466,6 +1508,14 @@ Guardian device (signed in)                 Worker/D1                      New d
  guardian screen live-updates (poll 2s) "המכשיר צורף ✓"                    stores token in Keychain,
                                                                             initial pull sync → picker
 ```
+**Device that already belongs to a family (E-27, GAP-57):** before storing the new token the app
+compares `device_self.family_id` with `familySnapshot.family.id`. Same family → the device is simply
+re-paired (old token revoked server-side). Different family → the claim is kept in memory only and
+the parent must type the old family's name to confirm the wipe; the app first tries to push the old
+family's unpushed events with the old token (best effort, ≤ 10 s), then deletes SQLite, packs and
+Keychain entries of the old family and stores the new token. Cancelling leaves the old family intact
+and the new pairing unclaimed (it expires after its 10 min).
+
 On shared kid devices no guardian session is stored by default. The parent area uses the PIN or Face
 ID gate locally. If a guardian wants admin actions from that device, they sign in there once
 ("התחברות הורה במכשיר זה"), and the refresh token is stored with `requireAuthentication: true`.
@@ -1502,8 +1552,13 @@ Guardian (web/app)            Worker                                    Target d
                                                                             every 60s while foreground)
                                        ◄─ POST /v1/devices/self/commands/:cid/ack {status:'applied'} ─┤
  UI shows "ננעל ✓ (לפני 2 דק׳)"
-unpair: server revokes device token immediately (401 on next call → device shows "המכשיר נותק מהמשפחה"
-        and returns to setup, keeping local data until wipe/reinstall).
+unpair: **push, then revoke** (GAP-57b): the server sets `devices.status='unpair_pending'`; the token stays
+        valid only for /sync push, /commands and /ack; on its next contact the device flushes every
+        unpushed event and dirty doc, acks `unpair`, then the token is revoked → the device shows
+        "המכשיר נותק מהמשפחה" and returns to setup, keeping local data until wipe/reinstall. If the
+        device does not come online within 7 days the token is revoked anyway (unsynced events lost;
+        the devices list shows "נותק; N אירועים לא סונכרנו" from the last known `seq` gap).
+        `{force:true}` (lost/stolen device, 10 FAM-04 "המכשיר אבד") revokes immediately and queues `wipe`.
 wipe:   command delivered on next contact (token stays valid only for /commands + /ack); device pushes
         any unsynced events first, then deletes SQLite + packs + Keychain, acks, then token revoked.
         If device never comes online: token already marked `wipe_pending` → revoked after 7 days.
@@ -1548,10 +1603,15 @@ The table lives in `packages/shared/rbac.ts` as data (`PERMS[role][perm]`), used
 | `single_child` | straight into that child's hub; switching hidden (gate) | gate | K1's own iPhone/iPad |
 | `parent_only` | parent dashboard; can launch a child in "parent-present" mode | always signed-in guardian | parents' iPhones |
 
-Bedtime is a **per-device schedule** (doc `device_settings/<deviceId>`: `bedtime {start:'19:30',
-end:'07:00', days}`). It's enforced locally and offline. In bedtime, the app shows a calm "לילה טוב"
-screen with no game access, and the parent gate unlocks it for 30 min. A remote `bedtime_lock` command
-applies the lock immediately until a given time.
+Bedtime has two layers (GAP-04): a **per-child bedtime** (`child_settings.bedtime {start, end, days}`;
+defaults per 10 §6.13 / 00 OPD-26: K3 19:30, K2 20:00, K1 20:30) and an optional **per-device
+schedule** (doc `device_settings/<deviceId>`: `bedtime {start:'19:30', end:'07:00', days}`). Both are
+enforced locally and offline; the **effective lock is the earliest** of the two. A new session for a
+child starts only if `bedtime − now ≥ plannedEpisodeMin + 2 min`; otherwise the picker shows the
+sleeping avatar and writes `launch.blocked{reason:'bedtime'}` (§5.8). In bedtime, the app shows a
+calm "לילה טוב" screen (SCR-20) with no game access, and the parent gate unlocks it for 30 min
+(device-wide; at the end of the window a 2-min warning, then the current beat lands and the picker
+returns). A remote `bedtime_lock` command applies the lock immediately until a given time.
 
 ### 5.6 Audit log
 
@@ -1594,8 +1654,15 @@ type EventEnvelope = {
   payload: unknown;      // validated by zod per type
 };
 ```
-- `local_only` events are emotional check-ins (C8) and raw per-tap telemetry. They **never leave the
-  device**: the sync pusher filters by class, and a test asserts it.
+- `local_only` events are emotional check-ins (`behavior.signal{kind:'emotion_checkin'}`, C8/C8a)
+  and raw per-tap telemetry. They **never leave the device**: the sync pusher filters by class, and a
+  test asserts it. Per 00 C8a the check-in **label is not persisted beyond the episode**: the event
+  row is deleted at `session.ended`; what survives is the 14-day aggregate counter table
+  `fs_local_counters` (07 §2.7; `{childId, dayKey, ruleId, count}`), which is **not an event table, is
+  excluded from the event log, from `/sync` push and from export**, and is read only by the on-device
+  `evaluateFlags` (08 §9.3). The only thing that may leave the device is the derived boolean inside
+  the encrypted `flags/<childId>` doc (§9.8) when consent `T4b` / `consent.checkinNudge` is on — 07's
+  `rf_raised{ruleId, week}` is a field of that encrypted doc, not a plain event.
 - The dashboard filters by child (primary) and device (secondary: usage minutes per device, last sync,
   install expiry, app version).
 
@@ -1603,26 +1670,42 @@ type EventEnvelope = {
 
 | Type | cls | Payload (abridged) |
 |---|---|---|
-| `session.started` / `session.ended` | learn | `{mode:'solo'\|'coop'\|'lap', reason?:'cap'\|'switch'\|'background'\|'inactivity'\|'parent'\|'done'}` |
+| `session.started` / `session.ended` | learn | started: `{mode: 08 Session.mode ('episode'\|'mini'\|'placement'\|'boss'\|'benchmark'\|'reentry'\|'playroom'\|'coop') \| 'safe_room', launchMode:'lap'\|'coplayFirst'\|'solo', coPlay:boolean, plannedMinutes}`; ended (`v:2`): `{reason: SessionEndReason, plannedMinutes, blocksCompleted, focusedMs}`. **`SessionEndReason` is 08 §1.10's enum, imported from `packages/shared/session.ts`:** `'completed' \| 'daily_cap' \| 'child_exit' \| 'parent_exit' \| 'frustration_break' \| 'disengaged' \| 'bedtime_lock' \| 'inactivity' \| 'app_killed'` (old wire values map: `switch`/`parent` → `parent_exit`, `cap` → `daily_cap`, `background` (E-16 > 10 min) → `app_killed`, `done` → `completed`; v1 rows are upcast by the reducer). `mode:'safe_room'` (SCR-16, GAP-19b) is wire-only: `toEngineEvent` drops it, it adds **0 minutes to any cap**, and 10 PA-LOG files it under "רוגע" |
 | `episode.completed` | learn | `{episodeId, coop:boolean, participants[], durationMs, celebrationMs}` (02 `episode_completed`; 09 UX-AC-08 budget uses `celebrationMs/durationMs`) |
-| `placement.step` | learn | `{probeId, skill, outcome, rtMs}` |
-| `item.presented` / `item.answered` | learn | `{packId, packVer, itemId, skill, template, answer, correct, firstTry, hintUsed, workedExample, isReview, stretch, embodied, rtMs, attempt}` (fields = 02 §2.1 `item_answered` + 08 §4 RT filters) |
+| `placement.step` / `placement.finished` | learn | `{probeId, skill, outcome, rtMs}` / `{subject, strand, theta, se, reason:'completed'\|'interrupted'\|'resumed_later'\|'lazy', quality}` (08 §3, §10.5.1; 10 W-ASM) |
+| `benchmark.result` | learn | `{window:'BOY'\|'MOY'\|'EOY', strand, theta, se, wordsCorrect45s?, wcpm?, errors?, pointed?}` (08 §8; 10 M-11) |
+| `item.presented` / `item.answered` (**v2**) | learn | v1 fields `{packId, packVer, itemId, skill, template, answer, correct, firstTry, hintUsed, workedExample, isReview, stretch, embodied, rtMs, attempt}` (02 §2.1 `item_answered` + 08 §4 RT filters) **plus v2** (08 §1.4 `Attempt`, imported from `packages/engine`): `outcome:'correct'\|'wrong'\|'too_tricky'\|'timeout'\|'abandoned'`, `chosenErrorTag?`, `touchesBeforeAnswer`, `idleMaxMs`, `appBackgrounded:boolean`, `context:{mode, role, assisted:'parent'\|'sibling'\|'none', wrapperTopic?}`, `steps?:{total, correct}` (O.STEP partial credit), `representation?:'concrete'\|'pictorial'\|'abstract'` (O.REP), `answerableAt`, `firstResponseAt`. The reducer reads v1 rows through 08's safe defaults (`outcome` from `correct`, `touchesBeforeAnswer=1`, `idleMaxMs=0`, `assisted:'none'`) so old logs replay unchanged |
 | `hint.shown` | learn | `{itemId, level, source:'scripted'\|'ai'}` |
-| `skill.level_changed` | learn | `{skill, from:LevelId, to:LevelId, evidence:{n, acc}}` (emitted by the engine reducer, deterministic; 08 §1.1 LevelId `new…master`; 02's `skill_state_changed` uses the `packages/shared/levels.ts` mapping) |
+| `behavior.signal` | learn (**`local_only` when `kind='emotion_checkin'`**) | payload = 08 §1.9 `BehaviorSignal` (`kind` ∈ `error, hint_request, hint_available_unused, challenge_choice, topic_choice, revisit, i_wonder, optional_extra, reaction, dwell_after_complete, early_quit, idle, rage_tap, rapid_guess_burst, break_request, calm_tool, recovery, novelty_offer, not_into_this, want_more, emotion_checkin, parent_correction` + `context`); replaces the earlier `checkin.mood`. The envelope `cls` is derived from `kind` by `makeEvent` (a test asserts `emotion_checkin` can never be `learn`) |
+| `skill.level_changed` / `skill.level_reverted` | learn | `{skill, from:LevelId, to:LevelId, reason:'evidence'\|'delayed_check'\|'parent'\|'rollover', evidence:{n, acc}}` / `{skill, from:LevelId, to:LevelId, cause:'session_reattribute'\|'reset_progress', sessionId?}` (emitted by the engine reducer, deterministic; 08 §1.1 LevelId `new…master`, §10.5.3; 02's `skill_state_changed` uses the `packages/shared/levels.ts` mapping and ignores `level_reverted` for the wallet — coins/gems/badges are never taken back, C5) |
 | `skill.delayed_check` | learn | `{skill, gapDays, passed}` (02 `delayed_check_passed`) |
+| `review.rung_passed` / `receipt.shown` / `episode.closed` / `season.tier_reached` / `brain_token.deposited` / `tool.state_changed` / `campfire.lantern_lit` | learn | 02 §2.1 economy inputs: `{skillId, rungDays:1\|3\|7\|14\|30\|60}` / `{episodeId}` / `{episodeId, reason:'abandoned'\|'profileSwitch'\|'cap'\|'parentStop', levelsCompleted}` / `{seasonId, tier}` / `{itemId}` / `{toolId, to:'seen'\|'tried'\|'used'\|'chosen'\|'transferred'}` / `{source:'circuit'\|'reading'}` (the lantern is light only, never logs/coins). `review.rung_passed` is emitted by the engine reducer on every rung pass |
+| `screen.enter` / `screen.exit` | learn | `{screenType, ms}` with `screenType` = the `focus.span` enum + `'picker'\|'results'\|'winddown'\|'rest'\|'safe_room'\|'parent'`; **one `exit` per visit** (ms = dwell), never per transition; 10 M-02 |
+| `app.background` / `app.foreground` | telemetry | `{route, sessionOpen:boolean}` / `{route, awayMs}` (10 M-02, E-16) |
+| `creation.saved` | learn | `{kind:'build'\|'drawing'\|'story', id}` (10 M-13; the creation itself is a doc/asset, the event is the fact) |
+| `launch.blocked` | learn (device-level, `childId` optional) | `{reason:'quiet_hours'\|'bedtime'\|'shabbat_full'\|'cap'\|'lap_needs_parent'}` (10 M-14, AL-06; written once per child per minute at most) |
+| `parent.tonight_done` | admin | `{cardId, childId}` ("עשינו ✔" on the evening card, 10 §4.1) |
+| `parent.input` | admin | payload = 08 §1.9א `ParentInput` union (`questionnaire`, `session_reattribute{sessionId, to}`, `reset_profile_model`, `reset_progress{subjects}`, `skill_action`, `flag_action`, `class_topic`, `grade_rollover`, `interest_override`, `disposition_correction`, `external_evidence`); written only by guardian-scoped routes (§7.3, §7.10a), audit-logged, synced to all devices and folded in canonical order; `session_reattribute` / `reset_progress` trigger the engine's checkpoint replay (08 §10.5.4). The §7.10a admin events `econ.refund`, `sticker.granted`, `mission.confirmed` stay separate types |
+| `cap.bonus_granted` | admin | `{childId, minutes:10, guardianId}` (§4.16; ≤ 1 per child per `DayKey`) |
+| `asset.missing` | learn | `{assetId, kind:'vo'\|'image'\|'level_chunk'\|'rive'\|'glb'}` (01 DD-38; the player kept going) |
+| `picturepin.miss` / `app.tz_mismatch` / `pack.revoked` | telemetry | `{childId}` / `{deviceTz, familyTz}` / `{packId, version}` (§4.16, §4.8, §4.4) |
+| `fact.reported` | admin | `{packId, factCardId, note}` (06 §12.6 errata; `POST /content/fact-report`) |
 | `world.trigger` / `world.rescue` / `world.collect` / `world.secret` / `world.boss` | learn | `{zoneId, levelId, triggerId, friendId?, pieceId?, secretId?, bossId?, first?}` (02 `friend_rescued`, `puzzle_piece_found`, `secret_level_cleared`, `boss_defeated`, `region_boss_defeated`) |
 | `focus.span` | learn | `{start, end, focusedSec, screenType:'episode'\|'world'\|'hub'\|'shop'\|'base'\|'collection'\|'coop'\|'move'}` — **computed on the device** by `src/services/telemetry/focus.ts` from the raw tap stream (which stays in memory and is never stored); one event per screen visit ≥ 10 s; 10 §4 M-01 reads it. Raw taps never leave the device (10 §18.2) |
 | `mission.confirmed` / `mentor.completed` / `holiday.completed` | learn | `{missionId, confirmedBy}` / `{mentorId, menteeId}` / `{eventId}` (02 §2.1) |
 | `econ.spend` / `chest.opened` / `inventory.equip` / `wishlist.set` / `econ.overdraft` | econ | `{itemId, price, currency}` / `{chestId}` / `{slot, itemId}` / `{itemId\|null}` / `{coins}` — **user actions and anomalies only**. Earnings, chest contents and grants are **not stored as events**: they are a deterministic fold of `learn` events by `packages/engine/economy` (02 §2.1), so two devices can never double-pay. Chest contents are fixed by `chestId = hash(sourceEventId)` (D2) |
 | `coop.joined` / `coop.contribution` | learn | `{roomId, role, contribution}` |
 | `motion.activity` | learn | `{activity, counts:{jumps:n}, seated:boolean}` (aggregates only) |
-| `app.error` / `app.perf` / `app.start` / `app.update` / `app.storage_full` / `app.resigned` | telemetry | `{route, message, stack≤4KB, kind?}` / `{fpsP95, jsMsP95, coldStartMs, memPeakMb, thermal:{nominal,fair,serious,critical}, scene}` / `{runtimeVersion, updateId, signedAt}` / `{fromUpdateId, toUpdateId, where:'cold'\|'picker'\|'parent'}` / `{freeMb}` / `{signedAt}` |
-| `checkin.mood` | local_only | `{mood}` (never synced; only the derived boolean `EMO_CHECKIN` flag may sync, and only with consent T4b, per 10 00-Δ3 / 08 §9.2) |
+| `app.error` / `app.perf` / `app.start` / `app.update` / `app.storage_full` / `app.resigned` | telemetry | `{route, message, stack≤4KB, kind?}` / `{fpsP95, jsMsP95, coldStartMs, memPeakMb, thermal:{nominal,fair,serious,critical}, scene}` / `{runtimeVersion, updateId, signedAt}` / `{fromUpdateId, toUpdateId, where:'cold'\|'picker'\|'boundary'\|'foreground'\|'parent'}` / `{freeMb}` / `{signedAt}` |
+| ~~`checkin.mood`~~ | — | **removed**: it is `behavior.signal{kind:'emotion_checkin'}` (`local_only`, 08 §1.9, 00 C8a); only the derived boolean inside the encrypted `flags/<childId>` doc may sync, and only with consent `T4b` (§5.7, §9.8) |
 
 **Naming contract:** wire `type` is dotted and lower-case; `packages/shared/events.ts` exports
 `toEngineEvent(envelope): EngineEvent` which maps to the snake_case `t` names 02 §2.1 and 08 use
-(`item.answered` ↔ `item_answered`, `world.rescue` ↔ `friend_rescued`, …). One mapping, one test that
-every 02 `LearnEvent.t` has exactly one wire type.
+(`item.answered` ↔ `item_answered`, `world.rescue` ↔ `friend_rescued`, `review.rung_passed` ↔
+`review_rung_passed`, `behavior.signal` ↔ `BehaviorSignal`, `parent.input` ↔ `ParentInput`, …). One
+mapping, one test that every 02 `LearnEvent.t`, every 08 `EngineEvent` kind and every event named in
+10 §4.1 has exactly one wire type with a zod schema (§16 #18). Every row above is `v:1` unless marked
+(`item.answered` v2, `session.ended` v2); reducers keep the upcasters.
 
 ### 5.9 Retention policy
 
@@ -1630,7 +1713,7 @@ every 02 `LearnEvent.t` has exactly one wire type.
 |---|---|---|---|
 | `learn`/`econ` events | D1 `events` | 24 months raw, then rolled into `child_skill_month` aggregates; raw archived to R2 `backups/events/<yyyy-mm>.ndjson.gz` (kept until family delete) | Cron monthly |
 | `telemetry` events | D1 `events` | 30 days | Cron nightly |
-| `local_only` | device only | until device wipe; capped at last 90 days locally | device purge job |
+| `local_only` | device only | **not persisted beyond the episode** (row deleted at `session.ended`, 00 C8a); only the 14-day aggregate counters in `fs_local_counters` survive, rows older than 14 days purged nightly on the device; raw tap telemetry stays in memory only | device purge job (part of `UpdateGate`/picker idle work) |
 | AI request/response log | D1 `ai_log` | 90 days (parent can pin) | Cron nightly |
 | Photos (raw) | R2 `olam-private/photos/` | deleted right after parent approval/rejection; **hard max 30 days** (R2 lifecycle rule) | worker + lifecycle |
 | Extracted item JSON (approved) | packs | until parent deletes pack | — |
@@ -1671,6 +1754,10 @@ every 02 `LearnEvent.t` has exactly one wire type.
   - יומן פעולות (audit)
   - נתונים (export/delete)
 - **Viewer role** sees only סקירה, with celebrations and no scores unless the owner enables them.
+- **One login, not two (00 H6, 10 SEC-09):** Cloudflare Access in front of `olam-parent` is an
+  **optional extra layer, not in the MVP plan**. If the owner ever turns it on, every guardian
+  (including viewers) must be allowlisted there as well; the mobile app is unaffected because it
+  calls the Worker directly, never through Pages.
 - **Deployed by** CI `parent-web.yml` with `wrangler pages deploy apps/parent-web/dist --project-name
   olam-parent`. Without a custom domain it's `https://olam-parent.pages.dev`; with one,
   `https://parent.<domain>`.
@@ -1698,7 +1785,10 @@ CREATE TABLE device_self (
   type TEXT NOT NULL CHECK (type IN ('ipad','ipad_mini','iphone','web')),
   mode TEXT NOT NULL CHECK (mode IN ('shared_kids','single_child','parent_only')),
   paired_at INTEGER NOT NULL, signed_at INTEGER,            -- build signing time (free-team expiry)
-  next_seq INTEGER NOT NULL DEFAULT 1
+  next_seq INTEGER NOT NULL DEFAULT 1,
+  last_day_key TEXT,                                        -- 02 §2.1: DayKey monotonic per device (§6.4)
+  clock_skew_ms INTEGER NOT NULL DEFAULT 0,                 -- device − server at the last sync (§6.4; 08 §10.5.5)
+  last_server_time INTEGER, last_server_time_local INTEGER  -- §4.8 lastServerTime for the engine/economy
 ) STRICT;
 
 CREATE TABLE family (
@@ -1720,12 +1810,15 @@ CREATE TABLE child (
   tier TEXT NOT NULL CHECK (tier IN ('K1','K2','K3')),      -- band T|G|S derived (A6)
   dominant_hand TEXT CHECK (dominant_hand IN ('left','right','unset')) DEFAULT 'unset',
   avatar_json TEXT NOT NULL DEFAULT '{}', picture_pin_hash TEXT, picture_pin_salt TEXT,
+  model_epoch INTEGER NOT NULL DEFAULT 0, subject_epoch_json TEXT NOT NULL DEFAULT '{}',  -- 08 §10.5.6: raised by parent.input{reset_progress}; events are never deleted
   allowed_on_device INTEGER NOT NULL DEFAULT 1, deleted INTEGER NOT NULL DEFAULT 0, hlc TEXT NOT NULL
 ) STRICT;
 
 -- generic LWW documents (settings, resume state, device settings…)
 CREATE TABLE doc (
-  kind TEXT NOT NULL,                 -- 'child_settings'|'child_resume'|'device_settings'|'family_prefs'|'reward'
+  kind TEXT NOT NULL,                 -- 'child_settings'|'child_resume'|'child_resume_bak'|'device_settings'|'family_prefs'|'reward'
+                                      -- |'skill_prefs'|'interests'|'class_topics'|'family_calendar'|'guardian_prefs'
+                                      -- |'neighborhood_layout' (02 §7.7, whole-doc LWW)|'flags' (ciphertext, §9.8)|'family_pubkey'
   id TEXT NOT NULL,                   -- e.g. childId / deviceId / rewardId
   body_json TEXT NOT NULL, hlc TEXT NOT NULL, deleted INTEGER NOT NULL DEFAULT 0,
   dirty INTEGER NOT NULL DEFAULT 0,   -- 1 = needs push
@@ -1784,6 +1877,33 @@ CREATE TABLE daily_usage (
 CREATE TABLE projection_checkpoint (
   child_id TEXT PRIMARY KEY, last_event_key TEXT NOT NULL, engine_version INTEGER NOT NULL
 ) STRICT;
+CREATE TABLE engine_checkpoint (          -- 08 §1.11: EngineState snapshots, 30 per child (≈ a month)
+  child_id TEXT NOT NULL, seq INTEGER NOT NULL,           -- seq = running number per child
+  last_event_key TEXT NOT NULL,                           -- "(ts, deviceId, eventId)" of the last folded event
+  engine_version INTEGER NOT NULL, model_epoch INTEGER NOT NULL,
+  state_blob BLOB NOT NULL,                               -- zod-validated EngineState JSON, gzip
+  created_at INTEGER NOT NULL, PRIMARY KEY (child_id, seq)
+) STRICT;
+-- written after every session end and every 200 events; the oldest beyond 30 is deleted in the same
+-- transaction. A late event (key < last_event_key), parent.input{session_reattribute|reset_progress}
+-- or an engine_version bump loads the newest checkpoint older than the affected key and re-folds
+-- (08 §10.5.4; S-4 ≤ 1 ms/event). Never a source of truth: `rebuildProjections` from events wins.
+
+-- 07 §2.7 / 00 C8a: 14-day aggregate counters for the on-device flag rules. NOT an event table:
+-- excluded from push, export and the event log; read only by evaluateFlags (08 §9.3)
+CREATE TABLE fs_local_counters (
+  child_id TEXT NOT NULL, day_key TEXT NOT NULL, rule_id TEXT NOT NULL, count INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (child_id, day_key, rule_id)
+) STRICT;   -- rows older than 14 days are purged nightly on the device
+
+-- 12 §3.16: offline capture queue (parent devices only; JPEG files encrypted with a SecureStore key)
+CREATE TABLE capture_queue (
+  client_job_id TEXT PRIMARY KEY,         -- ulid; idempotency key for POST /photo-jobs
+  child_ids_json TEXT NOT NULL, source_kind TEXT NOT NULL, mode TEXT NOT NULL,
+  pages_json TEXT NOT NULL,               -- [{localUri, bytes, sha256}] after the §9.4 privacy pass
+  created_at INTEGER NOT NULL, expires_at INTEGER NOT NULL,   -- created + 7 d
+  attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT
+) STRICT;   -- ≤ 20 pages / 60 MB in total; FIFO upload on connectivity; cleared on unpair/family delete
 
 -- content & assets
 CREATE TABLE content_pack (
@@ -1822,7 +1942,14 @@ go in `expo-secure-store`.
 CREATE TABLE families (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, tz TEXT NOT NULL DEFAULT 'Asia/Jerusalem',
   prefs_json TEXT NOT NULL DEFAULT '{}', prefs_hlc TEXT NOT NULL,
-  ai_daily_cap_cents INTEGER NOT NULL DEFAULT 100, created_at INTEGER NOT NULL, deleted_at INTEGER
+  -- prefs_json fields (field-level LWW doc `family_prefs`, §6.5): shabbatMode 'soft'|'full'|'off', city,
+  -- travelCity?, quietHours, calmMode:boolean (00 B8b, default false), consent:{checkinNudge:boolean (T4b,
+  -- default false), …}, hasChildUnder36m:boolean (00 C13; SERVER-DERIVED nightly + on every birthdate
+  -- edit, read-only for devices), smallPartsOverride:{until, by} (00 C13 audited override)
+  ai_daily_cap_cents INTEGER NOT NULL DEFAULT 300,      -- 12 §1.9 / 00 OPD-08: $3/day, parent range 100–1000
+  ai_monthly_cap_cents INTEGER NOT NULL DEFAULT 4000,   -- $40/month, parent range 1000–10000
+  ai_override_count_month INTEGER NOT NULL DEFAULT 0, ai_override_month TEXT,   -- OVERRIDE_USD $5, ≤ 3/month
+  created_at INTEGER NOT NULL, deleted_at INTEGER, purge_at INTEGER   -- purge_at = deleted_at + 7 d (grace)
 ) STRICT;
 
 CREATE TABLE guardians (
@@ -1878,6 +2005,7 @@ CREATE TABLE children (
   tier TEXT NOT NULL CHECK (tier IN ('K1','K2','K3')),   -- profile tier (A2); band T|G|S is DERIVED by packages/shared/bands.ts (A6), never stored
   dominant_hand TEXT CHECK (dominant_hand IN ('left','right','unset')) DEFAULT 'unset',  -- H2; joystick side default (09 §3.11)
   avatar_json TEXT NOT NULL DEFAULT '{}', picture_pin_hash TEXT, picture_pin_salt TEXT,
+  model_epoch INTEGER NOT NULL DEFAULT 0, subject_epoch_json TEXT NOT NULL DEFAULT '{}',   -- 08 §10.5.6 (server projection of parent.input{reset_progress})
   hlc TEXT NOT NULL, created_at INTEGER NOT NULL, deleted_at INTEGER
 ) STRICT;
 
@@ -1890,7 +2018,8 @@ CREATE TABLE devices (
   model TEXT, os_version TEXT, app_version TEXT, runtime_version TEXT, update_id TEXT,
   signed_at INTEGER, signing TEXT CHECK (signing IN ('free','paid','web')),
   last_seen_at INTEGER, last_sync_at INTEGER, pull_cursor INTEGER NOT NULL DEFAULT 0,
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','wipe_pending','unpaired')),
+  clock_skew_ms INTEGER NOT NULL DEFAULT 0, storage_free_mb INTEGER,   -- from the /sync device block (§6.4, §4.7)
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','unpair_pending','wipe_pending','unpaired')),
   unpaired_at INTEGER
 ) STRICT;
 
@@ -1910,7 +2039,7 @@ CREATE INDEX pairings_code ON pairings(code_hash) WHERE claimed_at IS NULL;
 
 CREATE TABLE device_commands (
   id TEXT PRIMARY KEY, device_id TEXT NOT NULL REFERENCES devices(id), family_id TEXT NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('bedtime_lock','unlock','unpair','wipe','refresh_content','resync')),
+  type TEXT NOT NULL CHECK (type IN ('bedtime_lock','unlock','unpair','wipe','refresh_content','resync','child_remove')),
   args_json TEXT NOT NULL DEFAULT '{}', created_by TEXT NOT NULL, created_at INTEGER NOT NULL,
   delivered_at INTEGER, acked_at INTEGER, ack_status TEXT, expires_at INTEGER
 ) STRICT;
@@ -1956,8 +2085,8 @@ CREATE TABLE idempotency (
 -- 0003_content_ai.sql ------------------------------------------------------
 CREATE TABLE packs (
   pack_id TEXT NOT NULL, version TEXT NOT NULL, family_id TEXT NOT NULL,
-  status TEXT NOT NULL CHECK (status IN ('draft','qa_failed','awaiting_approval','approved','rejected','retired')),
-  source TEXT NOT NULL CHECK (source IN ('curriculum','photo','parent_request','seasonal')),
+  status TEXT NOT NULL CHECK (status IN ('draft','qa_failed','awaiting_approval','approved','rejected','retired','revoked')),  -- revoked: 12 §2.7.1 S0, §4.4 #7
+  source TEXT NOT NULL CHECK (source IN ('curriculum','photo','parent_request','seasonal','family_voice')),   -- family_voice: §7.13
   manifest_key TEXT NOT NULL,                        -- R2 key in olam-content
   child_ids_json TEXT NOT NULL DEFAULT '[]', qa_report_json TEXT,
   created_at INTEGER NOT NULL, approved_by TEXT, approved_at INTEGER,
@@ -1967,10 +2096,19 @@ CREATE INDEX packs_family_status ON packs(family_id, status);
 
 CREATE TABLE ai_jobs (
   id TEXT PRIMARY KEY, family_id TEXT NOT NULL, kind TEXT NOT NULL
-    CHECK (kind IN ('generate_pack','photo_extract','parent_summary','qa_judge','nikud')),
-  status TEXT NOT NULL CHECK (status IN ('queued','submitted','running','succeeded','failed','cancelled')),
+    CHECK (kind IN ('generate_pack','photo_extract','photo_build','photo_rerender_variants','parent_summary','qa_judge','nikud','fs_t2','class_topics_map')),
+  status TEXT NOT NULL CHECK (status IN ('queued','deferred','submitted','running','succeeded','failed','cancelled')),
+  run_after INTEGER,                      -- deferred (12 §1.9 cost guard): next 06:00 Israel, FIFO by created_at
   batch_id TEXT, input_ref TEXT, output_ref TEXT, error TEXT,
   created_by TEXT, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+) STRICT;
+CREATE INDEX ai_jobs_deferred ON ai_jobs(run_after) WHERE status = 'deferred';
+
+CREATE TABLE ai_cost_ledger (             -- 12 §1.9: every cost-guard state transition (also an audit row)
+  id TEXT PRIMARY KEY, family_id TEXT NOT NULL, at INTEGER NOT NULL,
+  scope TEXT NOT NULL CHECK (scope IN ('daily','monthly','kill')),
+  from_state TEXT NOT NULL, to_state TEXT NOT NULL,   -- 'ok'|'p80'|'p100'|'override'|'off'
+  spent_cents INTEGER NOT NULL, cap_cents INTEGER NOT NULL, trigger_job_id TEXT
 ) STRICT;
 
 CREATE TABLE ai_log (
@@ -1994,11 +2132,24 @@ CREATE TABLE tts_cache (
   approved INTEGER NOT NULL DEFAULT 0, duration_ms INTEGER, created_at INTEGER NOT NULL
 ) STRICT;
 
-CREATE TABLE photos (
-  id TEXT PRIMARY KEY, family_id TEXT NOT NULL, child_id TEXT, uploaded_by TEXT NOT NULL,
-  r2_key TEXT NOT NULL, bytes INTEGER, status TEXT NOT NULL
-    CHECK (status IN ('pending_upload','uploaded','extracting','extracted','approved','rejected','deleted')),
-  job_id TEXT, created_at INTEGER NOT NULL, delete_after INTEGER NOT NULL, deleted_at INTEGER
+CREATE TABLE photo_jobs (                 -- 12 §3.4/§3.15/§3.16 (one job = ≤ 4 pages of one game)
+  id TEXT PRIMARY KEY, family_id TEXT NOT NULL, client_job_id TEXT NOT NULL,   -- ulid from the device; idempotency
+  uploaded_by TEXT NOT NULL, child_ids_json TEXT NOT NULL DEFAULT '[]',
+  source_kind TEXT NOT NULL, mode TEXT NOT NULL CHECK (mode IN ('study_list','homework_practice','exam_page','story','number_page')),
+  pages_json TEXT NOT NULL,               -- [{page, r2_key, bytes, phash}]
+  status TEXT NOT NULL CHECK (status IN ('uploaded','extracting','needs_confirm','building','ready','failed','deferred')),
+  extraction_ref TEXT, pack_ref TEXT, error TEXT,
+  created_at INTEGER NOT NULL, confirm_by INTEGER NOT NULL,   -- created + 24 h: no confirm → job + photos deleted (12 §3.15 #16)
+  delete_after INTEGER NOT NULL, deleted_at INTEGER           -- photos: right after confirm/reject, hard max 30 d
+) STRICT;
+CREATE UNIQUE INDEX photo_jobs_client ON photo_jobs(family_id, client_job_id);
+CREATE INDEX photo_jobs_phash ON photo_jobs(family_id, created_at);   -- pHash duplicate check over the last 30 d (12 §3.15 #9)
+
+CREATE TABLE voice_clips (                -- §7.13 parent voice clips (00 E9 parent script, 01 §14.1)
+  id TEXT PRIMARY KEY, family_id TEXT NOT NULL, guardian_id TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('child_name','praise','goodnight','holiday','custom')), child_id TEXT,
+  r2_key TEXT NOT NULL, duration_ms INTEGER NOT NULL, lufs REAL, approved INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL, replaced_by TEXT
 ) STRICT;
 
 -- 0004_reports.sql ---------------------------------------------------------
@@ -2135,6 +2286,20 @@ stored as doc `flags/<childId>` (never in the weekly payload).
 - **HLC** for docs: `"<physical ms 13 digits>:<counter 4 digits>:<deviceId>"`, compared
   lexicographically, implemented in `packages/shared/hlc.ts`. The server clamps the physical part to
   `serverNow + 5 min` to defeat a far-future device clock.
+- **`DayKey` (02 §2.1, F2 #20):** `packages/shared/dayKey.ts` exports `dayKeyOf(ts, tzOffsetMin)`
+  (`YYYY-MM-DD` of the device-local day) and `nextDayKey(ev, deviceSelf)` =
+  `max(dayKeyOf(ev), device_self.last_day_key)`, written into the event in the same transaction that
+  bumps `device_self.last_day_key`. A clock moved backwards therefore never opens a new day and never
+  re-pays a daily grant; the server stores the event's `dayKey` as sent (it is part of the payload for
+  every learn/econ event) and never recomputes it (08 §10.5.5). Property test: for any sequence of
+  `ts` the sequence of `dayKey` is non-decreasing per device.
+- **Clock skew (08 §10.5.5, 10 FAM-04 / AC-41, F5 #7):** each `/sync` response carries `serverTime`;
+  the device stores `clock_skew_ms = localNow − serverTime` on `device_self` and reports it in the
+  next request's `device` block, so `devices.clock_skew_ms` is visible in `GET /devices`
+  (`clockSkewMs`, `clockInaccurate: |skew| > 2 min`) and on the device card. When |skew| > 2 min the
+  engine facade passes `ctx.now = lastServerTime + (localNow − lastServerTimeLocal)` (08 §10.5.5 (ה))
+  so "today" decisions match the Worker's reports; event `ts` stays the raw device time (facts are
+  never rewritten) and E-19's server-side `daily_usage` recompute applies when |skew| > 2 h.
 
 ### 6.5 Sync protocol
 
@@ -2154,7 +2319,9 @@ Request:
     "commandAcks": [ { "id": "cmd_…", "status": "applied" } ]
   },
   "device": { "appVersion": "1.4.0", "runtimeVersion": "fp:7c1e…", "updateId": "…",
-              "signedAt": 1761900000000, "os": "iPadOS 27.0.1", "model": "iPad13,18" },
+              "signedAt": 1761900000000, "os": "iPadOS 27.0.1", "model": "iPad13,18",
+              "localNow": 1762106411000, "clockSkewMs": -1000, "storageFreeMb": 9120,
+              "pendingAppUpdatePacks": 0 },
   "limit": 500
 }
 ```
@@ -2190,7 +2357,10 @@ Response:
     When a pull delivers events whose `ts` is older than the projection checkpoint for that child,
     the device runs `rebuildProjections(childId)`.
   - **Docs:** last-writer-wins by HLC. Two granularities:
-    - **Whole-doc LWW** for `child_resume` (one writer: the device the child plays on).
+    - **Whole-doc LWW** for `child_resume` (one writer: the device the child plays on),
+      `neighborhood_layout/<childId>` (02 §7.7 / GAP-09: the losing layout's displaced items return
+      to the inventory with a mailbox note, computed by the economy fold, nothing is lost) and the
+      encrypted `flags/<childId>` (§9.8).
     - **Field-level LWW (E-11)** for `child_settings`, `family_prefs`, `device_settings`, `reward`,
       `class_topics`, `interests`: `body` is `{ [field]: { v, hlc } }`; the merge takes, per field,
       the entry with the higher HLC, so two parents changing different settings at the same time
@@ -2267,7 +2437,8 @@ app.use('*', requestId(), secureHeaders(), errorHandler(), rateLimit());   // RL
 app.route('/auth', auth); app.route('/family', family); app.route('/guardians', guardians);
 app.route('/invites', invites); app.route('/children', children); app.route('/devices', devices);
 app.route('/pairings', pairings); app.route('/sync', sync); app.route('/config', config);
-app.route('/content', content); app.route('/ai', ai); app.route('/tts', tts); app.route('/photos', photos);
+app.route('/content', content); app.route('/ai', ai); app.route('/tts', tts); app.route('/photo-jobs', photoJobs);
+app.route('/voice-clips', voiceClips); app.route('/fs', fs); app.route('/notifications', notifications);
 app.route('/reports', reports); app.route('/coop', coop); app.route('/audit', audit);
 app.route('/admin', admin); app.route('/ops', ops);
 export default {
@@ -2311,15 +2482,27 @@ Cron times are UTC (`src/cron/index.ts` dispatches on `ev.cron`):
      Shabbat/holiday window from `@hebcal/core` with the family city, Friday rule Q-3, caps CAP-1/2,
      expiry EXP-1 = 5 days → `status:'report'`). Phase 1 channels: `inbox` (always) and `email`
      (Resend); `push`/`telegram` are flag-gated for phase 2.
-  2. **Weekly report** (10 §11.1): for each family with `reports.sent_at IS NULL AND send_at ≤ now`
-     → render + send (idempotent by `reports.id = family:isoWeek`). `send_at` is computed when the
-     row is created at 09:00 Israel on the send day: `clamp(candleLighting − 3h, 12:00, 14:00)`
-     Israel time on **Friday**; if Friday (or Thursday evening) is a holiday, the first erev-chag of
-     that week; with Shabbat mode off, Friday 12:00. The payload contains **no `flags[]`** (§7.10).
+  2. **Weekly report** (10 §11.1, 12 §5.1): the row is created at 09:00 Israel on the send day with
+     `send_at = clamp(candleLighting − 3h, 12:00, 14:00)` Israel time on **Friday**; if Friday (or
+     Thursday evening) is a holiday, the first erev-chag of that week; with Shabbat mode off, Friday
+     12:00. Sub-steps on the send day (each idempotent, keyed by `reports.id = family:isoWeek`):
+     (a) **06:05** (first run after) — submit the monthly-strengths/weekly **Haiku Batch**
+     (`ai_jobs kind:'parent_summary'`, input = `StrengthsNarrativeInput` progress facts only, 10 §11.7;
+     never `flags`); (b) **11:00** — if the batch has not returned, one realtime Haiku call
+     (≈ $0.002); if that fails too, the template-only report; (c) at `send_at` — render + send when
+     `sent_at IS NULL`. The payload contains **no `flags[]`** (§7.10). GAP-23b: a missed window
+     (Worker down) sends at the next run the same day if ≥ 3 h before candle lighting, else Sunday
+     07:30 with "(באיחור)" in the subject.
   3. **Batch polling** (§8.1): `batches.retrieve` for `ai_jobs.status='submitted'`; collect when
-     ended (12 §5 also says every 15 min). Skipped when there are no submitted jobs.
-  4. **Expiry nudges**: once per day (first run after 06:00 Israel) for devices with
-     `signed_at + 6d < now` and `signing='free'` → `AL-11` inbox + email "צריך לחבר את האייפד למק".
+     ended (12 §5 also says every 15 min). Skipped when there are no submitted jobs. **Deferred jobs**
+     (12 §1.9): at the first run after **06:00 Israel**, `ai_jobs.status='deferred' AND run_after ≤ now`
+     are re-queued FIFO (before the nightly batch of P1 is planned at 02:10 the *following* night).
+  4. **Expiry and health nudges** (once per day, first run after 06:00 Israel): devices with
+     `signed_at + 6d < now` and `signing='free'` → `AL-11{variant:'resign_overdue'}` inbox + email
+     "צריך לחבר את האייפד למק"; devices with `pendingAppUpdatePacks > 0` → `AL-11{variant:
+     'app_update_needed'}` (≤ 1 per 7 days per device); devices reporting `storageFreeMb < 500` →
+     `AL-11{variant:'storage_low'}` (≤ 1 per 7 days); families with `hasChildUnder36m` to recompute
+     (also nightly) and `smallPartsOverride.until` passed → override cleared + audit.
 - This **replaces** the earlier `41 4 * * 0` (Sunday report) and `0 */6 * * *` triggers, per 10 §18.2.
   Workers allow up to 5 cron triggers per Worker (⟂VERIFY current limit); we use 2.
 - Every cron step is wrapped: a throw in one step is logged (`cron.error`, `ops/notify` after 3
@@ -2358,20 +2541,21 @@ The access JWT is signed with jose, HS256 using `SESSION_SIGNING_KEY`:
 | Method & path | Perm | Request → Response |
 |---|---|---|
 | GET `/family` | family.read | → `{family, guardians[], children[], devices[] (summary)}` |
-| PATCH `/family` | family.update | `{name?, tz?, prefs?{shabbatPause, holidays, quietHours}}` → `{family}` |
-| DELETE `/family` | family.delete (owner) | `{confirm:"<family name>"}` → 202, schedules full purge (7-day grace) |
+| PATCH `/family` | family.update | `{name?, tz?, prefs?{shabbatMode:'soft'\|'full'\|'off', city, travelCity?, holidays, quietHours, calmMode:boolean (00 B8b; parent gate + audit), consent:{checkinNudge:boolean (T4b, OPD-27)}, smallPartsOverride?:{on:true} (00 C13: step-up + audit; server sets `until` = next nightly recompute)}}` → `{family}`. `hasChildUnder36m` is **read-only** (server-derived nightly and on every child birthdate edit; 400 if sent). Field-level LWW doc `family_prefs` (§6.5) |
+| DELETE `/family` | family.delete (owner) | `{confirm:"<family name>"}` → 202, `families.deleted_at = now`, `purge_at = now + 7 d`. **During the grace (E-26, GAP-56):** every device/guardian call except `POST /family/undelete` answers **410 `family_deleting{purgeAt}`**; devices switch to offline-only with the parent-gate banner; the owner can cancel on the web dashboard (`POST /family/undelete`, audit). After `purge_at` the nightly cron deletes D1 rows, R2 prefixes (`photos/`, `voice/`, backups of this family), DO rooms; later calls → 401 → setup screen |
 | GET `/guardians/me` · PATCH `/guardians/me` | self | `{displayName?, gender?}` |
 | PUT `/guardians/me/pin` | self | `{pinHash, pinSalt}` (scrypt N=2^15,r=8,p=1 computed on client) → 204 |
 | PATCH `/guardians/:id` | guardian.changeRole | `{role}` → `{guardian}` |
-| DELETE `/guardians/:id` | guardian.remove | → 204 (revokes sessions) |
+| DELETE `/guardians/:id` | guardian.remove | → 204. Revokes that guardian's sessions and refresh tokens, deletes their PIN hash from the synced set and their `guardian_prefs` doc. **Devices belong to the family, not to the guardian** (UC-007): devices the removed co-admin paired stay paired and keep playing; only the signed-in guardian session on them is cleared (E-23) |
 | POST `/invites` | guardian.invite | `{role:'coadmin'\|'viewer', email?}` → 201 `{inviteId, code, link, qrPayload, expiresAt}` |
 | GET `/invites` · DELETE `/invites/:id` | guardian.invite | list / revoke |
 | POST `/invites/accept` | none (RL_AUTH) | `{code}` → 200 `{familyName, role, next:'email_verify'}` (the email step completes) |
 | GET `/children` | family.read | → `{children[]}` (device scope: allowed only) |
 | POST `/children` | child.create | `{name, nickname?, birthdate, grammaticalGender:'f'\|'m'\|'n', grade, dominantHand?:'left'\|'right', avatar}` → 201 `{child}` (server derives `tier` from birthdate+grade; `band` T/G/S is computed by `packages/shared/bands.ts` on read, A6) |
 | PATCH `/children/:id` | child.update | partial → `{child}` |
-| PUT `/children/:id/picture-pin` | child.settings | `{hash, salt}` or `{clear:true}` → 204 |
-| DELETE `/children/:id` | child.delete (owner) | → 202 (soft delete; events purge after 30 d) |
+| PUT `/children/:id/picture-pin` | child.settings | `{hash, salt}` or `{clear:true}` → 204 (`clear` triggers the one-time "בחרי 3 תמונות" step, §4.16) |
+| POST `/children/:id/cap-bonus` | child.settings (parent gate) | `{}` → 201 `{eventId}`; writes `cap.bonus_granted` (admin event); 422 `bonus_used` on a second grant for the same `DayKey`; audit (01 DD-09, §4.16) |
+| DELETE `/children/:id` | child.delete (owner) | → 202 (soft delete; events purge after 30 d; queues `child_remove{childId}` to every device that lists the child, §5.1) |
 
 ### 7.4 Devices and pairing
 
@@ -2382,9 +2566,9 @@ The access JWT is signed with jose, HS256 using `SESSION_SIGNING_KEY`:
 | GET `/pairings/:id` | device.pair | → `{status:'open'\|'claimed'\|'expired', deviceId?}` (poll 2 s) |
 | DELETE `/pairings/:id` | device.pair | cancel |
 | POST `/pairings/claim` | none (RL_PAIR, 5/10 min/IP) | `{pairingId?, nonce?, code?, info:{model, os, appVersion, runtimeVersion, signedAt, signing}}` → 201 `{deviceId, deviceToken, familySnapshot}`; 410 expired; 422 `too_many_attempts` |
-| GET `/devices` | family.read (guardian) | → `{devices:[{id,name,type,mode,children[],lastSeenAt,lastSyncAt,appVersion,runtimeVersion,installExpiresAt,status}]}` |
-| PATCH `/devices/:id` | device.update | `{name?, mode?, allowedChildIds?}` → `{device}` |
-| POST `/devices/:id/commands` | device.command.* | `{type:'bedtime_lock'\|'unlock'\|'unpair'\|'wipe'\|'refresh_content'\|'resync', args?}` → 201 `{commandId}` |
+| GET `/devices` | family.read (guardian) | → `{devices:[{id,name,type,mode,children[],lastSeenAt,lastSyncAt,appVersion,runtimeVersion,installExpiresAt,status,clockSkewMs,clockInaccurate,storageFreeMb,pendingAppUpdatePacks,unsyncedEstimate}]}` (`unsyncedEstimate` = last reported `next_seq − 1` minus the last accepted `seq`; feeds "סנכרון: N אירועים ממתינים", 10 FAM-04 / 01 DD-37) |
+| PATCH `/devices/:id` | device.update | `{name?, mode?, allowedChildIds?}` → `{device}` (removing a child queues `child_remove`) |
+| POST `/devices/:id/commands` | device.command.* | `{type:'bedtime_lock'\|'unlock'\|'unpair'\|'wipe'\|'refresh_content'\|'resync'\|'child_remove', args?:{until?, childId?, force?:boolean}}` → 201 `{commandId}`. `unpair` = push-then-revoke unless `force:true` (S5) |
 | GET `/devices/:id/commands` | guardian | history with ack status |
 | GET `/devices/self/commands` | device | → `{commands[]}` (pending) |
 | POST `/devices/self/commands/:cid/ack` | device | `{status:'applied'\|'failed', detail?}` → 204 |
@@ -2403,7 +2587,8 @@ The access JWT is signed with jose, HS256 using `SESSION_SIGNING_KEY`:
 
 | Method & path | Auth | Request → Response |
 |---|---|---|
-| GET `/content/catalog` | device | `?since=<etag>` → `{packs:[{packId, version, manifestUrl, childIds, required:boolean}]}`; only `approved` packs for the device's allowed children |
+| GET `/content/catalog` | device | `?since=<etag>` → `{packs:[{packId, version, manifestUrl, childIds, required:boolean, status:'approved'\|'revoked'}]}`; only `approved` packs for the device's allowed children, **plus every version marked `revoked` in the last 30 days** so a device that already holds it hides it (§4.4 #7) |
+| POST `/content/fact-report` | content.approve (or the parent gate from a fact card, 06 §12.6) | `{packId, factCardId, note?}` → 201; writes the admin event `fact.reported`, opens an `approvals` row of kind `pack` with `reasons_json:['fact_report']`, and the nightly batch regenerates the card from the corrected brief (12 errata pipeline, ≤ 7 days to `version+1`) |
 | GET `/content/packs/:packId/:version/manifest` | device | → manifest JSON (signed) |
 | GET `/content/files?pack=&ver=&paths=` | device | → `{urls:{path: presignedUrl (15 min)}}` |
 | GET `/content/review` | content.approve | packs `awaiting_approval` with QA report + preview items |
@@ -2428,8 +2613,10 @@ Every AI route runs these steps:
 1. `killSwitches.ai` check
 2. RBAC
 3. RL_AI
-4. **cost pre-check**: if `ai_spend_daily.cost` plus the estimate is over `families.ai_daily_cap_cents`,
-   return 503 `cap_reached`
+4. **cost pre-check** (`costGuard.assertAllowed`, 12 §1.9): the route's **upper-bound estimate** from
+   the `ROUTES` table (e.g. `photo.extract` $0.08/page, `companion.turn` $0.003) is added to
+   `ai_spend_daily` / the month's total; the state machine in §8.4 decides (run / defer / scripted /
+   503 `cap_reached{scope:'daily'|'monthly'|'kill'}`)
 5. child-safety system prompt + structured output
 6. post-validation in code
 7. `ai_log` row
@@ -2439,10 +2626,11 @@ Every AI route runs these steps:
 |---|---|---|---|
 | POST `/ai/packs/generate` | content.approve (or Cron) | Opus 5.5 **Batch** + Sonnet 5.5 judge (batch) | `{childId, skills[], template?, count, interestTags?, source}` → 202 `{jobId}`; the job ends as a pack in `awaiting_approval` |
 | GET `/ai/jobs/:id` | guardian | — | `{status, progress?, packRef?, error?}` |
-| POST `/ai/photo/extract` | photo.capture | Sonnet 5.5 (vision, realtime, `fallbacks:"default"`) | `{photoId, childId, hint?:'math'\|'spelling'\|…}` → 202 `{jobId}`. The result is `{extraction (schema §8.3), proposedPack}` awaiting parent confirm |
-| POST `/ai/photo/:jobId/confirm` | photo.capture | — (templates in code) + Opus 5.5 realtime for distractors/hints only if needed | `{items (edited), childIds}` → 201 `{packId, version}` (approved by this action); photo deleted |
+| *(internal step of `POST /photo-jobs`, §7.9)* photo extract | job runner | Sonnet 5.5 (vision, realtime, `fallbacks:"default"`; Opus 5.5 in parallel only behind `photo.dualRoute`, 12 §3.5.1) | per page: `{extraction (schema §8.3), proposedPack}` → `photo_jobs.status = 'needs_confirm'` |
+| *(internal step of `POST /photo-jobs/:id/confirm`)* photo build | job runner | templates in code; Haiku 5.5 for per-child variants/hints (12 §3.1 #10) | `{items (edited), childIds}` → pack `ready` (approved by the confirm); pages deleted |
 | POST `/ai/companion/turn` | device | Haiku 5.5 realtime | `{childId, sessionId, itemId, context:{template, skill, attemptHistory[≤5], childAnswer?}, turnIndex}` → 200 `{hint:{textKey?, text, nikudText, level:1..3}, revealsAnswer:false, safety:{ok:true}}` |
-| POST `/ai/reports/summary` | Cron / guardian | Haiku 5.5 (batch nightly) | `{familyId, week}` → `{reportId}` |
+| POST `/ai/reports/summary` | Cron / guardian | Haiku 5.5 (Friday batch 06:05 → realtime fallback 11:00, §7.1) | `{familyId, week}` → `{reportId}` |
+| POST `/fs/t2/request` | device (K1 only, 07 §7.3) | Haiku 5.5 **batch** (nightly) + Sonnet 5.5 judge | `{childId, activityId, chips: string[]}` — **chips only** (00 C7a): every chip must belong to the closed `chipSets[activityId]` list in `packages/content/fs/chipSets.json`; any other string → 400 `chip_invalid` + audit (07 AC-32). → 202 `{jobId}` (`ai_jobs kind:'fs_t2'`); the answer lands in the parent approval queue, never live |
 | GET `/ai/log` | ai.log.read | — | `?childId&from&to&cursor` → `{entries[]}` |
 | POST `/ai/log/:id/pin` · POST `/ai/log/:id/flag` | ai.log.read | — | retention pin / flag for review |
 
@@ -2471,16 +2659,25 @@ Every AI route runs these steps:
 
 There is **no live TTS for children** (E9). The device only ever downloads approved, cached files.
 
-### 7.9 Photos (signed upload)
+### 7.9 Photo jobs (12 §3 is the owner of the pipeline; this is the wire contract)
 
 | Method & path | Auth | Request → Response |
 |---|---|---|
-| POST `/photos` | photo.capture | `{childId?, bytes, contentType:'image/jpeg'}` → 201 `{photoId, uploadUrl (PUT, 10 min, presigned, Content-Type and Content-Length bound), deleteAfter}` |
-| POST `/photos/:id/uploaded` | photo.capture | → 200; verifies the object exists and size ≤ 5 MB |
-| DELETE `/photos/:id` | photo.capture | immediate delete (R2 + row) |
+| POST `/photo-jobs` | photo.capture | multipart: `meta` JSON `{clientJobId (ulid), childIds[], sourceKind, mode, handwritten?, pages:[{sha256, bytes}]}` + ≤ 4 JPEG parts (≤ 3 MB each, long edge 2,576 px, q0.88, already face/name-blurred and EXIF-stripped on device, §9.4) → 201 `{jobId, status:'uploaded', confirmBy}`; **idempotent by `(familyId, clientJobId)`** (a retry after a crash returns the same job). 409 `duplicate_page{jobId, date}` when a page's pHash is within distance ≤ 6 of a job from the last 30 days (12 §3.15 #9; the client offers "open the existing game"). 413 over 4 pages (the client splits, 12 §3.15 #8) |
+| GET `/photo-jobs/:id` | guardian | → `{status:'uploaded'\|'extracting'\|'needs_confirm'\|'building'\|'ready'\|'failed'\|'deferred', extraction?, proposedPack?, error?, confirmBy, costEstimateCents}` (poll 2 s while `extracting`/`building`; the parent also gets AL-08 when `needs_confirm`) |
+| POST `/photo-jobs/:id/confirm` | photo.capture | `{items (edited), childIds, mode, notationUpdate?:{mulSign, divSign, carryRow, borrowMark} (03 §1.5, only on ✓)}` → 202 → `building` → `ready` `{packId, version}` (approved by this action; photos deleted now). Downgrading `exam_page` to another mode needs a fresh Face ID (`X-Olam-StepUp` token, 12 §3.10) |
+| DELETE `/photo-jobs/:id` | photo.capture | immediate delete (R2 pages + row) |
+| *(job runner)* `photo.rerender_variants` | Cron / on `PATCH /children/:id {grammaticalGender}` | renders the missing `m/f/pl` TTS lines of every photo pack of that child and bumps the pack version; devices download silently (10 AC-25 scope; GAP-52) |
 
-The client must strip EXIF and downscale before upload (§9.4). The server re-checks by parsing the
-JPEG and rejecting any APP1/EXIF segment.
+Rules (12 §3.15/§3.16): a job with no confirm within **24 h** is deleted with its pages (one
+PA-INBOX reminder after 2 h); `deferred` is set by the cost guard (§8.4) and re-queued at 06:00;
+vendor errors keep the job `uploaded` and retry every 5 min for 1 h in the background, then
+`failed{reason:'vendor'}` + "לא הצלחנו לקרוא את הדף הזה"; a refusal is never retried. The device
+side keeps an offline **capture queue** (`capture_queue`, §6.1: ≤ 20 pages / 60 MB, 7-day expiry,
+FIFO upload when online or at app open; cleared on unpair/family delete). The server re-checks every
+page by parsing the JPEG and rejecting any `APP1`/`APP13` segment (double EXIF strip). The earlier
+`/photos` presigned-PUT routes and `/ai/photo/*` are **removed**; `/ai/photo/extract` is now the
+internal step the job runner performs.
 
 ### 7.10 Reports
 
@@ -2497,7 +2694,8 @@ JPEG and rejecting any APP1/EXIF segment.
 
 | 10 id | Method & path | Perm | Storage |
 |---|---|---|---|
-| API-12 | POST `/children/:id/skills/:skillId/actions` `{action:'classTaught'\|'prefer'\|'lock'\|'unlock'\|'skipChallenge'\|'notRelevant'\|'interfaceIssue', reason?}` | child.settings | doc `skill_prefs/<childId>` (field-level LWW) |
+| API-12 | POST `/children/:id/skills/:skillId/actions` `{action:'classTaught'\|'prefer'\|'lock'\|'unlock'\|'skipChallenge'\|'notRelevant'\|'interfaceIssue', reason?}` | child.settings | admin event `parent.input{kind:'skill_action'}` (08 §1.9א) + doc `skill_prefs/<childId>` (field-level LWW) for the UI |
+| API-13 | POST `/children/:id/sessions/:sid/reattribute` `{to: childId \| 'unknown' \| 'revert'}` (10 W-LOG-05 "לא {name} שיחק/ה"; AL-15 ✓/✗ card) | child.settings | admin event `parent.input{kind:'session_reattribute', sessionId, to}` (`'revert'` = 08's `to:'confirmed_self'`), synced to every device, audit-logged; each device re-folds from the checkpoint before the session (08 §10.5.3/§10.5.4) and may emit `skill.level_reverted`; wallet/collection untouched (C5) |
 | API-14 | GET/PATCH `/children/:id/interests[/:topicId]`, POST `…/interests/seeds` | child.settings | doc `interests/<childId>` |
 | API-15 | GET `/children/:id/observations`, POST `/observations/:id/feedback` | child.reports.read | nightly projection + `observation_feedback` |
 | API-16 | GET `/children/:id/assessments`, POST `/children/:id/evidence` | child.reports.read / child.settings | projection + `external_evidence` |
@@ -2526,11 +2724,25 @@ JPEG and rejecting any APP1/EXIF segment.
 |---|---|---|
 | GET `/audit?from&to&action&actor&cursor` | O/C | audit log page |
 | GET `/admin/costs?month=` | admin.ops | AI spend by route/model/day, plus D1/R2 usage snapshot |
-| PATCH `/admin/limits` | admin.ops | `{aiDailyCapCents}` (max 1000 without a second confirm) |
-| POST `/admin/export` | data.export | → 202; builds a ZIP (NDJSON per table + photos none + audio list) in R2 and emails a 24 h link |
+| PATCH `/admin/limits` | admin.ops | `{aiDailyCapCents?: 100–1000, aiMonthlyCapCents?: 1000–10000}` (12 §1.9 ranges; 10 PA-SET); a monthly cap above the console limit the parent recorded in setup (`families.prefs.consoleCapCents`, OPD-08) is refused with 422 `above_console_cap` |
+| POST `/admin/export` | data.export | `{includeFlags?: boolean}` → 202; builds a ZIP in R2: NDJSON per table (events, docs, audit, approvals…), **`engine-state.v1/<childId>.json`** per child (08 §10.5.10: `EngineState.children[childId]` without `ItemCalibration`, plus the `levels.ts` mapping), `FlagState` only when `includeFlags` is ticked (decrypted client-side first — the server holds ciphertext, so the web dashboard uploads the plaintext part into the ZIP via `POST /admin/export/:id/flags`), **never `emotion_checkin`** or `fs_local_counters` (device-only), no photos, an audio file list; the 24 h link is emailed **and shown in-app/web** (10 GAP-49: no domain in phase 1) |
 | POST `/admin/backup/run` | admin.ops | run the backup now |
 | POST `/ops/notify` | `OPS_TOKEN` (Mac resign script, CI) | `{kind:'resign_overdue'\|'ci_failed'\|…, deviceId?, text}` → emails O/C, rate-limited 1/kind/12 h |
-| POST `/ops/bootstrap` | `OPS_TOKEN` (CI only) | `{email}` → `{setupCode}` (used by `tools/ops/bootstrap-owner`) |
+| POST `/ops/bootstrap` | `OPS_TOKEN` (CI only) | `{email, role:'owner'\|'coadmin', familyId?}` → `{setupCode}` (used by `tools/ops/bootstrap-owner` and `bootstrap-guardian --role coadmin`, §5.2; 00 H2) |
+
+### 7.13 Parent voice clips (00 E9 parent script; 01 §14.1, §19; 09 §6.6; GAP-67)
+
+| Method & path | Auth | Request → Response |
+|---|---|---|
+| POST `/voice-clips` | guardian (self) | multipart `m4a` (AAC-LC mono, **≤ 10 s, ≤ 200 KB**) + `{kind:'child_name'\|'praise'\|'goodnight'\|'holiday'\|'custom', childId?, scriptLineId}` → 201 `{clipId}`; stored at R2 `olam-private/voice/<familyId>/<guardianId>/<clipId>.m4a`; the runner normalises to −18 LUFS (E9) and writes `lufs`; **re-recording the same `scriptLineId` replaces** (new row, old row `replaced_by`, old object deleted) |
+| GET `/voice-clips` · DELETE `/voice-clips/:id` | guardian | list own / delete own (owner: all) |
+
+Distribution: approved clips are assembled into the family pack **`family.voice`** (`packs.source =
+'family_voice'`, one pack per family, version bumped on every change), signed and served through the
+normal catalog (§4.4), so devices cache it under `documentDirectory/packs/` like any pack and the
+player resolves `vo(key)` to a guardian clip first (child's name, "כל הכבוד", goodnight, holiday
+greetings — placed only in the wind-down and special events, 09 §6.6). Clips never go to any AI
+vendor; they are included in the export ZIP as files and deleted with the family.
 | GET `/health` | none (RL_API) | `{ok, version, d1:'ok'\|'error', r2:'ok'\|'error', cron:{lastNightly, last15m}}`; used by CI smoke and the 6-hourly uptime check (§13); returns 503 when D1 is unreachable so the client treats it as "Worker down" (E-09) |
 
 ---
@@ -2584,41 +2796,75 @@ JPEG and rejecting any APP1/EXIF segment.
   - CER > 8% → re-roll up to 2 takes.
   - Still failing → `needs_listen`.
 - The parent's listening queue is in the dashboard.
-- Loudness is normalized to −16 LUFS (ffmpeg loudnorm) and encoded as AAC 64 kbps mono m4a.
+- Loudness is normalized to **−18 LUFS integrated ±1, true peak ≤ −1 dBTP** (ffmpeg `loudnorm`; short
+  clips < 3 s get the per-voice calibrated gain instead, 12 §6.9 — 00 E9 / 09 §6.7 own the number)
+  and encoded as AAC-LC 64–96 kbps mono m4a (14 PQ-R-36); `content:validate` fails any clip outside
+  ±1 LU.
 - Stored content-addressed in R2.
 
 ### 8.3 Photo-to-game (E8, parent confirm mandatory)
 
 ```
 Parent device (gate)                         Worker                              Anthropic
-capture (expo-camera / image-picker) → crop to exercise area (user) → expo-image-manipulator:
-  resize long edge 1600px, JPEG q0.8 (re-encode drops EXIF/GPS) → on-device face check (later)
-POST /photos → PUT uploadUrl → POST /photos/:id/uploaded
-POST /ai/photo/extract ─────────────────────► fetch R2 object → base64 image block
+capture (expo-camera, or the document-scanner plugin when adopted) ≤ 4 pages → crop to the exercise
+  (CMP-44; "exclude" rectangles) → ON-DEVICE PRIVACY PASS (12 §3.3, mandatory, also offline):
+  1 modules/vision-privacy: face rects (+20 %) → Skia blur σ=25 + pixelate; non-family names
+    (OPD-35 list) via VNRecognizeTextRequest when Hebrew is supported
+  2 bake EXIF orientation into pixels, THEN re-encode with expo-image-manipulator (drops EXIF/GPS)
+  3 resize long edge 2,576 px, JPEG q0.88, never grayscale (Claude's high-res tier)
+  4 blur/brightness check (Laplacian < 60 or mean < 40 → "לצלם שוב?", non-blocking)
+→ capture_queue row (clientJobId) → POST /photo-jobs (multipart) when online
+                                              server: MIME check, APP1/APP13 segment rejection (double
+                                              EXIF strip), pHash vs 30 d, R2 photos/<familyId>/<jobId>/<page>.jpg
+                                              (private, lifecycle 30 d) → status extracting
                                               messages.create({model:'claude-sonnet-5-5',
                                                 output_config:{format:{type:'json_schema', schema: ExtractionSchema}},
-                                                betas/fallbacks:'default', system: extraction+safety}) ─► 
-                                              ◄─ extraction (items, pii_detected[], confidence)
-                                              code: recompute math, drop low-confidence, replace
-                                              detected names with placeholders, choose templates
-◄── poll GET /ai/jobs/:id → review screen: photo ⟷ items side by side; edit; choose child(ren)
-POST /ai/photo/:jobId/confirm ───────────────► build pack (templates in code), optional
-                                              distractors/hints call, TTS from cache or bake queue,
-                                              delete photo now. Playable at once with on-screen text
-                                              + bundled generic VO; item VO swaps in when baked.
+                                                fallbacks:'default', system: extraction+safety}) ─► 
+                                              ◄─ extraction (items, pii_spans[], confidence, looks_like_exam)
+                                              code: recompute math, drop low-confidence, V17/V18/V02,
+                                              names → [NAME], notation detection → confirm line, templates
+                                              → status needs_confirm (+ AL-08 to the parent)
+◄── poll GET /photo-jobs/:id → review screen (SCR-14): photo ⟷ items; edit; mode; choose child(ren)
+POST /photo-jobs/:id/confirm ────────────────► status building: pack (templates in code), Haiku
+                                              variants/hints, validators, TTS from cache or bake queue,
+                                              delete pages now → ready → catalog. Playable at once with
+                                              on-screen text + bundled generic VO; item VO swaps in when baked.
 ```
 Latency target: shutter → review screen ≤ 15 s p50. ExtractionSchema follows the
 `photo_to_game_pipeline.md` schema, within Claude's structured-output limits (no numeric bounds, so
-counts are enforced in code).
+counts are enforced in code). Everything the parent sees in the review screen (`exam_page` rules,
+"[שם הוסר]" chips, "לא הצלחנו לשכפל פריט N", cost estimate for > 4 pages, queue status, 24 h
+auto-delete notice) is specified in 12 §3.5.6/§3.15 and 10 SCR-14.
 
 ### 8.4 Cost controls
 
-1. **Worker hard cap:** default $1.00 per family-day (`ai_daily_cap_cents`), plus per-route quotas
-   (companion 20/child/day, photo 10/day).
-2. **Anthropic workspace** "olam-family" with a monthly spend limit of $30, set by the parent.
-3. A kill switch in config.
-4. An alert email when 80% of the daily cap is reached.
-5. A Batch-first policy for anything not interactive.
+The **values** are 12 §1.9's (00 OPD-08, J1); this section only wires them.
+
+1. **Worker soft caps:** `families.ai_daily_cap_cents = 300` ($3.00 per family-day, resets 00:00
+   Asia/Jerusalem; parent range $1–$10 in 10 PA-SET) and `ai_monthly_cap_cents = 4000` ($40, range
+   $10–$100), plus per-route quotas (companion 20/child/day, photo 10/day).
+2. **`costGuard` state machine** (per family, evaluated at every AI call with the route's
+   upper-bound estimate, §7.7 step 4; every transition → `ai_cost_ledger` + audit):
+
+   | State (`spent_today / daily cap`) | P1 batch | P2 photo-to-game | P3 companion | P4 summaries | Parent sees |
+   |---|---|---|---|---|---|
+   | `ok` < 80 % | runs | runs | runs | runs | — |
+   | `p80` 80–100 % | **new jobs → `deferred`** (submitted ones continue) | runs | runs | runs | PA-HOME line "AI: 80% מהתקציב היומי" |
+   | `p100` ≥ 100 % | deferred | review screen works; "צור משחק" → "המשחק יוכן מחר בבוקר (06:00)" + **"להכין עכשיו"** (Face ID step-up, `OVERRIDE_USD` $5, ≤ 3 per month, counter on `families`) | **scripted lines only** (child sees no change) | runs (negligible, not counted) | one PA-INBOX notice; email if 3 consecutive days (`AL-11{variant:'ai_cap'}`) |
+   | monthly ≥ 100 % | off until the 1st | only with override | scripted | runs | notice + "להעלות תקרה?" |
+   | `killSwitches.ai` | off | "לא זמין כרגע" | scripted | code-only | the owner switched it (S0 or suspected leak) |
+
+   Deferred jobs run at the first 15-min tick after **06:00 Israel**, FIFO (§7.1 step 3).
+3. **Anthropic workspace** "olam-family" with a console hard spend limit **≥ the monthly soft cap —
+   default $50/month** (OPD-08: the safety net sits *above* the soft cap, never below it). The parent
+   records the chosen limit at setup (`families.prefs.consoleCapCents`); `PATCH /admin/limits` refuses
+   a monthly soft cap above it.
+4. A kill switch in config (`killSwitches.ai`, §4.12) the owner can flip from the dashboard.
+5. Alerts at 80 % (quiet PA-HOME line) and 100 % (PA-INBOX; email after 3 consecutive days).
+6. A Batch-first policy for anything not interactive.
+7. Integration test (12 §10): a simulated day with 40 photos crosses 80 %/100 % at exactly the
+   expected item, the override is counted, the reset happens at midnight, the kill switch stops
+   every route with 503.
 
 **Cost estimate:** `(input_tokens × in_price + output × out_price) × (batch ? 0.5 : 1)`, with cache
 reads at the model's cache price. It's computed from `usage` on each response and stored in
@@ -2648,7 +2894,8 @@ reads at the model's cache price. It's computed from `usage` on each response an
 
 - TLS only. HSTS is set via `secureHeaders`.
 - CORS: none on the API (the dashboard is same-origin through Pages), except `localhost` in dev.
-- Body limit 1 MB (sync), 64 KB (other routes). Photos go directly to R2 via presigned PUT.
+- Body limit 1 MB (sync), 64 KB (other JSON routes), **12 MB multipart for `POST /photo-jobs`** (≤ 4 ×
+  3 MB, §7.9) and 250 KB for `POST /voice-clips` (§7.13); the Worker streams multipart parts to R2.
 - Rate limits (Workers Rate Limiting binding, keyed by `ip` for unauthenticated routes and by
   `deviceId`/`guardianId` otherwise): auth 10/min, pairing claim 5/min, general 120/min, AI 20/min.
   D1-backed counters handle per-code attempts: pairing 5, email code 5.
@@ -2678,14 +2925,20 @@ dashboard).
 
 ### 9.4 Photos
 
-- **On device:**
-  - The user crops to the exercise.
-  - `expo-image-manipulator` re-encodes to JPEG with a 1600 px long edge. The re-encode writes no
-    EXIF; the server verifies this.
-  - Later: on-device face detection blurs faces before upload.
-  - Kids can never start a photo flow; it's parent-gated.
-- **Storage:** private bucket `olam-private`, key `photos/<familyId>/<photoId>.jpg`, no public access.
-  Access is only via 10-min presigned URLs to guardians.
+- **On device (12 §3.3 is the owner; mandatory before any upload, also offline):**
+  - The user crops to the exercise and may mark 1–3 "exclude" rectangles.
+  - `modules/vision-privacy` (§2.3) blurs faces (`VNDetectFaceRectanglesRequest`, rects +20 %, Skia
+    blur σ=25 + pixelate) and, where Hebrew OCR is supported, the "non-family names" list (OPD-35);
+    otherwise names are handled server-side (12 V18). A page with > 25 % blurred area prompts a
+    retake.
+  - EXIF orientation is baked into the pixels **first**, then `expo-image-manipulator` re-encodes to
+    JPEG, long edge **2,576 px, quality 0.88**, never grayscale; the re-encode writes no EXIF/GPS and
+    the server rejects any `APP1`/`APP13` segment (double strip).
+  - Queued pages (`capture_queue`) are stored encrypted with a SecureStore key.
+  - Kids can never start a photo flow; it's parent-gated. A test uploads a fixture page with a
+    synthetic face and asserts the stored object has the blurred region and no EXIF (§16 #19).
+- **Storage:** private bucket `olam-private`, key `photos/<familyId>/<jobId>/<page>.jpg`, no public
+  access. Access is only via 10-min presigned URLs to guardians (review screen).
 - **Retention:** deleted right after confirm or reject. An R2 **lifecycle rule** deletes the
   `photos/` prefix at 30 days as a backstop, and the nightly Cron also purges `photos.delete_after`.
 - **AI:** images go to Anthropic only via the API (no training on API data per Anthropic commercial
@@ -2754,6 +3007,25 @@ stored on the server **only as ciphertext**:
   such keys. Lost key (both guardian devices wiped): the flags are recomputed from the kids' devices'
   local 14-day counters after a new keypair is generated; older history is gone by design.
 - ⟂VERIFY `@noble/ciphers` XChaCha20-Poly1305 performance on Hermes (≤ 5 ms per 4 KB doc) at C3.
+
+### 9.9 Data at rest on a lost or stolen device (GAP-41, UC-083)
+
+What is on disk, in which protection class, and what an attacker with the unlocked-once device gets:
+
+| Data | Where | Protection | Note |
+|---|---|---|---|
+| `olam.db` (+`-wal`/`-shm`): children's names, nicknames, birthdates, avatars, grade; the learning event log; projections; settings docs | `documentDirectory` | iOS default class **`NSFileProtectionCompleteUntilFirstUserAuthentication`** (encrypted at rest with the device passcode; readable after the first unlock since boot) ⟂VERIFY by reading `FileManager.attributesOfItem(...)[.protectionKey]` in `/(parent)/debug` on day 1 of the first native build; raising the class to `Complete` would break background sync and is not planned | the device passcode is the control (parent checklist: a passcode on every family device); no flags or check-in labels are here (C8a) |
+| Packs, audio cache, `family.voice` clips | `documentDirectory/packs`, `audio-cache` | same | content, not personal data (voice clips are the exception: deleted on `wipe`) |
+| Capture-queue JPEGs | `documentDirectory/capture` | same **plus** AES-GCM with a key in `expo-secure-store` (12 §3.16) | pages can hold other children's names before the server pass |
+| Device token, guardian refresh token, `deviceId`/`familyId` copy, capture key, family private key | Keychain (`expo-secure-store`) | `WHEN_UNLOCKED_THIS_DEVICE_ONLY`; guardian refresh + family private key with `requireAuthentication: true` (Face ID/passcode per read) | no admin power without Face ID; the device token only reaches this family's sync/content/companion routes |
+| Parent PIN hashes (synced so the gate works offline) | `olam.db` | as the DB | scrypt N=2^15; a brute-forced PIN opens only the local parent gate (§9.7), never the guardian session |
+| `kv-store` conveniences, `boot_marker` | `Library` | same as the DB | nothing personal |
+| Nothing from `flags/*` in plaintext, no emotional labels, no raw taps | — | — | by design (§9.8, C8a) |
+
+On loss: the parent runs **unpair `{force:true}` + wipe** from any other device or the web (S5);
+the token is dead immediately, the wipe executes on the next contact and local data is deleted,
+and until then the data stays behind the passcode. The parent checklist (13 §3.3) says: passcode on
+every device, no shared "1234", and "המכשיר אבד" is the first button on the device card.
 
 ---
 
@@ -2827,10 +3099,23 @@ type S2C =
  | { t: 'end'; reason: 'all_left'|'idle'|'cap'; summary: CoopSummary };
 ```
 - **Idempotency:** `action.id` is uuidv7, and the DO keeps the last 500 ids.
-- **Reconnect:** `hello{lastTick}` gets a full `welcome` back.
+- **Reconnect / rejoin (01 DD-34, 00 E5):** `hello{lastTick}` gets a full `welcome` back. A device
+  that rejoins **within the 15-min idle window** resumes its child's role and position (the DO keeps
+  `members[]` with `left_at`); meanwhile the scripted friend plays the role (≤ 1 s swap). After the
+  window the room has closed and the device gets `end`.
+- **Single-sourced outcomes:** `boss_defeated{participants[], eventId}` (and `friend_rescued`,
+  `campfire_level`) are emitted **once by the DO**, with one uuidv7 `eventId`, to every member and
+  to late rejoiners in `welcome`; each device writes the learn event with that same id, so the
+  economy fold pays each child exactly once from one event (02 UC-17). When the room ends the DO
+  writes `coop_rooms.summary_json` and the Worker emits a server-authored event
+  `coop.room_ended{roomId, summary}` (`deviceId:'server'`, cls `learn`) that every family device
+  pulls. **Campfire level-ups come only from that summary** (GAP-21): the fold applies level changes
+  from `coop.room_ended`/DO events, never from client-side `coop.contribution` alone.
 - **Rate limit:** ≤ 20 msgs/s per socket.
 - **Offline fallback:** if the socket drops for more than 10 s, the client continues in local
-  "solo co-op" mode and merges contributions as events afterwards. There is no loss.
+  "solo co-op" mode; its `coop.contribution` events are merged afterwards as **light/logs toward the
+  next meter**, not as a level-up (GAP-21). There is no loss for the child (their own receipt pays
+  as usual, 02).
 
 ---
 
@@ -2859,7 +3144,7 @@ export default (): ExpoConfig => ({
       NSMotionUsageDescription: 'חיישני התנועה משמשים למשחקי הטיה ותנועה.',
       NSMicrophoneUsageDescription: 'המיקרופון משמש לתרגול קריאה בקול (רק כשהורה מפעיל).',
       CADisableMinimumFrameDurationOnPhone: true, ITSAppUsesNonExemptEncryption: false,
-      UIRequiresFullScreen: false,
+      UIRequiresFullScreen: true,   // 00 A3, §0: no Split View / Slide Over / resizable Stage Manager on iPad
     },
     usesAppleSignIn: SIGNING === 'paid',
   },
@@ -3107,7 +3392,7 @@ Also:
 | Worker/API | — | vitest-pool-workers 0.23.0 (Miniflare D1/R2/DO) + Hono `testClient` | CI | every route: auth, RBAC matrix (generated cases), tenancy isolation, idempotency, pairing brute-force limits, sync conflicts, cap enforcement, DO protocol |
 | Migrations | — | fixture DBs (local v-1..v-3; D1 `applyD1Migrations`) | CI on migration PRs | upgrade + rebuild projections equals golden |
 | Visual/RTL/gender | ~10% | Playwright 1.64.1 in a **pinned Docker image** on the web export | CI (PR subset) + nightly (full) | §12.2 |
-| E2E golden paths | <5% | **Maestro** YAML on the **Mac iOS Simulator** via Remote Control | before each native build and before promote | onboarding (bootstrap) → add child → pair (simulated code) → picker → episode → chest → parent gate → settings → sync |
+| E2E golden paths | <5% | **Maestro** YAML (`apps/mobile/e2e-maestro/*.yaml`, the 10 flows of 14 PQ-T-06) on the **Mac iOS Simulator** via Remote Control, against the `development` variant; weekly also on one real iPad (manual trigger; real-device Maestro is unofficial) | before each native build and before promote; weekly | onboarding (bootstrap) → add child → pair (simulated code) → picker → episode → chest → parent gate → settings → sync. Depends on: `testID` on every interactive element (09 §7 common props, §12 #17; lint `olam/require-testid` on `packages/ui` exports), the dev-only deep links `olam://dev/fixture?id=FX-..` (loads a fixture family and resets the DB) and `olam://dev/setNow?ts=` (injected clock) from §4.1, and `EXPO_PUBLIC_TEST=1` audio/Rive stubs. 11 §12.4 rows 1, 10, 12 and 13 map to flows `03`, `08`, `09`, `10` (GAP-48) |
 | Real device | — | checklist §12.4 + device perf protocol §12.5 | each native build; monthly | haptics, audio latency, Rive, nikud, Face ID, camera QR, 3D fps, thermal |
 | Render-perf regression | — | **Reassure 1.6.1** (`reassure --baseline` on main, compare on PR) | every UI PR | gate: no added render per interaction, ≤ +10 % duration (14 PQ-T-05) |
 | Mutation | — | Stryker 10.1.1 vitest-runner, incremental on PR, full `--force` nightly | PR + nightly | **blocking:** mutation score ≥ 80 % on `packages/engine` (economy, projections, migrations) |
@@ -3312,7 +3597,7 @@ This follows `performance_reliability_playbook.md` §11E:
 | Domain (for email codes + dashboard URL) | ~$0.85 | ~$0.85 | ~$10/yr at Cloudflare Registrar; optional if bootstrap-only |
 | Resend (email codes + weekly report) | $0 | $0 | free tier 3k/mo, 100/day |
 | Claude: content gen (Opus 5.5 Batch $2/$10) + judge (Sonnet 5.5 Batch $1/$5) | $3–12 | $3–12 | ~400 items/mo |
-| Claude: companion (Haiku 5.5) + summaries + photo extraction (Sonnet 5.5) | $1–4 | $1–4 | capped $1/day hard |
+| Claude: companion (Haiku 5.5) + summaries + photo extraction (Sonnet 5.5) | $1–4 | $1–4 | soft caps $3/day, $40/month (12 §1.9, §8.4); console limit $50 |
 | TTS (bake-off winner; pre-rendered, cached forever) | $0–16 | $0–16 | falls to ~$0–3 at steady state |
 | Images/3D/audio assets (production months only) | $0–40 | $0–40 | E10 pipeline; steady state ~$0–5 |
 | **Total steady state** | **~$10–25** | **~$18–33** | production months +$20–50 |
@@ -3344,7 +3629,9 @@ This follows `performance_reliability_playbook.md` §11E:
    - Tell the agent your Expo username. The agent runs `eas init`, which creates the project and its
      `EAS_PROJECT_ID`.
 4. **Anthropic:**
-   - console.anthropic.com → Workspaces → create "olam-family" → Limits → monthly spend limit $30.
+   - console.anthropic.com → Workspaces → create "olam-family" → Limits → monthly spend limit
+     **$50** (OPD-08: must be ≥ the $40 soft monthly cap of 12 §1.9; tell the agent the value you
+     set — it is stored as `consoleCapCents` and bounds `PATCH /admin/limits`).
    - Create an API key in that workspace.
    - Paste it **directly** into Cloudflare → olam-api → Settings → Variables → Secret
      `ANTHROPIC_API_KEY`. Never paste it into chat.
@@ -3419,7 +3706,8 @@ approval gates (E10, content approval, voice); naming the kids; approving `famil
      email code all work end-to-end on device and web dashboard.
    - The RBAC matrix tests are generated for every route × role (100% route coverage).
    - Cross-family access tests fail closed.
-   - Bedtime lock reaches a foreground device in ≤ 60 s. Unpair revokes on next request. Wipe deletes
+   - Bedtime lock reaches a foreground device in ≤ 60 s. Unpair flushes unsynced events on the
+     device's next contact, then revokes (≤ 7 days, or immediately with `force:true`). Wipe deletes
      local data and acks.
 6. **Audit and retention:** every admin mutation produces an audit row. Cron purges per §5.9, verified
    by a time-travel test (Miniflare fake time).
@@ -3428,8 +3716,9 @@ approval gates (E10, content approval, voice); naming the kids; approving `famil
    - A tampered file is rejected and the previous version stays active.
    - Unapproved packs are never served to devices (test).
 8. **AI:**
-   - Every AI route enforces the daily $ cap (503 at cap), logs to `ai_log` with cost, and uses
-     structured outputs.
+   - Every AI route enforces the §8.4 cost-guard state machine ($3/day, $40/month; 503 `cap_reached`
+     at the cap; deferred/scripted/override behaviour per pipeline; the 12 §10 40-photo simulation
+     passes), logs to `ai_log` with cost, and uses structured outputs.
    - Companion replies that leak the answer are blocked by code (unit tests with adversarial
      fixtures).
    - Photos are deleted after confirm and never older than 30 days (lifecycle + cron test).
@@ -3465,7 +3754,22 @@ approval gates (E10, content approval, voice); naming the kids; approving `famil
 16. **Routes and owners:** `routes-and-owners.mjs` green — every 09 SCR has a route, every CMP an
     owner package.
 17. **Sensitive data:** no `flags`/dispositions/check-in keys in any AI request body (worker test);
-    `flags/*` docs on the server are ciphertext (test reads D1 directly).
+    `flags/*` docs on the server are ciphertext (test reads D1 directly); `fs_local_counters` and
+    `behavior.signal{emotion_checkin}` rows never appear in a push payload or an export (test).
+18. **Event registry completeness:** a `packages/shared` test asserts that every `LearnEvent.t` of 02
+    §2.1, every engine event kind of 08 §1.4/§1.9/§1.9א and every event named in 10 §4.1 has exactly
+    one wire type with a zod schema, that `toEngineEvent` round-trips `item.answered` v1 and v2, and
+    that `session.ended.reason` only accepts 08's `SessionEndReason`.
+19. **Photo privacy:** uploading a fixture page with a synthetic face and an EXIF/GPS header yields
+    an R2 object with the region blurred and no `APP1`/`APP13` segment; the capture queue survives a
+    kill mid-upload without creating a second job (`clientJobId`).
+20. **Revocation and updates:** a pack marked `revoked` is unselectable on a connected device within
+    5 min; an update ready during an episode is applied only at the next boundary/picker/foreground
+    moment of §3.3 (unit test on `UpdateGate` with every moment).
+21. **Clock and travel:** with the device clock 3 h off, `GET /devices` shows `clockInaccurate`,
+    the engine's `ctx.now` is the corrected time and `DayKey` stays monotonic; with
+    `deviceTz = America/New_York` the Shabbat window follows the family city until `travelCity` is
+    set (fake clock + `@hebcal/core`).
 
 ---
 
@@ -3518,7 +3822,10 @@ approval gates (E10, content approval, voice); naming the kids; approving `famil
    "Playwright baselines generated only in the pinned Playwright Docker image".
 
 **Status after 00 revision 2 (Fable review):** items 1–7 were accepted into 00 (E1, E7/H2/H6, E3,
-E1b, H6, E11, E4). Remaining proposals from this review:
+E1b, H6, E11, E4). **Status after 00 revision 3 (round 2):** items 8–11 below were also accepted
+(E5 now says "two Cron triggers: nightly + one 15-min job with four ordered steps" and "CoopRoom
+15 min idle / 30 min hard cap"; A3 says `UIRequiresFullScreen: true`; E6a references the §9.8 X25519
+mechanism). They stay here as the record only.
 
 8. **E5 crons:** 00 lists `*/15 6-12 * * *` for the weekly-report scheduler and "every 15 min" for the
    alert queue. This spec implements both inside **one** `*/15 * * * *` trigger (window filter in
@@ -3617,3 +3924,63 @@ research log.
 - Cross-file issues for 13 (script path, channel name, tunnel line, Playwright viewports), 02/08 (event
   name mapping), 10 (PIN lockout numbers already aligned; `reports` table shape), 12 (nightly time) are
   in `docs/review/fable-issues-F6.md`.
+
+### Round 2 changelog
+
+Reviewer R6, 2026-11-02. Inputs: 00 revision 3 (A3, B8b, C8a, C13, E5, E9, H2, OPD-08, OPD-26),
+`fable-issues-F2/F4/F5/F7/F8/F9.md` and 15 §3 GAPs addressed to 11, `round2-R1.md` §2, current 08
+§1.4/§1.9–1.11/§10.5, 12 §1.9/§3.3/§3.15/§3.16/§6.9, 10 §4.1/§15.2, 02 §2.1/§6.3, 01 §12/DD-09/DD-31/
+DD-34/DD-37/DD-38, 07 §2.7/§7.3, 06 §12.6. Disposition table: `docs/review/round2-R6.md`.
+
+- **Events (§5.8, F5 #1–#4/#6, F2 #19/#24, F9 GAP-02/24, 02 §2.1):** `session.started/ended` v2 with
+  08's `SessionEndReason` enum (old values mapped), `plannedMinutes/blocksCompleted/focusedMs`,
+  wire-only `mode:'safe_room'` (0 cap minutes); `item.answered` v2 = 08 `Attempt` fields with v1
+  upcast; new `behavior.signal` (replaces `checkin.mood`), `skill.level_reverted`, `benchmark.result`,
+  `placement.finished`, `screen.enter/exit`, `app.background/foreground`, `creation.saved`,
+  `launch.blocked`, `parent.tonight_done`, `parent.input` (08 `ParentInput` union), `cap.bonus_granted`,
+  `asset.missing`, the seven 02 economy inputs (`review.rung_passed`…`campfire.lantern_lit`),
+  `fact.reported`, `picturepin.miss`, `app.tz_mismatch`, `pack.revoked`; registry completeness test
+  (§16 #18).
+- **C8a (F5 #4, F4 #29):** `local_only` = not persisted beyond the episode; `fs_local_counters` table
+  (device-only, excluded from log/sync/export); `rf_raised` lives inside the encrypted `flags` doc
+  (§5.7, §5.9, §6.1, §16 #17).
+- **Engine integration (F5 #7/#8, F2 #20/#21):** `engine_checkpoint` table (30/child, every 200
+  events + session end), `model_epoch/subject_epoch` on child rows, `packages/shared/dayKey.ts` with
+  the per-device monotonic `last_day_key`, `clock_skew_ms` on `device_self`/`devices` + `clockInaccurate`
+  in `GET /devices`, corrected `ctx.now`, `lastServerTime` for 02 UC-15/01 UC-15, push-only flush on
+  app background (§4.8, §6.1, §6.4, §6.5, §7.4).
+- **AI caps and cost guard (F7 #5, F9 GAP-14e, OPD-08, R1-5):** $3/day (`ai_daily_cap_cents=300`),
+  $40/month, console ≥ soft cap default $50 stored as `consoleCapCents`; the 12 §1.9 state machine
+  per pipeline (`p80`/`p100`/monthly/kill), `deferred` jobs at 06:00, `OVERRIDE_USD` counter,
+  `ai_cost_ledger`, upper-bound pre-check (§4.11, §6.2, §7.1, §7.7, §8.4, §14, §15.1, §16 #8).
+- **Photo pipeline (F7 #6/#7, F9 GAP-15/15b/52, R1):** on-device privacy pass with
+  `modules/vision-privacy`, orientation bake → EXIF strip → 2,576 px q0.88, double strip server-side;
+  `POST /photo-jobs` multipart with `clientJobId` idempotency, states `uploaded → extracting →
+  needs_confirm → building → ready | failed | deferred`, pHash 30-day duplicate check, 24 h
+  auto-delete, `photo.rerender_variants` job, `capture_queue` (20 pages / 60 MB / 7 d); old
+  `/photos` + `/ai/photo/*` removed (§2.3, §6.1, §6.2, §7.7, §7.9, §8.3, §9.2, §9.4, §16 #19).
+- **Content (F7 #8/#9, F4 #30, 06 §12.6):** `revoked` pack status + loader rule (≤ 5 min hide, E-25),
+  `pending_app_update` parent surface (GAP-27), closed `VoIntent` enum in `packages/shared`,
+  `POST /content/fact-report`, `POST /fs/t2/request` chips-only (§4.4, §4.11, §7.6, §7.7).
+- **Identity/devices (F9 GAP-04/07/11b/22/36/51/56/57/57b, R1-6/7, 00 B8b/C13/H2):** `family_prefs`
+  fields `calmMode`, `consent.checkinNudge`, `travelCity`, server-derived `hasChildUnder36m` +
+  audited `smallPartsOverride`; `bootstrap-guardian --role coadmin`; `child_remove` command and a
+  defined `resync`; unpair = push-then-revoke (`force` for lost devices); family-delete grace (410
+  `family_deleting`, E-26); pairing on a device with another family's data (E-27); per-child +
+  per-device bedtime with "earliest wins" and the start rule; `launchMode`; device-local cap overrides;
+  `+10 min` bonus route/event; picture-PIN miss/reset flow; guardian-removal semantics (§4.16, §5.1–5.5,
+  §7.3, §7.4).
+- **OTA and install (F9 GAP-26, F2 #22):** `UpdateGate` moments 2b (episode boundary / profile switch)
+  and 2c (foreground after ≥ 30 min), the only `reloadAsync` caller; ⟂VERIFY container preservation on
+  re-sign with the `--pre-install-sync` fallback and the unsynced counter (§3.3, §7.4).
+- **Deep links (F9 GAP-68/48):** closed `olam://` route list incl. `report/{id}`, `approvals`,
+  `invite`, `device/{id}` and dev-only `dev/fixture|setNow|moveTo|route|cycle`; Maestro layer wired to
+  them with `testID` lint (§4.1, §12.1).
+- **Storage/time/co-op/security:** audio cache LRU 400 MB + `storage_low` AL-11 (GAP-40); timezone/
+  travel rules (GAP-39, 01 DD-31); DO single-sourced `boss_defeated` with id, 15-min rejoin, level-ups
+  only from `coop.room_ended` (F2 #23, GAP-21); §9.9 data-at-rest table (GAP-41); parent voice clips
+  §7.13 + `family.voice` pack (GAP-67); SCR-21 car-mode route stub (P2, GAP-19); VO loudness −18 LUFS
+  ±1 (E9, R1-4); `UIRequiresFullScreen: true` in `app.config.ts` (A3, R1-1); §18 #8–11 marked accepted.
+- **Rejected / deferred:** GAP-44 04:00 cap boundary — 00 OPD-26 binds "cap day = `DayKey`" (02's
+  device-local day); `DAY_START_HOUR` constant kept at 0. F9's 4-job/48 h capture-queue numbers →
+  12 §3.16's 20 pages / 60 MB / 7 days (12 owns the pipeline).

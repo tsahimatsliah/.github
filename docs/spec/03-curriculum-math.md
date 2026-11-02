@@ -27,8 +27,10 @@
 ### 1.1 מזהים
 - **מיומנות:** `M.<ציר>.<נושא>.<רמה>`, למשל `M.NUM.COUNT.ROTE10`.
   - **הצירים:** `NUM` (מספר וספירה), `PV` (ערך מקומי), `OPS` (חיבור וחיסור), `FACT` (שטף עובדות), `MUL` (כפל וחילוק), `FRAC` (שברים), `GEO` (גאומטריה ומרחב), `MEAS` (מדידה), `PAT` (דפוסים ואלגברה מוקדמת), `DATA` (נתונים ומיון), `WP` (בעיות מילוליות וחשיבה).
-- **תבנית מחולל:** `T.<משפחה>`. **קוד טעות:** `E.<שם>`. **מסלול תיקון:** `R.<שם>`. **מכניקה:** `MECH.<שם>`. **פרופיל שליטה:** `MP.<רצועה>`. **יחידה בתוכנית השנתית:** `U.K1.<nn>` / `U.K2.<nn>`. **משימת הדפסה:** `PRN.<יחידה>.<n>`. **פעילות בית:** `HOME.<n>`. **קריטריון קבלה:** `MATH-AC-<nn>`.
+- **תבנית מחולל:** `T.<משפחה>`. **קוד טעות:** `EM.<שם>` (סבב 2: הקידומת `E.` הוחלפה ב-`EM.`; ראו "מרחבי שמות" בהמשך). **מסלול תיקון:** `R.<שם>`. **מכניקה:** `MECH.<שם>`. **פרופיל שליטה:** `MP.<רצועה>`. **יחידה בתוכנית השנתית:** `U.K1.<nn>` / `U.K2.<nn>`. **משימת הדפסה:** `PRN.<יחידה>.<n>`. **פעילות בית:** `HOME.<n>`. **קריטריון קבלה:** `MATH-AC-<nn>`.
 - **קדם-דרישה קשה:** `M.X`, וחוסמת כניסה לשוליים (fringe). **קדם-דרישה רכה:** `~M.X`, משמשת כהמלצה ומקבלת קרדיט FIRe-lite, אבל לא חוסמת.
+- **מרחבי שמות (החלטת סבב 2, מחייבת ל-03/04/05/12):** קודי טעות נושאים קידומת לפי מקצוע: **`EM.*`** מתמטיקה (כאן), **`EH.*`** עברית (04 §2.3), **`EE.*`** אנגלית (05 §3.5; שם היום `ERR.*`, שאינו מתנגש, מומלץ ליישר). הקידומת `E.*` לבדה שמורה **למזהי המיומנויות באנגלית של 05** (`E.PA.*`, `E.PH.*`, `E.VO.*`), כי `Skill.errorTags` ו-`Attempt.chosenErrorTag` של 08 חיים באותו מרחב מחרוזות עם `SkillId` (F5 → 04 #2 / 05 #3). קודי `MATH_*`/`HE_*`/`NIK_*` של 12 הם כינויים ב-`packages/content/errors/aliases.json` (12 §12.2); הקטלוג הקנוני כאן הוא `packages/content/math/errors.json`. לינטר התוכן: כל קוד טעות בחבילת המתמטיקה תואם `^EM\.`, ואין מחרוזת שמתחילה ב-`E.` בשדות `errorCodes`/`errorTags`/`distractors[].errorTag` (`MATH-AC-26`).
+- **מזהים מוקפאים (06 `crossPrereqs`, 06 AC-06-26; 08 `questionnaire-map.json`):** `M.NUM.COUNT.ROTE10`, `M.MEAS.MONEY.CHANGE`, `M.OPS.ADD.2D2D`, `M.MEAS.LEN.CM`, `M.MEAS.LEN.NONSTD`, `M.DATA.PICTO.G`, `M.DATA.BAR`, וכל מזהה בטבלת השאלון של §6.0א. שינוי שם מחייב כינוי ב-`skills.json` `aliases` וגרסת חבילה חדשה (`MATH-AC-26`).
 
 ### 1.2 רצועות גיל (תת-רצועות של `T`/`G`/`S` של 07 §0.2)
 07 מגדיר שלוש רצועות: `T` (2–4), `G` (5–6), `S` (7–10). המסמך הזה מחלק אותן לתת-רצועות כדי לסדר את הגרף; כל מזהה כאן ממופה חד-ערכית לרצועת 07 (עמודה "רצועת 07"), וזה הערך שנשמר בשדה `band` של 07/06. התיוג הוא **לפי תוכן**, לא לפי ילד: ילד יכול לשחק בכל תת-רצועה שהשוליים שלו פותחים.
@@ -134,8 +136,8 @@
 | `MP.S` | `S-R`, `S`, `S+` | כמו 08 | 1, 3, 7, 14, 30, 60 |
 | `MP.X` | חשיפה או העשרה שלא חוסמת | `placementEligible:false`, לא נכנס ל-fringe של צאצאים, מגיע לכל היותר ל-L2. משמש בבלוק fun. | — |
 
-**שכבות נוספות למתמטיקה** (overlays; ‏`math.extraGates` נבדק בנוסף לתנאי ה-`proficient` של 08, ראו §17.2):
-- **`O.REP` (מושגי):** כדי להגיע ל-L3 צריך, בנוסף, לפחות 2 תשובות נקיות בשלב P ולפחות 2 בשלב A בתוך last8.
+**שכבות נוספות למתמטיקה** (overlays; ‏`Skill.extraGates` של 08 §1.2 נבדק בנוסף לתנאי ה-`proficient` של 08 §5.1 (התקבל; ראו §17.2)):
+- **`O.REP` (מושגי):** כדי להגיע ל-L3 צריך, בנוסף, לפחות 2 תשובות נקיות בשלב P ולפחות 2 בשלב A בתוך last8. **מוצמד רק למיומנות שמסלול ה-CPA שלה כולל גם P וגם A** (08 §1.2 דורש ≥2 תבניות `reviewed` עם `representation:'pictorial'` ו-≥2 עם `'abstract'`, אחרת החבילה נדחית); מיומנות שמסלולה P בלבד או C→P לא נושאת `O.REP` (סבב 2: הוסר מ-`M.NUM.SUBIT.C5`, `M.NUM.SUBIT.C10`, `M.OPS.BOND.5`, `M.GEO.SHAPE.ID2D`; ב-`M.MEAS.PERIM_AREA` נוסף שלב A). הפרסר נכשל על `+O.REP` במסלול בלי A (`MATH-AC-12`).
 - **`O.FLU` (שטף, רק K1, רק `M.FACT.*`):**
   - `fluencyEligible:true`.
   - `fluencyTargetMs`: חיבור 3,000, חיסור 3,500, כפל 3,000, חילוק 3,500.
@@ -144,7 +146,7 @@
   - **זמן תגובה לא משפיע על Elo** בתרגול רגיל. הוא משפיע רק בסבב המהירות (opt-in, ‏08 §4.5; כאן §9.6).
 - **`O.STEP` (פרוצדורה רב-שלבית, ‏K1):**
   - תשובה נקייה היא תשובה שכל השלבים בה נכונים.
-  - שגיאת שלב נרשמת עם קוד `E.*` ומשמשת כ-`errorTag` (08 §5.5).
+  - שגיאת שלב נרשמת עם קוד `EM.*` ב-`Attempt.steps.firstErrorTag`, שממלא את `chosenErrorTag` ומשמש כ-`errorTag` (08 §1.4, §4.1, §5.5).
   - **ניקוד:** ‏`x = correctSteps/steps`, ‏`w = 1`. זו הרחבה לטבלת הניקוד של 08 §4.1, שכבר מקבלת x שאינו 0/1 (§17.2).
 
 ### 3.3 שוליים, דעיכה ו-FIRe-lite
@@ -185,8 +187,8 @@ function buildChoices(item, skill, profile): Choice[] {
     if (v != null && valid(v, item) && !eq(v, item.answer) && !pool.some(p => eq(p.value, v)))
       pool.push({ value: v, errorCode: e.code, weight: e.w });
   }
-  // fillers: near misses inside the legal range, error code E.NEAR
-  for (const d of [1, -1, 2, -2, 10, -10]) if (pool.length < n - 1) tryPush(item.answer + d, 'E.NEAR');
+  // fillers: near misses inside the legal range, error code EM.NEAR
+  for (const d of [1, -1, 2, -2, 10, -10]) if (pool.length < n - 1) tryPush(item.answer + d, 'EM.NEAR');
   const picked = weightedSample(pool, n - 1, item.seed);  // seeded → reproducible
   return seededShuffle([{ value: item.answer, correct: true }, ...picked], item.seed);
 }
@@ -195,96 +197,96 @@ function buildChoices(item, skill, profile): Choice[] {
 ```
 - **K1:** בעובדות ובחישוב, ברירת המחדל היא **הקלדה חופשית** (שליפה ולא זיהוי). רב-ברירה משמש רק בפריטים מושגיים.
 - **K2:** בחירה מתוך "פס מספרים" 0–20. הפס הוא בעצמו ישר מספרים, ולכן מחזק את P3.
-- **רישום:** כל תשובה שגויה (גם בהקלדה) עוברת דרך `classifyError(item, response)`. הפונקציה בודקת אם התשובה זהה לפלט של אחד מ-`ERROR_FN` של המיומנות, ומחזירה קוד או `E.UNKNOWN`.
+- **רישום:** כל תשובה שגויה (גם בהקלדה) עוברת דרך `classifyError(item, response)`. הפונקציה בודקת אם התשובה זהה לפלט של אחד מ-`ERROR_FN` של המיומנות, ומחזירה קוד או `EM.UNKNOWN`.
 - **אבחון:** אותו קוד טעות 3 פעמים ב-10 הניסיונות האחרונים במיומנות מפעיל את מסלול התיקון `R.*` שלו. המסלול כולל מיני-שיעור של 3–5 פריטים ממוקדים, ושורה בדוח להורה בניסוח "שמנו לב ש…".
 
 ### 4.2 הקטלוג
 | קוד | שם | תיאור | `ERROR_FN` (מסיח) | תיקון |
 |---|---|---|---|---|
-| `E.NEAR` | קרוב | טעות של ±1/±2 בלי דפוס | answer±1, ±2 | — |
-| `E.SEQ_SKIP` | דילוג ברצף | מדלג על מספר בספירה ("1,2,4") | answer+1 | `R.SEQ_SONG` |
-| `E.SEQ_REPEAT` | חזרה ברצף | אומר/סופר מספר פעמיים | answer−1 | `R.SEQ_SONG` |
-| `E.TEEN_DECADE` | מעבר עשרת | "29, 20, 21" או "תשע-עשרה, עשר-עשרה" | answer−9 (אחרי x9) | `R.DECADE_BRIDGE` |
-| `E.1TO1_SKIP` | דילוג על פריט | לא נוגע באחד הפריטים | count−1 | `R.TOUCH_MOVE` |
-| `E.1TO1_DOUBLE` | ספירה כפולה | סופר פריט פעמיים | count+1 | `R.TOUCH_MOVE` |
-| `E.CARD_RECOUNT` | אין קרדינליות | ל"כמה?" עונה בספירה מחדש, או ברצף ולא במספר האחרון | (ממשק: בוחר "1,2,3" או מתחיל לספור) | `R.LASSO` |
-| `E.GIVE_GRAB` | חופן | ב-Give-N נותן כמות אקראית | random≠N בטווח | `R.LASSO` |
-| `E.SIZE_CONFOUND` | גודל ולא כמות | בוחר את הקבוצה שתופסת יותר מקום, או את האובייקטים הגדולים | הקבוצה המפוזרת | `R.MATCH_PAIRS` |
-| `E.NUMERAL_CONFUSE` | בלבול ספרות | 6/9, 2/5, 1/7 | המיפוי {6↔9, 2↔5, 1↔7, 3↔8} | `R.NUMERAL_TRACE` |
-| `E.REVERSE_DIGITS` | היפוך ספרות | 31 במקום 13, 52 במקום 25 | היפוך סדר הספרות | `R.PV_BLOCKS` |
-| `E.TEEN_WRITE` | עשרה-ומשהו | כותב "103" ל"שלוש-עשרה" או 31 | "10"+u / u*10+1 | `R.PV_BLOCKS` |
-| `E.COUNT_ALL` | סופר הכול | ב-count-on מתחיל מ-1 (זמן ארוך, נכון) | — (מזוהה מזמן, לא מסיח) | `R.COUNT_ON_HIDE` |
-| `E.COUNT_ON_INCL` | ספירה ממשיכה כוללת | 5+3: "5,6,7" ← 7 | a+b−1 | `R.COUNT_ON_HIDE` |
-| `E.LINE_TICKS` | ספירת שנתות | בישר המספרים סופר שנתות ולא קפיצות | answer±1 | `R.HOP_ARCS` |
-| `E.LINE_LOG` | ישר לוגריתמי | מכווץ מספרים גדולים, ממקם 20 מתוך 100 באמצע | log-scale position | `R.LINE_LANDMARKS` |
-| `E.OP_SWAP` | פעולה הפוכה | חיבור במקום חיסור, או להפך | a+b / a−b | `R.BAR_MODEL` |
-| `E.MUL_ADD` | כפל כחיבור | 6×4 → 10 | a+b | `R.ARRAY` |
-| `E.MUL_NEIGHBOR` | עובדה שכנה | 7×8 → 49 / 64 / 48 | a×(b±1), (a±1)×b | `R.STRATEGY_CARD` |
-| `E.SKIP_SLIP` | טעות בקפיצה | ספירת דילוג החמיצה צעד | answer±a | `R.SKIP_TRACK` |
-| `E.SQUARE_CONFUSE` | ריבוע | a×b → a×a | a×a, b×b | `R.ARRAY` |
-| `E.X0_IDENTITY` | אפס כזהות | n×0 → n, n+0 → 0 | n / 0 | `R.ZERO_STORY` |
-| `E.SUB_SMALL_FROM_LARGE` | קטן מגדול | בכל עמודה מחסר את הקטן מהגדול: 52−17 → 45 | abs(aᵢ−bᵢ) לכל עמודה | `R.PV_BLOCKS` |
-| `E.NO_CARRY` | שכחת נשיאה | 47+38 → 75 | סכום עמודות mod 10 בלי נשיאה | `R.PV_BLOCKS` |
-| `E.CARRY_WRITE` | כתיבת נשיאה | 47+38 → 715 | שרשור סכומי עמודות | `R.PV_BLOCKS` |
-| `E.BORROW_NO_DEC` | פריטה בלי הפחתה | 52−17 → 45 (פרט ולא הוריד) | פריטה בלי הפחתת העמודה השכנה | `R.PV_BLOCKS` |
-| `E.ZERO_BORROW` | פריטה דרך אפס | 403−158: שגיאה בעמודת האפס | הדמיית הבאג (Ashlock) | `R.PV_BLOCKS` |
-| `E.PV_FACE` | ערך הספרה | "ערך הספרה 4 ב-3,452" → 4 | הספרה עצמה | `R.PV_CHART` |
-| `E.PV_ZERO_OMIT` | אפס נשמט | "אלפיים וחמש" → 25 / 205 | השמטת אפסים פנימיים | `R.PV_CHART` |
-| `E.PV_CONCAT` | שרשור | 300+40+5 → 300405 | שרשור מחרוזות | `R.PV_CHART` |
-| `E.PV_ZERO_EXTRA` | אפס עודף | "אלפיים וחמש" → 20005 | כתיבה לפי מילים | `R.PV_CHART` |
-| `E.TENS_COUNT` | "כמה עשרות" | "כמה עשרות ב-340" → 4 (ולא 34) | ספרת העשרות בלבד | `R.PV_BLOCKS` |
-| `E.ROUND_DIR` | עיגול | 45 → 40 / מעגל לפי הספרה הלא נכונה | עיגול כלפי מטה / עיגול לפי ספרה אחרת | `R.LINE_LANDMARKS` |
-| `E.EQ_OPERATIONAL` | "=" כ"התשובה היא" | ‎8+4=_+5 → 12 | a+b (מתעלם מצד ימין) | `R.BALANCE` |
-| `E.EQ_ALL_ADD` | חיבור הכול | ‎8+4=_+5 → 17 | סכום כל המספרים | `R.BALANCE` |
-| `E.KEYWORD` | מילת מפתח | "יותר" → חיבור, גם כשצריך חיסור (שאלת השוואה הפוכה) | תוצאת הפעולה ה"מרומזת" | `R.BAR_MODEL` |
-| `E.TIMES_VS_MORE` | פי/יותר | "פי 3 יותר מ-4" ← 7 | a+b במקום a×b | `R.BAR_UNITS` |
-| `E.REM_TOO_BIG` | שארית גדולה | 23:4 = 4 ושארית 7 | (q−1, r+d) | `R.SHARE_LOOT` |
-| `E.REM_IGNORE` | התעלמות מהשארית | בשאלת "כמה סירות צריך" עונה q במקום q+1 | q | `R.REM_CONTEXT` |
-| `E.DIV_REVERSE` | חילוק הפוך | 4:20 = 5 | (מושגי) b:a | `R.SHARE_LOOT` |
-| `E.ORDER_LTR` | סדר פעולות | ‎2+3×4 → 20 | חישוב משמאל לימין | `R.ORDER_STORY` |
-| `E.FRAC_BIG_DEN` | מכנה גדול = שבר גדול | ⅛ > ¼ | הפיכת ההשוואה | `R.FRAC_BARS` |
-| `E.FRAC_UNEQUAL` | חלקים לא שווים | קורא לשליש את אחד משלושה חלקים לא שווים | צורה עם חלוקה לא שווה | `R.FRAC_FOLD` |
-| `E.FRAC_PART_PART` | חלק/חלק | 1 מתוך 4 חלקים צבוע → ⅓ | צבוע/לא-צבוע | `R.FRAC_FOLD` |
-| `E.FRAC_SET_WHOLE` | שבר של כמות | ⅓ מ-12 → 3 (מחלק ב-4) או 36 | 12:4 / 12×3 | `R.SHARE_LOOT` |
-| `E.SHAPE_PROTO` | אב-טיפוס | "משולש הפוך/צר הוא לא משולש", "ריבוע מסובב הוא יהלום" | צורות בכיוון לא טיפוסי מסומנות "לא" | `R.SHAPE_TURN` |
-| `E.SHAPE_LOOKS` | "נראה כמו" | מזהה לפי מראה ולא לפי תכונות (סגור, ישר) | צורה פתוחה או עם צלע עגולה | `R.SHAPE_RULES` |
-| `E.SQUARE_NOT_RECT` | ריבוע אינו מלבן | שולל ריבוע ממשפחת המלבנים | — (מושגי) | `R.SHAPE_RULES` |
-| `E.ANGLE_SIDE_LEN` | זווית לפי אורך הקרניים | זווית עם קרניים ארוכות "גדולה יותר" | זוג זוויות שבו הארוכה קטנה | `R.ANGLE_TESTER` |
-| `E.LR_MIRROR` | ימין/שמאל | הפוך מנקודת מבט הדמות | המיקום ההפוך | `R.BODY_TURN` |
-| `E.RULER_ONE` | סרגל מ-1 | מודד מהסימן 1 או מקצה הסרגל | answer+1 / answer−1 | `R.RULER_ZERO` |
-| `E.UNIT_GAPS` | יחידות עם רווחים | מניח יחידות מדידה עם רווחים או חפיפות | ±1–2 | `R.ITERATE` |
-| `E.UNIT_CONVERT` | המרת יחידות | 3 מ' = 30 ס"מ | ×10 במקום ×100 (וכו') | `R.UNIT_LADDER` |
-| `E.PERIM_AREA` | היקף/שטח | מחשב שטח כשנשאל היקף, או להפך | השני | `R.FENCE_TILES` |
-| `E.PERIM_TWO_SIDES` | היקף חלקי | מחבר 2 צלעות בלבד | a+b | `R.FENCE_TILES` |
-| `E.CLOCK_HANDS` | מחוגים | מחליף בין מחוג השעות למחוג הדקות | החלפה | `R.CLOCK_GEARS` |
-| `E.CLOCK_5MIN` | מספר במקום דקות | המחוג על 4 ← "4 דקות" | הספרה במקום ×5 | `R.CLOCK_GEARS` |
-| `E.CLOCK_HOUR_NEXT` | שעה הבאה | ב-3:50 אומר "4 ו-50" | h+1 | `R.CLOCK_GEARS` |
-| `E.TIME_BASE10` | זמן בבסיס 10 | ‏1:50 + 20 דק' → 1:70 / 2:10 נשכח | חישוב עשרוני | `R.CLOCK_GEARS` |
-| `E.MONEY_COUNT_COINS` | ספירת מטבעות | סופר את מספר המטבעות ולא את ערכם | מספר המטבעות | `R.MAKOLET` |
-| `E.AGOROT` | אגורות | 1.50 ש"ח = 150 ש"ח / 15 אגורות | בלבול סקלות | `R.MAKOLET` |
-| `E.PATTERN_COPY_LAST` | חזרה על האחרון | ממשיך דפוס בחזרה על האלמנט האחרון | האלמנט האחרון | `R.PATTERN_CORE` |
-| `E.PATTERN_UNIT` | יחידה שגויה | ‏ABB מוחלף ב-AB | המשך לפי יחידה קצרה | `R.PATTERN_CORE` |
-| `E.GRAPH_READ_HEIGHT` | קריאת גרף | קורא את מספר הקווים ולא את הערך בציר, או מתבלבל בקנה מידה ≠1 | ערך/קנה-מידה | `R.GRAPH_SCALE` |
-| `E.EXTRA_INFO` | מידע מיותר | משתמש בכל המספרים בבעיה | פעולה עם המספר המיותר | `R.BAR_MODEL` |
-| `E.ONE_STEP` | צעד אחד | בבעיה דו-שלבית עוצר אחרי הצעד הראשון | התוצאה הביניימית | `R.BAR_MODEL` |
-| `E.HALF_DOUBLE` | חצי/כפול | ‎12 × 2 → 6, ‏‎12 : 2 → 24 | answer/4 (×2) · answer×4 (:2) | `R.ARRAY` |
-| `E.UNKNOWN` | לא מסווג | — | — | — |
+| `EM.NEAR` | קרוב | טעות של ±1/±2 בלי דפוס | answer±1, ±2 | — |
+| `EM.SEQ_SKIP` | דילוג ברצף | מדלג על מספר בספירה ("1,2,4") | answer+1 | `R.SEQ_SONG` |
+| `EM.SEQ_REPEAT` | חזרה ברצף | אומר/סופר מספר פעמיים | answer−1 | `R.SEQ_SONG` |
+| `EM.TEEN_DECADE` | מעבר עשרת | "29, 20, 21" או "תשע-עשרה, עשר-עשרה" | answer−9 (אחרי x9) | `R.DECADE_BRIDGE` |
+| `EM.1TO1_SKIP` | דילוג על פריט | לא נוגע באחד הפריטים | count−1 | `R.TOUCH_MOVE` |
+| `EM.1TO1_DOUBLE` | ספירה כפולה | סופר פריט פעמיים | count+1 | `R.TOUCH_MOVE` |
+| `EM.CARD_RECOUNT` | אין קרדינליות | ל"כמה?" עונה בספירה מחדש, או ברצף ולא במספר האחרון | (ממשק: בוחר "1,2,3" או מתחיל לספור) | `R.LASSO` |
+| `EM.GIVE_GRAB` | חופן | ב-Give-N נותן כמות אקראית | random≠N בטווח | `R.LASSO` |
+| `EM.SIZE_CONFOUND` | גודל ולא כמות | בוחר את הקבוצה שתופסת יותר מקום, או את האובייקטים הגדולים | הקבוצה המפוזרת | `R.MATCH_PAIRS` |
+| `EM.NUMERAL_CONFUSE` | בלבול ספרות | 6/9, 2/5, 1/7 | המיפוי {6↔9, 2↔5, 1↔7, 3↔8} | `R.NUMERAL_TRACE` |
+| `EM.REVERSE_DIGITS` | היפוך ספרות | 31 במקום 13, 52 במקום 25 | היפוך סדר הספרות | `R.PV_BLOCKS` |
+| `EM.TEEN_WRITE` | עשרה-ומשהו | כותב "103" ל"שלוש-עשרה" או 31 | "10"+u / u*10+1 | `R.PV_BLOCKS` |
+| `EM.COUNT_ALL` | סופר הכול | ב-count-on מתחיל מ-1 (זמן ארוך, נכון) | — (מזוהה מזמן, לא מסיח) | `R.COUNT_ON_HIDE` |
+| `EM.COUNT_ON_INCL` | ספירה ממשיכה כוללת | 5+3: "5,6,7" ← 7 | a+b−1 | `R.COUNT_ON_HIDE` |
+| `EM.LINE_TICKS` | ספירת שנתות | בישר המספרים סופר שנתות ולא קפיצות | answer±1 | `R.HOP_ARCS` |
+| `EM.LINE_LOG` | ישר לוגריתמי | מכווץ מספרים גדולים, ממקם 20 מתוך 100 באמצע | log-scale position | `R.LINE_LANDMARKS` |
+| `EM.OP_SWAP` | פעולה הפוכה | חיבור במקום חיסור, או להפך | a+b / a−b | `R.BAR_MODEL` |
+| `EM.MUL_ADD` | כפל כחיבור | 6×4 → 10 | a+b | `R.ARRAY` |
+| `EM.MUL_NEIGHBOR` | עובדה שכנה | 7×8 → 49 / 64 / 48 | a×(b±1), (a±1)×b | `R.STRATEGY_CARD` |
+| `EM.SKIP_SLIP` | טעות בקפיצה | ספירת דילוג החמיצה צעד | answer±a | `R.SKIP_TRACK` |
+| `EM.SQUARE_CONFUSE` | ריבוע | a×b → a×a | a×a, b×b | `R.ARRAY` |
+| `EM.X0_IDENTITY` | אפס כזהות | n×0 → n, n+0 → 0 | n / 0 | `R.ZERO_STORY` |
+| `EM.SUB_SMALL_FROM_LARGE` | קטן מגדול | בכל עמודה מחסר את הקטן מהגדול: 52−17 → 45 | abs(aᵢ−bᵢ) לכל עמודה | `R.PV_BLOCKS` |
+| `EM.NO_CARRY` | שכחת נשיאה | 47+38 → 75 | סכום עמודות mod 10 בלי נשיאה | `R.PV_BLOCKS` |
+| `EM.CARRY_WRITE` | כתיבת נשיאה | 47+38 → 715 | שרשור סכומי עמודות | `R.PV_BLOCKS` |
+| `EM.BORROW_NO_DEC` | פריטה בלי הפחתה | 52−17 → 45 (פרט ולא הוריד) | פריטה בלי הפחתת העמודה השכנה | `R.PV_BLOCKS` |
+| `EM.ZERO_BORROW` | פריטה דרך אפס | 403−158: שגיאה בעמודת האפס | הדמיית הבאג (Ashlock) | `R.PV_BLOCKS` |
+| `EM.PV_FACE` | ערך הספרה | "ערך הספרה 4 ב-3,452" → 4 | הספרה עצמה | `R.PV_CHART` |
+| `EM.PV_ZERO_OMIT` | אפס נשמט | "אלפיים וחמש" → 25 / 205 | השמטת אפסים פנימיים | `R.PV_CHART` |
+| `EM.PV_CONCAT` | שרשור | 300+40+5 → 300405 | שרשור מחרוזות | `R.PV_CHART` |
+| `EM.PV_ZERO_EXTRA` | אפס עודף | "אלפיים וחמש" → 20005 | כתיבה לפי מילים | `R.PV_CHART` |
+| `EM.TENS_COUNT` | "כמה עשרות" | "כמה עשרות ב-340" → 4 (ולא 34) | ספרת העשרות בלבד | `R.PV_BLOCKS` |
+| `EM.ROUND_DIR` | עיגול | 45 → 40 / מעגל לפי הספרה הלא נכונה | עיגול כלפי מטה / עיגול לפי ספרה אחרת | `R.LINE_LANDMARKS` |
+| `EM.EQ_OPERATIONAL` | "=" כ"התשובה היא" | ‎8+4=_+5 → 12 | a+b (מתעלם מצד ימין) | `R.BALANCE` |
+| `EM.EQ_ALL_ADD` | חיבור הכול | ‎8+4=_+5 → 17 | סכום כל המספרים | `R.BALANCE` |
+| `EM.KEYWORD` | מילת מפתח | "יותר" → חיבור, גם כשצריך חיסור (שאלת השוואה הפוכה) | תוצאת הפעולה ה"מרומזת" | `R.BAR_MODEL` |
+| `EM.TIMES_VS_MORE` | פי/יותר | "פי 3 יותר מ-4" ← 7 | a+b במקום a×b | `R.BAR_UNITS` |
+| `EM.REM_TOO_BIG` | שארית גדולה | 23:4 = 4 ושארית 7 | (q−1, r+d) | `R.SHARE_LOOT` |
+| `EM.REM_IGNORE` | התעלמות מהשארית | בשאלת "כמה סירות צריך" עונה q במקום q+1 | q | `R.REM_CONTEXT` |
+| `EM.DIV_REVERSE` | חילוק הפוך | 4:20 = 5 | (מושגי) b:a | `R.SHARE_LOOT` |
+| `EM.ORDER_LTR` | סדר פעולות | ‎2+3×4 → 20 | חישוב משמאל לימין | `R.ORDER_STORY` |
+| `EM.FRAC_BIG_DEN` | מכנה גדול = שבר גדול | ⅛ > ¼ | הפיכת ההשוואה | `R.FRAC_BARS` |
+| `EM.FRAC_UNEQUAL` | חלקים לא שווים | קורא לשליש את אחד משלושה חלקים לא שווים | צורה עם חלוקה לא שווה | `R.FRAC_FOLD` |
+| `EM.FRAC_PART_PART` | חלק/חלק | 1 מתוך 4 חלקים צבוע → ⅓ | צבוע/לא-צבוע | `R.FRAC_FOLD` |
+| `EM.FRAC_SET_WHOLE` | שבר של כמות | ⅓ מ-12 → 3 (מחלק ב-4) או 36 | 12:4 / 12×3 | `R.SHARE_LOOT` |
+| `EM.SHAPE_PROTO` | אב-טיפוס | "משולש הפוך/צר הוא לא משולש", "ריבוע מסובב הוא יהלום" | צורות בכיוון לא טיפוסי מסומנות "לא" | `R.SHAPE_TURN` |
+| `EM.SHAPE_LOOKS` | "נראה כמו" | מזהה לפי מראה ולא לפי תכונות (סגור, ישר) | צורה פתוחה או עם צלע עגולה | `R.SHAPE_RULES` |
+| `EM.SQUARE_NOT_RECT` | ריבוע אינו מלבן | שולל ריבוע ממשפחת המלבנים | — (מושגי) | `R.SHAPE_RULES` |
+| `EM.ANGLE_SIDE_LEN` | זווית לפי אורך הקרניים | זווית עם קרניים ארוכות "גדולה יותר" | זוג זוויות שבו הארוכה קטנה | `R.ANGLE_TESTER` |
+| `EM.LR_MIRROR` | ימין/שמאל | הפוך מנקודת מבט הדמות | המיקום ההפוך | `R.BODY_TURN` |
+| `EM.RULER_ONE` | סרגל מ-1 | מודד מהסימן 1 או מקצה הסרגל | answer+1 / answer−1 | `R.RULER_ZERO` |
+| `EM.UNIT_GAPS` | יחידות עם רווחים | מניח יחידות מדידה עם רווחים או חפיפות | ±1–2 | `R.ITERATE` |
+| `EM.UNIT_CONVERT` | המרת יחידות | 3 מ' = 30 ס"מ | ×10 במקום ×100 (וכו') | `R.UNIT_LADDER` |
+| `EM.PERIM_AREA` | היקף/שטח | מחשב שטח כשנשאל היקף, או להפך | השני | `R.FENCE_TILES` |
+| `EM.PERIM_TWO_SIDES` | היקף חלקי | מחבר 2 צלעות בלבד | a+b | `R.FENCE_TILES` |
+| `EM.CLOCK_HANDS` | מחוגים | מחליף בין מחוג השעות למחוג הדקות | החלפה | `R.CLOCK_GEARS` |
+| `EM.CLOCK_5MIN` | מספר במקום דקות | המחוג על 4 ← "4 דקות" | הספרה במקום ×5 | `R.CLOCK_GEARS` |
+| `EM.CLOCK_HOUR_NEXT` | שעה הבאה | ב-3:50 אומר "4 ו-50" | h+1 | `R.CLOCK_GEARS` |
+| `EM.TIME_BASE10` | זמן בבסיס 10 | ‏1:50 + 20 דק' → 1:70 / 2:10 נשכח | חישוב עשרוני | `R.CLOCK_GEARS` |
+| `EM.MONEY_COUNT_COINS` | ספירת מטבעות | סופר את מספר המטבעות ולא את ערכם | מספר המטבעות | `R.MAKOLET` |
+| `EM.AGOROT` | אגורות | 1.50 ש"ח = 150 ש"ח / 15 אגורות | בלבול סקלות | `R.MAKOLET` |
+| `EM.PATTERN_COPY_LAST` | חזרה על האחרון | ממשיך דפוס בחזרה על האלמנט האחרון | האלמנט האחרון | `R.PATTERN_CORE` |
+| `EM.PATTERN_UNIT` | יחידה שגויה | ‏ABB מוחלף ב-AB | המשך לפי יחידה קצרה | `R.PATTERN_CORE` |
+| `EM.GRAPH_READ_HEIGHT` | קריאת גרף | קורא את מספר הקווים ולא את הערך בציר, או מתבלבל בקנה מידה ≠1 | ערך/קנה-מידה | `R.GRAPH_SCALE` |
+| `EM.EXTRA_INFO` | מידע מיותר | משתמש בכל המספרים בבעיה | פעולה עם המספר המיותר | `R.BAR_MODEL` |
+| `EM.ONE_STEP` | צעד אחד | בבעיה דו-שלבית עוצר אחרי הצעד הראשון | התוצאה הביניימית | `R.BAR_MODEL` |
+| `EM.HALF_DOUBLE` | חצי/כפול | ‎12 × 2 → 6, ‏‎12 : 2 → 24 | answer/4 (×2) · answer×4 (:2) | `R.ARRAY` |
+| `EM.UNKNOWN` | לא מסווג | — | — | — |
 
 ### 4.2א מיפוי לקודי הטעויות של 12 (צינור הצילום והמסיחים)
-12 §3.7/§12.2 משתמש בקודים `MATH_*`. **הקטלוג הזה (`E.*`) הוא מקור האמת**; 12 מתבקש להחליף את `MATH_*` ב-`E.*` או להחזיק את טבלת הכינויים הזו ב-`packages/content/math/errors.json` (`aliases`). עד אז `classifyError` מקבל את שני השמות.
+12 §3.7/§12.2 משתמש בקודים `MATH_*`. **הקטלוג הזה (`EM.*`, קובץ `packages/content/math/errors.json`) הוא מקור האמת**; 12 (§12.2, סבב F7) מחזיק את טבלת הכינויים הזו ב-`packages/content/errors/aliases.json`, ו-`classifyError` מקבל את שני השמות ומחזיר תמיד את הקוד הקנוני. **סבב 2:** הקידומת שונתה מ-`E.` ל-`EM.` (מרחבי שמות, §1.1); 12 מעדכן את עמודת היעד בטבלת §12.2 שלו בהתאם (`E.PV_CONCAT` → `EM.PV_CONCAT` וכו'). קוד חדש נולד רק כאן; 12 מוסיף כינוי בלבד.
 
-| 12 (`MATH_*`) | כאן (`E.*`) | הערה |
+| 12 (`MATH_*`) | כאן (`EM.*`) | הערה |
 |---|---|---|
-| `MATH_OP_SWAP` | `E.OP_SWAP` | |
-| `MATH_OFF_BY_ONE` | `E.NEAR` (±1) | |
-| `MATH_DIGIT_REVERSAL` | `E.REVERSE_DIGITS` | |
-| `MATH_PLACE_VALUE` (25+7→95) | `E.PV_CONCAT` | 12 מתאר "חיבור יחידות לעשרות"; זה מקרה של שרשור/ערך מקום. 22 (בלי נשיאה) הוא `E.NO_CARRY` |
-| `MATH_CARRY_OMIT` | `E.NO_CARRY` | |
-| `MATH_BORROW_OMIT` | `E.SUB_SMALL_FROM_LARGE` | ב-12 "כולל קטן מגדול"; כאן זה הקוד העיקרי, ו-`E.BORROW_NO_DEC` הוא הווריאנט "פרט ולא הוריד" |
-| `MATH_TABLE_NEIGHBOR` | `E.MUL_NEIGHBOR` | |
-| `MATH_ADD_FOR_MULT` | `E.MUL_ADD` | |
-| `MATH_COUNT_ALL_AGAIN` | `E.COUNT_ALL` | מזוהה מזמן/הקשות, לא מסיח |
-| `MATH_HALF_DOUBLE` | **חדש:** `E.HALF_DOUBLE` | ‏×2 ↔ ‎:2 (‎12 × 2 → 6). נוסף לקטלוג: `ERROR_FN` = answer/4 בכפל ב-2, answer×4 בחילוק ב-2; תיקון `R.ARRAY` |
+| `MATH_OP_SWAP` | `EM.OP_SWAP` | |
+| `MATH_OFF_BY_ONE` | `EM.NEAR` (±1) | |
+| `MATH_DIGIT_REVERSAL` | `EM.REVERSE_DIGITS` | |
+| `MATH_PLACE_VALUE` (25+7→95) | `EM.PV_CONCAT` | 12 מתאר "חיבור יחידות לעשרות"; זה מקרה של שרשור/ערך מקום. 22 (בלי נשיאה) הוא `EM.NO_CARRY` |
+| `MATH_CARRY_OMIT` | `EM.NO_CARRY` | |
+| `MATH_BORROW_OMIT` | `EM.SUB_SMALL_FROM_LARGE` | ב-12 "כולל קטן מגדול"; כאן זה הקוד העיקרי, ו-`EM.BORROW_NO_DEC` הוא הווריאנט "פרט ולא הוריד" |
+| `MATH_TABLE_NEIGHBOR` | `EM.MUL_NEIGHBOR` | |
+| `MATH_ADD_FOR_MULT` | `EM.MUL_ADD` | |
+| `MATH_COUNT_ALL_AGAIN` | `EM.COUNT_ALL` | מזוהה מזמן/הקשות, לא מסיח |
+| `MATH_HALF_DOUBLE` | **חדש:** `EM.HALF_DOUBLE` | ‏×2 ↔ ‎:2 (‎12 × 2 → 6). נוסף לקטלוג: `ERROR_FN` = answer/4 בכפל ב-2, answer×4 בחילוק ב-2; תיקון `R.ARRAY` |
 
 ### 4.3 מסלולי תיקון (R.*): תבנית אחידה
 כל `R.X` מוגדר כ-`{ microLesson: TemplateId+knobs (stage C/P), steps: 3–5, voiceScriptKey, exitRule: 2 נכונים ברצף }`. דוגמאות:
@@ -324,7 +326,7 @@ function buildChoices(item, skill, profile): Choice[] {
 | `MECH.TANGRAM` | "צללית" | משלימים צללית של בית/מגן | K3(T+), K2, K1 | גרירה/סיבוב | הרכבה ופירוק צורות |
 | `MECH.BLUEPRINT` | "תוכנית בנייה" | גידור ורצפות | K1 | גרירה/הקלדה | אורך, היקף, שטח, המרות |
 | `MECH.CLOCK_CAMP` | "שעון המחנה" | לוח הזמנים של המחנה | K2, K1 | סיבוב מחוגים | קריאה וכיוון שעון, משך זמן |
-| `MECH.MAKOLET` | "המכולת של המחנה" | קונים ציוד (כסף מדומה) | K2, K1 | גרירה | שקלים/אגורות, עודף |
+| `MECH.MAKOLET` | "המכולת של המחנה" | קונים ציוד (כסף משחק) | K2, K1 | גרירה | שקלים/אגורות, עודף. **שקלי המשחק אינם מטבע:** אביזר של השלב בלבד, מתאפס בסוף השלב, לעולם לא נכנס לארנק, לקבלה או לחנות (02 §2.7 `neverEarns`, 02 AC-ECO-5, 01 MX-M15 / AC-MX-7) |
 | `MECH.BALANCE` | "מאזני הקסם" | מאזניים של המכשף | K2, K1 | גרירה | משקל, שוויון, "=" |
 | `MECH.MAP_NAV` | "מפת המטמון" | מסלול ביער | K3(T+), K2, K1 | הקשה/גרירה | מיקום, כיוונים, קואורדינטות |
 | `MECH.BEADS` | "שרשרת רונות" | מחרוזת קסם | K3, K2, K1 | גרירה | דפוסים |
@@ -353,30 +355,40 @@ function buildChoices(item, skill, profile): Choice[] {
   - K2 משלים/ה עגלה ל-10;
   - K1 פותר/ת עובדות כפל ב"מגדלי האור".
 - **מצב "מדריכה" של K1 (C6, אופציונלי):** K1 מקבלת כרטיס רמז מתוסרט לבעיה של K2 ("שאלי אותו: כמה חסר כדי להגיע ל-10?"). היא מתוגמלת על ההתקדמות שלה, למשל מיומנות `M.WP.EXPLAIN`, ולא על הביצוע של K2.
+- **אזורי מגע ותיוג `assisted` (מחייב, 01 §12.2):** בכל משחק משותף על מכשיר אחד לכל ילד אזור מגע משלו (CO-1 חצי מסוכב; CO-2 ≥1/3 רוחב עם רצועה מתה של 12 מ"מ; K3 תמיד הקרוב/ה למדורה). הקשה מחוץ לאזור אינה תשובה של אף אחד (01 AC-CO-7). `assisted:'sibling'` נקבע **רק** מסימון הורה, `assisted:'parent'` מהקשת ההורה על "אני עניתי"; המנוע משקלל w ×0.3 (08 §4.1, `Attempt.context.assisted`) והכלכלה משלמת `itemRecovered` (02). המסמך הזה לא מגדיר את הכלל מחדש; 01 §12.2 גובר. מצב "מדריכה" = 01 §12.6 (אסימוני רמז בלבד).
 
-### 5.4 מיפוי למכניקות של `01-game-design.md` (§7.1)
-המזהים `MECH.*` לוגיים, ו-01 קובע את המימוש, האמנות והטוויסטים. במקומות שאין ב-01 מכניקה מתאימה, המסמך הזה מציע אותה כ-variant של מכניקה קיימת או כמכניקה חדשה. ההצעות מסומנות **הצעה ל-01**.
+### 5.4 מיפוי למכניקות של `01-game-design.md` (§7.1, §7.3)
+המזהים `MECH.*` לוגיים, ו-01 קובע את המימוש, האמנות והטוויסטים (00 J1). **סבב 2:** כל ההצעות של המסמך הזה התקבלו ב-01 (F2 #1): שמונה המכניקות החדשות הן `MX-M13…MX-M20` עם כרטיסים מלאים ב-01 §7.3, וה-variants רשומים בכרטיסי המכניקות הקיימות. אין עוד "הצעה ל-01".
 
-| `MECH.*` | ב-01 |
-|---|---|
-| `FEED` | `MX-M03` give-n |
-| `TAP_COUNT` | `MX-M01` number-jet (ספירת אבנים) + variant "לאסו" ב-`MX-M03` (**הצעה ל-01**) |
-| `PEEKABOO` | `MX-M02` subitize-sparks |
-| `PATH_RACE` | variant משחק הלוח של `MX-M12` line-hop (01: "K2 a linear 0–10/0–20 board game"), ולוח מודפס דרך MV/PRN |
-| `NUMLINE_JUMP` | `MX-M12` line-hop |
-| `TENFRAME_CART`, `FORGE`, `HIDE_HUT` | `MX-M04` ten-forge (העגלה והבקתה הם variants, **הצעה ל-01**) |
-| `ARRAY_BUILD` | `MX-M05` array-hammer |
-| `BAR_BUILDER` | `MX-M06` bar-bridge |
-| `TOWER`, `TABLE_MAP` | `MX-M07` fact-spells (המפה היא מסך התקדמות, **הצעה ל-01**) |
-| `PV_BANK` | `MX-M08` place-value-carts |
-| `SHARE_LOOT`, `PIZZA_CUT` | `MX-M09` fair-share |
-| `BLUEPRINT` | `MX-M10` measure-rope, ומצב הבנייה בבסיס |
-| `BEADS` | `MX-M11` pattern-path |
-| `MAP_NAV` | `MX-X03` map-explorer |
-| `SORT_BINS` | `MX-X04` sort-pack |
-| `SONG`, `SHAPE_HOLE` | חדר המשחקים של K3 (01, "חדר הגחליליות") |
-| `DUEL`, `TANGRAM`, `CLOCK_CAMP`, `MAKOLET`, `BALANCE`, `MIRROR`, `SCOUT_CHART`, `NUMBER_TALK` | **הצעה ל-01:** מכניקות חדשות. כל אחת עונה על כלל ה-intrinsic integration שבטבלה §5.1. |
-| `BOSS`, `COOP_FIRE`, `PRINT`, `HOME` | הבוס החודשי (08 §10.2), המשחק המשותף והמשימות הפיזיות של 01 |
+**קובץ כינויים:** `packages/content/mechanics.aliases.json` ממפה `MECH.<שם>` → `MX-Mnn[:variant]` לפי הטבלה; `mechanics[]` ב-`skills.json` רשאי להשתמש בשם הלוגי או במזהה `MX-*`, והטוען מנרמל ל-`MX-*`. CI מוודא שכל ערך קיים בקטלוג 01 (`MATH-AC-03`). שלב הבנייה לפי 01 §7.1 (A = פרוסה אנכית, B = עד S1, C = עד S3).
+
+| `MECH.*` | ב-01 (`MX-*`) | שלב |
+|---|---|---|
+| `FEED` | `MX-M03` give-n | B |
+| `TAP_COUNT` | `MX-M01` number-jet (ספירת אבנים) + `MX-M03:lasso` | A / B |
+| `PEEKABOO` | `MX-M02` subitize-sparks | A |
+| `PATH_RACE` | `MX-M12:board-game` (לוח ליניארי 0–10/0–20/0–100), ולוח מודפס דרך `PRN` (§12.4) | B |
+| `NUMLINE_JUMP` | `MX-M12` line-hop | B |
+| `TENFRAME_CART`, `FORGE`, `HIDE_HUT` | `MX-M04` ten-forge; `MX-M04:cart`, `MX-M04:hut` | B |
+| `ARRAY_BUILD` | `MX-M05` array-hammer | B |
+| `BAR_BUILDER` | `MX-M06` bar-bridge | C |
+| `TOWER`, `TABLE_MAP` | `MX-M07` fact-spells; `MX-M07:table-map` (מסך התקדמות, §9.5) | C |
+| `PV_BANK` | `MX-M08` place-value-carts | C |
+| `SHARE_LOOT`, `PIZZA_CUT` | `MX-M09` fair-share | C |
+| `BLUEPRINT` | `MX-M10` measure-rope, ומצב הבנייה בבסיס | C |
+| `BEADS` | `MX-M11` pattern-path | B |
+| `MAP_NAV` | `MX-X03` map-explorer | C |
+| `SORT_BINS` | `MX-X04` sort-pack | B |
+| `SONG`, `SHAPE_HOLE` | חדר המשחקים של K3 (`MX-P01`, "חדר הגחליליות") | A |
+| `BALANCE` | `MX-M13` balance-scale (מאזני הקסם; גם מסלול התיקון `R.BALANCE`) | C |
+| `CLOCK_CAMP` | `MX-M14` camp-clock (שעון המחנה; גרירת מחוג לאורך קשת, הצמדה ל-5 דק', 09) | B |
+| `MAKOLET` | `MX-M15` camp-shop (המכולת; שקלי משחק מחוץ לכלכלה, §5.1) | C |
+| `MIRROR` | `MX-M16` mirror-lake (קסם המראה; ציור Skia עם סובלנות 8 מ"מ, 09) | B |
+| `NUMBER_TALK` | `MX-M17` number-talk (שיחת מספרים; כרטיסי האסטרטגיה משתמשים ברכיב כרטיסי הכלים של `MX-T01`, 07) | C |
+| `DUEL` | `MX-M18` light-duel (מי חזק יותר?) | B |
+| `TANGRAM` | `MX-M19` shadow-tangram (צללית; סיבוב בהקשה, לא בשתי אצבעות, 09) | C |
+| `SCOUT_CHART` | `MX-M20` scout-chart (דוח הסיירים) | C |
+| `BOSS`, `COOP_FIRE`, `PRINT`, `HOME` | הבוס החודשי (08 §10.2), המשחק המשותף (`MX-B02`, 01 §12) והמשימות הפיזיות של 01 | — |
 
 ---
 
@@ -388,7 +400,7 @@ function buildChoices(item, skill, profile): Choice[] {
 #### `ID` — שם עברי
 - **מטא:** רצועה · `IL:…`(ביטחון) · C&S: רמה · CPA: מסלול · MP: פרופיל(+overlays) · קדם: `ID`, `~ID`
 - **תיאור:** מה הילד/ה עושה ומה נחשב הצלחה.
-- **טעויות · מכניקות · תבנית:** `E.*` (עם הערה ספציפית) · `MECH.*` · `T.*{פרמטרים}`
+- **טעויות · מכניקות · תבנית:** `EM.*` (עם הערה ספציפית) · `MECH.*` · `T.*{פרמטרים}`
 - **דוגמאות:** (1) … (2) … (3) …
 ```
 - **פרופיל השליטה:** ברירת המחדל נקבעת לפי הרצועה: `T`/`T+` → `MP.T`, `G`/`G+` → `MP.G`, `S*` → `MP.S`. בבלוק מצוינות רק שכבות נוספות (overlays) או חריגות.
@@ -401,7 +413,7 @@ function buildChoices(item, skill, profile): Choice[] {
 
 | שדה (08) | כלל |
 |---|---|
-| `id` | מזהה הבלוק (`M.*`). המזהים הזמניים ב-08 (`math.counting_rote3` וכו') ממופים בטבלה שבהמשך הסעיף. |
+| `id` | מזהה הבלוק (`M.*`). מזהי השאלון (`questionId`) של 08 §3.3א (`math.counting_rote3` וכו') ממופים בטבלה שבהמשך הסעיף; המיפוי נשמר ב-`packages/content/questionnaire-map.json` (08) ונפרס דרך `ContentIndex.aliases`. |
 | `subject` | `'math'` |
 | `strand` | לפי הציר (טבלה שבהמשך הסעיף). |
 | `kind` | **`fact`:** ‏`M.FACT.*`. **`fluency`:** ‏`M.FACT.*.MIXED`. **`procedure`:** ‏`M.OPS.*COL*`, ‏`M.OPS.SUB.ZERO`, ‏`M.MUL.2D1D.COL`, ‏`M.MUL.2D2D`, ‏`M.MUL.DIV.REM`. **`discrimination`:** ‏`M.NUM.COMP.*`, ‏`M.FRAC.COMPARE.*`, ‏`M.GEO.*.CLASSIFY`, ‏`M.MEAS.PERIM_AREA`. **`motor`:** ‏`M.NUM.NUMERAL.WRITE10`. **`concept`:** כל השאר. |
@@ -414,7 +426,8 @@ function buildChoices(item, skill, profile): Choice[] {
 | `fluencyEligible` / `fluencyTargetMs` | `true` ל-`M.FACT.*` ברצועות `S-R`/`S`, עם 3,000 / 3,500 / 3,000 / 3,500 (‏+, −, ×, :). לכל השאר `false`. |
 | `curriculumSource` | `IL(V)` של כיתות א'–ג' ← `'moe_new_2026'`. ‏`IL(C)` ← `'moe_old'`. ‏T/G לפי C&S ← `'evidence'`. ‏`IL(I)` ← `'unknown'`. |
 | `prereqs` / `encompasses` | **`prereqs`:** רק הקדם-דרישות הקשות. **`encompasses`:** קשות במשקל 0.5 ורכות במשקל 0.25 (§3.3). |
-| `errorTags` | `E.*` → קדם-דרישה חשודה (החשודה הראשונה שהיא אב של המיומנות; אם אין כזו, אין תג). הרשימה: ‏`E.PV_*`, ‏`E.REVERSE_DIGITS`, ‏`E.TEEN_WRITE`, ‏`E.NO_CARRY`, ‏`E.CARRY_WRITE` ← `M.PV.TENS100`/`M.PV.HUND1000`/`M.PV.THOU10K` · ‏`E.SUB_SMALL_FROM_LARGE`, ‏`E.BORROW_NO_DEC`, ‏`E.ZERO_BORROW`, ‏`E.UNIT_CONVERT`, ‏`E.TENS_COUNT` ← `M.PV.UNITIZE` (ב-S-R: ‏`M.PV.TENS100`) · ‏`E.EQ_*` ← `M.OPS.EQ.MEANING` · ‏`E.COUNT_ALL`, ‏`E.COUNT_ON_INCL` ← `M.NUM.COUNT.ON` · ‏`E.CARD_RECOUNT`, ‏`E.GIVE_GRAB` ← `M.NUM.CARD.LAST5` · ‏`E.1TO1_*` ← `M.NUM.COUNT.TAG10` · ‏`E.MUL_ADD`, ‏`E.TIMES_VS_MORE` ← `M.MUL.GROUPS` · ‏`E.MUL_NEIGHBOR` ← עובדת ה-FACT המתאימה · ‏`E.REM_*`, ‏`E.DIV_REVERSE` ← `M.MUL.DIV.MEANING` · ‏`E.FRAC_UNEQUAL`, ‏`E.FRAC_PART_PART` ← `M.FRAC.EQUALPARTS` · ‏`E.FRAC_BIG_DEN`, ‏`E.FRAC_SET_WHOLE` ← `M.FRAC.UNIT` · ‏`E.LINE_*` ← ה-`M.NUM.LINE.*` הקרוב · ‏`E.KEYWORD`, ‏`E.OP_SWAP`, ‏`E.EXTRA_INFO`, ‏`E.ONE_STEP` ← `M.WP.BAR.PPW` · ‏`E.PERIM_*` ← `M.MEAS.AREA.SQUARES` · ‏`E.CLOCK_*`, ‏`E.TIME_BASE10` ← `M.MEAS.TIME.HOUR_HALF` · ‏`E.SHAPE_*`, ‏`E.SQUARE_NOT_RECT` ← `M.GEO.SHAPE.ID2D` · ‏`E.ORDER_LTR` ← `M.MUL.ORDER.OPS`. |
+| `errorTags` | `EM.*` → קדם-דרישה חשודה (החשודה הראשונה שהיא אב של המיומנות; אם אין כזו, אין תג). הרשימה: ‏`EM.PV_*`, ‏`EM.REVERSE_DIGITS`, ‏`EM.TEEN_WRITE`, ‏`EM.NO_CARRY`, ‏`EM.CARRY_WRITE` ← `M.PV.TENS100`/`M.PV.HUND1000`/`M.PV.THOU10K` · ‏`EM.SUB_SMALL_FROM_LARGE`, ‏`EM.BORROW_NO_DEC`, ‏`EM.ZERO_BORROW`, ‏`EM.UNIT_CONVERT`, ‏`EM.TENS_COUNT` ← `M.PV.UNITIZE` (ב-S-R: ‏`M.PV.TENS100`) · ‏`EM.EQ_*` ← `M.OPS.EQ.MEANING` · ‏`EM.COUNT_ALL`, ‏`EM.COUNT_ON_INCL` ← `M.NUM.COUNT.ON` · ‏`EM.CARD_RECOUNT`, ‏`EM.GIVE_GRAB` ← `M.NUM.CARD.LAST5` · ‏`EM.1TO1_*` ← `M.NUM.COUNT.TAG10` · ‏`EM.MUL_ADD`, ‏`EM.TIMES_VS_MORE` ← `M.MUL.GROUPS` · ‏`EM.MUL_NEIGHBOR` ← עובדת ה-FACT המתאימה · ‏`EM.REM_*`, ‏`EM.DIV_REVERSE` ← `M.MUL.DIV.MEANING` · ‏`EM.FRAC_UNEQUAL`, ‏`EM.FRAC_PART_PART` ← `M.FRAC.EQUALPARTS` · ‏`EM.FRAC_BIG_DEN`, ‏`EM.FRAC_SET_WHOLE` ← `M.FRAC.UNIT` · ‏`EM.LINE_*` ← ה-`M.NUM.LINE.*` הקרוב · ‏`EM.KEYWORD`, ‏`EM.OP_SWAP`, ‏`EM.EXTRA_INFO`, ‏`EM.ONE_STEP` ← `M.WP.BAR.PPW` · ‏`EM.PERIM_*` ← `M.MEAS.AREA.SQUARES` · ‏`EM.CLOCK_*`, ‏`EM.TIME_BASE10` ← `M.MEAS.TIME.HOUR_HALF` · ‏`EM.SHAPE_*`, ‏`EM.SQUARE_NOT_RECT` ← `M.GEO.SHAPE.ID2D` · ‏`EM.ORDER_LTR` ← `M.MUL.ORDER.OPS`. |
+| `extraGates` | `O.REP` ← `MP: +O.REP` בבלוק **וגם** מסלול CPA שכולל P ו-A (§3.2; אחרת שגיאת build, `MATH-AC-12`). `O.STEP` ← `kind:'procedure'` ברצועות `S-R`/`S`/`S+` (K1). |
 | `discriminationPairs` | הצמדים ב-§13.2. |
 | `placementEligible` / `spineOrder` | רק המיומנויות ב"עמוד השדרה" (טבלה בהמשך הסעיף), לפי סדר ה-anchor. |
 
@@ -431,28 +444,28 @@ function buildChoices(item, skill, profile): Choice[] {
 | `math.geometry` (**חדש**) | `M.GEO.*` | `GEO.SHAPE.TYPICAL`, `GEO.SHAPE.ID2D`, `GEO.POLY.CLASSIFY`, `GEO.ANGLE.CLASSIFY`, `GEO.TRI.CLASSIFY`, `GEO.QUAD.CLASSIFY` |
 | `math.measurement` (**חדש**) | `M.MEAS.*` | `MEAS.LEN.DIRECT`, `MEAS.LEN.NONSTD`, `MEAS.LEN.CM`, `MEAS.TIME.HOUR_HALF`, `MEAS.TIME.CLOCK5`, `MEAS.PERIM`, `MEAS.AREA.RECT`, `MEAS.MONEY.CHANGE` |
 | `math.patterns_data` (**חדש**) | `M.PAT.*`, ‏`M.DATA.*` | `PAT.AB.EXTEND`, `PAT.CORE`, `DATA.PICTO.G`, `PAT.NUMSEQ`, `DATA.BAR` |
-(שמות עמוד השדרה מקוצרים: הקידומת `M.` והציר הושמטו.) הצירים החדשים נכנסים למסעות המיקום של 08 כ"צירי המשך". הם נבדקים רק ב-K1 (מסע E3), ואם הזמן לא מספיק, ה-prior שלהם נגזר מ-`pos(child, date)`.
+(שמות עמוד השדרה מקוצרים: הקידומת `M.` והציר הושמטו.) **מעמד הצירים החדשים ב-08 (§1.1, §3.2, §3.7; התקבל):** `math.facts` נבדק במסע E1 של K1 (3–4 עובדות מייצגות לקבוצה, ≤6 פריטים); `math.fractions` במסע E3 של K1 (3 פריטי `isProbe` בלבד); `math.geometry`, `math.measurement`, `math.patterns_data` הם `placementRole:'continuation'` עם **מיקום עצל** (3 פריטי probe בבלוק `new` הראשון של כל מיומנות, K = 0.50). ב-K2 כל הצירים החדשים הם `continuation`.
 
-**מיפוי המזהים הזמניים של 08 (שאלון ההורה) למזהים כאן**
-| 08 | 03 |
+**מיפוי מזהי השאלון של 08 §3.3א (`questionId`) למזהים כאן**
+| 08 (`questionId`) | 03 |
 |---|---|
-| `math.colors_shapes` | `M.GEO.SHAPE.TYPICAL`, ‏`M.DATA.SORT.ONE` |
-| `math.counting_rote3` | `M.NUM.COUNT.ROTE3` |
-| `math.rote_count` (10/20/30) | `M.NUM.COUNT.ROTE10` / `M.NUM.COUNT.ROTE20` / `M.NUM.COUNT.ROTE30` |
-| `math.cardinality10` | `M.NUM.COUNT.OBJ10` |
-| `math.numerals10` | `M.NUM.NUMERAL.ID10` |
-| `math.compare` | `M.NUM.COMP.SYM10` (ו-`M.NUM.COMP.COUNT10` במשקל 0.5) |
-| `math.add_within5` | `M.OPS.JOIN.C5` |
-| `math.facts_x_to5` | `M.FACT.MUL.X2`, ‏`M.FACT.MUL.X5`, ‏`M.FACT.MUL.X3`, ‏`M.FACT.MUL.X4` |
-| `math.facts_x_to10` | `M.FACT.MUL.MIXED` |
-| `math.add_sub100` | `M.OPS.ADD.2D2D`, ‏`M.OPS.SUB.2D2D` |
-| `math.pv1000` | `M.PV.HUND1000` |
-| `math.word_problems` | `M.WP.BAR.PPW`, ‏`M.WP.BAR.CHANGE` |
-| `math.fractions_intro` | `M.FRAC.UNIT` |
+| T6 `math.colors_shapes` | `M.GEO.SHAPE.TYPICAL`, ‏`M.DATA.SORT.ONE` |
+| T7 `math.counting_rote3` | `M.NUM.COUNT.ROTE3` |
+| G7 `math.rote_count` (10/20/30) | `M.NUM.COUNT.ROTE10` / `M.NUM.COUNT.ROTE20` / `M.NUM.COUNT.ROTE30` |
+| G8 `math.cardinality10` | `M.NUM.COUNT.OBJ10` |
+| G9 `math.numerals10` | `M.NUM.NUMERAL.ID10` |
+| G10 `math.compare` | `M.NUM.COMP.SYM10` (ו-`M.NUM.COMP.COUNT10` במשקל 0.5) |
+| G11 `math.add_within5` | `M.OPS.JOIN.C5` |
+| S7 `math.facts_x_to5` | `M.FACT.MUL.X2`, ‏`M.FACT.MUL.X5`, ‏`M.FACT.MUL.X3`, ‏`M.FACT.MUL.X4` |
+| S8 `math.facts_x_to10` | `M.FACT.MUL.MIXED` |
+| S9 `math.add_sub100` | `M.OPS.ADD.2D2D`, ‏`M.OPS.SUB.2D2D` |
+| S10 `math.pv1000` | `M.PV.HUND1000` |
+| S11 `math.word_problems` | `M.WP.BAR.PPW`, ‏`M.WP.BAR.CHANGE` |
+| S12 `math.fractions_intro` | `M.FRAC.UNIT` |
 
-כלל הפירוש: שאלה שממופה לכמה מיומנויות מייצרת תצפית-פסאודו (08 §3.3) לכל אחת, במשקל 0.7 (או במשקל שצוין בסוגריים). ‏`math.colors_shapes` של K3 נכנס רק ל-`M.GEO.SHAPE.TYPICAL`/`M.DATA.SORT.ONE` ולא ל"צבעים" (אין מיומנות צבעים במתמטיקה; הצבעים ב-06). המזהים הזמניים נשארים כ-`aliases` ב-`skills.json` כדי ששאלון ישן ימשיך לעבוד (`MATH-AC-19`).
+כלל הפירוש: שאלה שממופה לכמה מיומנויות מייצרת תצפית-פסאודו (08 §3.3) לכל אחת, במשקל 0.7 (או במשקל שצוין בסוגריים). ‏`math.colors_shapes` של K3 נכנס רק ל-`M.GEO.SHAPE.TYPICAL`/`M.DATA.SORT.ONE` ולא ל"צבעים" (אין מיומנות צבעים במתמטיקה; הצבעים ב-06). מזהי השאלון נשמרים גם כ-`ContentIndex.aliases[questionId] = [{skillId, weight}]` (08 §3.3א), כך שתצפית-פסאודו אחת נפרסת לכל המיומנויות הממופות ב-`w = 0.7 × weight` (למשל 0.35 ל-`M.NUM.COMP.COUNT10`); `MATH-AC-19`.
 
-**מיפוי הצירים של מסעות המיקום (08 §3.2):** ‏K2 E1 = `math.counting` + `math.magnitude`; ‏K1 E1 = `math.number` + `math.operations`; ‏K1 E3 = `math.word_problems`. הצירים החדשים (`math.facts` וכו') נבדקים רק אם נשאר זמן במסע E3 של K1 (עד 25 פריטים למקצוע, 08 §3.1); אחרת ה-prior שלהם נגזר מ-`pos(child, date)` וה-`θ` של הציר הקרוב (`math.facts` ← `math.operations`; ‏`math.fractions` ← `math.number`; ‏`math.geometry`/`math.measurement`/`math.patterns_data` ← ממוצע המקצוע).
+**מיפוי הצירים של מסעות המיקום (08 §3.2):** ‏K2 E1 = `math.counting` + `math.magnitude`; ‏K1 E1 = `math.number` + `math.operations`; ‏K1 E3 = `math.word_problems`. `math.facts` ← E1 ו-`math.fractions` ← E3 (08 §3.2, בתוך תקרת 25 הפריטים למקצוע); שלושת הצירים האחרים הם `continuation` (08 §3.7): `θ₀ = SCALE·(pos − 0.2)`, `se = 1.0`, ו-`StrandMeta.priorFrom` (08 §1.1) מצביע על הציר-האח: `math.facts` ← `math.operations`, `math.fractions` ← `math.number`; ל-`math.geometry`/`math.measurement`/`math.patterns_data` אין `priorFrom` (ה-prior מ-`pos` בלבד; 08 אינו תומך ב"ממוצע מקצוע").
 
 **גילי C&S לרצועות `T`/`T+`** (בחודשים; משמשים לחישוב `anchor`; ‏BK, לאמת):
 - **30:** `COUNT.ROTE3`, ‏`SUBIT.P2`, ‏`CARD.GIVE1`, ‏`GEO.SHAPE.MATCH`, ‏`GEO.SPACE.INONUNDER`, ‏`MEAS.SIZE.BIGSMALL`, ‏`DATA.SORT.ONE`
@@ -468,337 +481,337 @@ function buildChoices(item, skill, profile): Choice[] {
 #### `M.NUM.COUNT.ROTE3` — ספירה בעל-פה עד 3
 - **מטא:** T · `IL:GAN.NUM`(V) · C&S: Chanter→Reciter · CPA: C (שיר+תנועה) · קדם: —
 - **תיאור:** אומר/ת או שר/ה "אחת, שתיים, שלוש" יחד עם הדמות, בתנועה (קפיצות, מחיאות). ההצלחה נמדדת בהשלמה: הדמות עוצרת, והילד/ה משלים/ה את המילה הבאה, בקול או בהקשה על הכפתור המהבהב.
-- **טעויות · מכניקות · תבנית:** `E.SEQ_SKIP`, `E.SEQ_REPEAT` · `MECH.SONG` · `T.COUNT.SEQ{from:1,to:3,mode:"chant"}`
+- **טעויות · מכניקות · תבנית:** `EM.SEQ_SKIP`, `EM.SEQ_REPEAT` · `MECH.SONG` · `T.COUNT.SEQ{from:1,to:3,mode:"chant"}`
 - **דוגמאות:** (1) "אחת, שתיים…" (הדמות עוצרת) והילד/ה משלים/ה "שלוש". (2) שלוש קפיצות של הארנב, וסופרים יחד בכל קפיצה. (3) "שיר הניצוצות": ניצוץ נדלק על כל מילה, והילד/ה נוגע/ת כדי להדליק את הבא.
 
 #### `M.NUM.COUNT.ROTE5` — ספירה בעל-פה עד 5
 - **מטא:** T · `IL:GAN.NUM`(V) · C&S: Reciter · CPA: C · קדם: `M.NUM.COUNT.ROTE3`
 - **תיאור:** אומר/ת את רצף המילים 1–5 בסדר קבוע, בלי הדמות, בהשלמה ממקום כלשהו ("שתיים, שלוש, …").
-- **טעויות · מכניקות · תבנית:** `E.SEQ_SKIP`, `E.SEQ_REPEAT` · `MECH.SONG`, `MECH.TAP_COUNT` · `T.COUNT.SEQ{from:1,to:5,mode:"chant|complete"}`
+- **טעויות · מכניקות · תבנית:** `EM.SEQ_SKIP`, `EM.SEQ_REPEAT` · `MECH.SONG`, `MECH.TAP_COUNT` · `T.COUNT.SEQ{from:1,to:5,mode:"chant|complete"}`
 - **דוגמאות:** (1) שיר "חמש אצבעות" עם יד מונפשת. (2) "שלוש, ארבע, …" ← "חמש". (3) חמישה גחליליות עפות אחת-אחת, ואומרים את המספר של כל אחת.
 
 #### `M.NUM.COUNT.ROTE10` — ספירה בעל-פה עד 10
 - **מטא:** T · `IL:GAN.NUM`(V) · C&S: Reciter(10) · CPA: C · קדם: `M.NUM.COUNT.ROTE5`
 - **תיאור:** אומר/ת את הרצף 1–10 בסדר נכון. המדד: השלמת מילה חסרה בשלושה מקומות שונים ברצף.
-- **טעויות · מכניקות · תבנית:** `E.SEQ_SKIP` (בעיקר 7↔8), `E.SEQ_REPEAT` · `MECH.SONG` · `T.COUNT.SEQ{from:1,to:10,mode:"complete",gapPos:"any"}`
+- **טעויות · מכניקות · תבנית:** `EM.SEQ_SKIP` (בעיקר 7↔8), `EM.SEQ_REPEAT` · `MECH.SONG` · `T.COUNT.SEQ{from:1,to:10,mode:"complete",gapPos:"any"}`
 - **דוגמאות:** (1) "שש, שבע, …" ← "שמונה". (2) ספירה לאחור של שיגור "טיל הניצוצות" 1→10 (קדימה בלבד ב-T). (3) "מה חסר?" ברצף מושמע 1–10 שבו "תשע" חסרה.
 
 #### `M.NUM.SUBIT.P2` — זיהוי מיידי של 1–2
 - **מטא:** T · `IL:GAN.NUM`(V) · C&S: Pre-Subitizer→Maker of Small Collections · CPA: C→P · קדם: —
 - **תיאור:** מזהה בלי לספור קבוצה של אחד או שניים ומתאים/ה אותה לקבוצה זהה או למילה. ההבהוב ארוך (2,000ms), ואחר כך הקבוצה נשארת גלויה.
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND` (שני פריטים קטנים לעומת אחד גדול) · `MECH.PEEKABOO` · `T.SUBIT.FLASH{n:[1,2],layout:"line",exposureMs:2000,response:"match"}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND` (שני פריטים קטנים לעומת אחד גדול) · `MECH.PEEKABOO` · `T.SUBIT.FLASH{n:[1,2],layout:"line",exposureMs:2000,response:"match"}`
 - **דוגמאות:** (1) "איפה שני ברווזים?" ושתי תמונות: 1 ו-2. (2) "תני/תן לי את הקופסה עם אחד". (3) הבהוב של 2 כוכבים ואז התאמה לקבוצה של 2 עיגולים.
 
 #### `M.NUM.SUBIT.P3` — זיהוי מיידי של 1–3
 - **מטא:** T · `IL:GAN.NUM`(V) · C&S: Perceptual Subitizer (to 3) · CPA: P · קדם: `M.NUM.SUBIT.P2`
 - **תיאור:** אומר/ת או בוחר/ת את המספר של קבוצה של 1–3 שמופיעה ל-1,500ms. סידורים: שורה, משולש, אקראי.
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.SIZE_CONFOUND` · `MECH.PEEKABOO` · `T.SUBIT.FLASH{n:[1,3],layout:"line|triangle|random",exposureMs:1500}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.SIZE_CONFOUND` · `MECH.PEEKABOO` · `T.SUBIT.FLASH{n:[1,3],layout:"line|triangle|random",exposureMs:1500}`
 - **דוגמאות:** (1) שלוש גחליליות מהבהבות: "כמה היו?", עם שלוש תשובות מצוירות. (2) "קוקו!" שתי חיות מציצות מאחורי עץ. (3) קובייה רכה מתגלגלת ונעצרת על 3.
 
 #### `M.NUM.SUBIT.P4` — זיהוי מיידי עד 4
 - **מטא:** T+ · `IL:GAN.NUM`(V) · C&S: Perceptual Subitizer to 4 · CPA: P · קדם: `M.NUM.SUBIT.P3`
 - **תיאור:** מזהה 1–4 בהבהוב של 1,000ms. ב-4 משתמשים בסידור ריבועי (כמו בקובייה), ואחר כך בסידור אקראי.
-- **טעויות · מכניקות · תבנית:** `E.NEAR` · `MECH.PEEKABOO` · `T.SUBIT.FLASH{n:[1,4],layout:"dice|random",exposureMs:1000}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` · `MECH.PEEKABOO` · `T.SUBIT.FLASH{n:[1,4],layout:"dice|random",exposureMs:1000}`
 - **דוגמאות:** (1) 4 נקודות בסידור קובייה. (2) 3 מול 4: "איפה יש ארבע?". (3) 4 פטריות מפוזרות מופיעות לרגע.
 
 #### `M.NUM.SUBIT.P5` — זיהוי מיידי עד 5
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Perceptual Subitizer to 5 · CPA: P · קדם: `M.NUM.SUBIT.P4`
 - **תיאור:** מזהה 1–5 בהבהוב של 700ms. 5 מופיע בסידור קובייה או בשורה.
-- **טעויות · מכניקות · תבנית:** `E.NEAR` (4↔5) · `MECH.PEEKABOO`, `MECH.PATH_RACE` (קובייה) · `T.SUBIT.FLASH{n:[1,5],layout:"dice|line|random",exposureMs:700}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` (4↔5) · `MECH.PEEKABOO`, `MECH.PATH_RACE` (קובייה) · `T.SUBIT.FLASH{n:[1,5],layout:"dice|line|random",exposureMs:700}`
 - **דוגמאות:** (1) קוביית המרוץ נוחתת על 5, ומזיזים 5 בלי לספור את הנקודות. (2) "כמה גחליליות היו?" עם תשובות 3/4/5. (3) יד עם 5 אצבעות פרושות מול 4.
 
 #### `M.NUM.SUBIT.C5` — סוביטיזציה מושגית עד 5 ("רואים חלקים")
-- **מטא:** G · `IL:GAN.NUM`(V) · C&S: Conceptual Subitizer to 5 · CPA: P · MP: +`O.REP` · קדם: `M.NUM.SUBIT.P5`
+- **מטא:** G · `IL:GAN.NUM`(V) · C&S: Conceptual Subitizer to 5 · CPA: P · קדם: `M.NUM.SUBIT.P5`
 - **תיאור:** רואה 5 כ"2 ו-3" או "4 ו-1" ואומר/ת את הסכום בלי לספור. הקבוצות צבועות בשני צבעים.
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.COUNT_ALL` (זמן ארוך, נרשם בלי עונש) · `MECH.PEEKABOO` · `T.SUBIT.FLASH{n:[3,5],layout:"twoColor",exposureMs:1200,ask:"total|parts"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.COUNT_ALL` (זמן ארוך, נרשם בלי עונש) · `MECH.PEEKABOO` · `T.SUBIT.FLASH{n:[3,5],layout:"twoColor",exposureMs:1200,ask:"total|parts"}`
 - **דוגמאות:** (1) 2 אדומות ו-3 כחולות: "כמה בסך הכול?". (2) "ראיתי שתיים ועוד…" ← "שלוש". (3) שתי ידיים: 4 אצבעות ועוד 1.
 
 #### `M.NUM.SUBIT.C10` — סוביטיזציה מושגית עד 10 (מסגרת עשר, אצבעות, זוגות קוביות)
-- **מטא:** G · `IL:GAN.NUM`(V) · C&S: Conceptual Subitizer to 10 · CPA: P · MP: +`O.REP` · קדם: `M.NUM.SUBIT.C5`, `M.NUM.COUNT.OBJ10`
+- **מטא:** G · `IL:GAN.NUM`(V) · C&S: Conceptual Subitizer to 10 · CPA: P · קדם: `M.NUM.SUBIT.C5`, `M.NUM.COUNT.OBJ10`
 - **תיאור:** מזהה כמות 6–10 במסגרת עשר ("5 ועוד 2"), בשתי ידיים או בזוג קוביות, בהבהוב של 1,500ms. המשוב מראה את המבנה: "חמש בשורה העליונה ועוד שתיים".
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.COUNT_ALL` · `MECH.PEEKABOO`, `MECH.TENFRAME_CART` · `T.SUBIT.FLASH{n:[6,10],layout:"tenframe|fingers|dicePair",exposureMs:1500}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.COUNT_ALL` · `MECH.PEEKABOO`, `MECH.TENFRAME_CART` · `T.SUBIT.FLASH{n:[6,10],layout:"tenframe|fingers|dicePair",exposureMs:1500}`
 - **דוגמאות:** (1) מסגרת עשר עם 7 (שורה מלאה ועוד 2): "כמה?". (2) ידיים: 5 ו-3. (3) שתי קוביות: 6 ו-4, ושואלים "כמה צעדים?" במרוץ.
 
 #### `M.NUM.SUBIT.FINGERS` — מספרים באצבעות
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Conceptual Subitizer (fingers) · CPA: C · MP: +דיווח עצמי · קדם: `M.NUM.SUBIT.C5`
 - **תיאור:** מראה N באצבעות בלי לספור אחת-אחת (במצלמה רק אם ההורה אישר, אחרת בהקשה על "הראיתי"), ומזהה תבנית אצבעות על המסך. EEF: אצבעות הן אמצעי המחשה.
-- **טעויות · מכניקות · תבנית:** `E.NEAR` · `MECH.PEEKABOO`, `MECH.HOME` · `T.SUBIT.FLASH{n:[1,10],layout:"fingers",response:"choose|showSelf"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` · `MECH.PEEKABOO`, `MECH.HOME` · `T.SUBIT.FLASH{n:[1,10],layout:"fingers",response:"choose|showSelf"}`
 - **דוגמאות:** (1) "הראה/הראי לי שש אצבעות". (2) תמונה של יד מלאה ועוד 2: "כמה?". (3) "כמה אצבעות מורמות בשתי הידיים של הדמות?" (8).
 
 #### `M.NUM.CARD.GIVE1` — "תן/תני אחד" (one-knower)
 - **מטא:** T · `IL:GAN.NUM`(V) · C&S: Producer (1) · CPA: C · קדם: `~M.NUM.SUBIT.P2`
 - **תיאור:** גורר/ת לגחלילית בדיוק פריט אחד מתוך ערימה. אם נגרר יותר, הדמות מחזירה בעדינות ("רק אחד, תודה!").
-- **טעויות · מכניקות · תבנית:** `E.GIVE_GRAB` · `MECH.FEED` · `T.GIVE.N{n:1,pile:[4,6]}`
+- **טעויות · מכניקות · תבנית:** `EM.GIVE_GRAB` · `MECH.FEED` · `T.GIVE.N{n:1,pile:[4,6]}`
 - **דוגמאות:** (1) "הארנב רוצה גזר אחד". (2) "שימו כדור אחד בסל". (3) "בובה אחת למיטה".
 
 #### `M.NUM.CARD.GIVE2` — נותן/ת בדיוק 2
 - **מטא:** T · `IL:GAN.NUM`(V) · C&S: Producer (2) · CPA: C · קדם: `M.NUM.CARD.GIVE1`, `M.NUM.SUBIT.P2`
 - **תיאור:** Give-N עם N=2, מעורבב עם N=1 כדי למנוע תשובה קבועה.
-- **טעויות · מכניקות · תבנית:** `E.GIVE_GRAB` · `MECH.FEED` · `T.GIVE.N{n:[1,2],pile:[5,6]}`
+- **טעויות · מכניקות · תבנית:** `EM.GIVE_GRAB` · `MECH.FEED` · `T.GIVE.N{n:[1,2],pile:[5,6]}`
 - **דוגמאות:** (1) "הדוב רוצה שני דגים". (2) "שתי עוגיות לבובה". (3) "שימו שני ענפים במדורה".
 
 #### `M.NUM.CARD.GIVE3` — נותן/ת בדיוק 3
 - **מטא:** T · `IL:GAN.NUM`(V) · C&S: Producer (3) · CPA: C · קדם: `M.NUM.CARD.GIVE2`, `M.NUM.SUBIT.P3`
 - **תיאור:** Give-N עם N בין 1 ל-3. הדמות סופרת בקול כל פריט שמגיע, ובסוף אומרת את הכמות: "שלושה גזרים!"
-- **טעויות · מכניקות · תבנית:** `E.GIVE_GRAB`, `E.NEAR` · `MECH.FEED` · `T.GIVE.N{n:[1,3],pile:[6,8]}`
+- **טעויות · מכניקות · תבנית:** `EM.GIVE_GRAB`, `EM.NEAR` · `MECH.FEED` · `T.GIVE.N{n:[1,3],pile:[6,8]}`
 - **דוגמאות:** (1) "שלושה גזרים לארנב". (2) "שתי כפיות". (3) "שלוש אבנים לבניית קן".
 
 #### `M.NUM.COUNT.TAG3` — אחד-לאחד עד 3
 - **מטא:** T · `IL:GAN.NUM`(V) · C&S: Corresponder · CPA: C · קדם: `M.NUM.COUNT.ROTE3`
 - **תיאור:** נוגע/ת בכל פריט פעם אחת בזמן הספירה. כל נגיעה מדליקה את הפריט ומשמיעה את המילה הבאה. נגיעה חוזרת באותו פריט לא נספרת, והפריט מהבהב בעדינות.
-- **טעויות · מכניקות · תבנית:** `E.1TO1_SKIP`, `E.1TO1_DOUBLE` · `MECH.TAP_COUNT` · `T.COUNT.OBJ{n:[1,3],layout:"line",lockTouched:true}`
+- **טעויות · מכניקות · תבנית:** `EM.1TO1_SKIP`, `EM.1TO1_DOUBLE` · `MECH.TAP_COUNT` · `T.COUNT.OBJ{n:[1,3],layout:"line",lockTouched:true}`
 - **דוגמאות:** (1) שלושה ניצוצות: נוגעים, ונדלק אחד בכל פעם. (2) שני פרחים בשורה. (3) שלוש ביצים בקן.
 
 #### `M.NUM.COUNT.TAG5` — אחד-לאחד עד 5
 - **מטא:** T · `IL:GAN.NUM`(V) · C&S: Counter (Small Numbers) · CPA: C · קדם: `M.NUM.COUNT.TAG3`, `M.NUM.COUNT.ROTE5`
 - **תיאור:** סופר/ת 1–5 פריטים בשורה ואחר כך במעגל. במעגל צריך לזכור מאיפה התחילו, והפריט הראשון מסומן בכוכב.
-- **טעויות · מכניקות · תבנית:** `E.1TO1_SKIP`, `E.1TO1_DOUBLE` · `MECH.TAP_COUNT` · `T.COUNT.OBJ{n:[3,5],layout:"line|circle",lockTouched:true}`
+- **טעויות · מכניקות · תבנית:** `EM.1TO1_SKIP`, `EM.1TO1_DOUBLE` · `MECH.TAP_COUNT` · `T.COUNT.OBJ{n:[3,5],layout:"line|circle",lockTouched:true}`
 - **דוגמאות:** (1) 5 בלונים בשורה. (2) 4 גחליליות סביב המדורה. (3) 5 צעדים על השביל.
 
 #### `M.NUM.COUNT.TAG10` — אחד-לאחד עד 10
 - **מטא:** T+ · `IL:GAN.NUM`(V) · C&S: Counter (10) · CPA: C · קדם: `M.NUM.COUNT.TAG5`, `M.NUM.COUNT.ROTE10`
 - **תיאור:** סופר/ת 6–10 פריטים בשורה, במערך ובפיזור. בפיזור, פריט שנספר נשאר מסומן.
-- **טעויות · מכניקות · תבנית:** `E.1TO1_SKIP`, `E.1TO1_DOUBLE`, `E.SEQ_SKIP` · `MECH.TAP_COUNT` · `T.COUNT.OBJ{n:[6,10],layout:"line|array|scatter",lockTouched:true}`
+- **טעויות · מכניקות · תבנית:** `EM.1TO1_SKIP`, `EM.1TO1_DOUBLE`, `EM.SEQ_SKIP` · `MECH.TAP_COUNT` · `T.COUNT.OBJ{n:[6,10],layout:"line|array|scatter",lockTouched:true}`
 - **דוגמאות:** (1) 8 צדפים מפוזרים. (2) 10 נרות (שורה). (3) 7 צללונים ישנים.
 
 #### `M.NUM.CARD.LAST5` — "כמה?" = המילה האחרונה (העיקרון הקרדינלי)
 - **מטא:** T · `IL:GAN.NUM`(V) · C&S: Counter (Small Numbers) עם קרדינליות · CPA: C · קדם: `M.NUM.COUNT.TAG5`, `M.NUM.CARD.GIVE3`
 - **תיאור:** אחרי הספירה, עונה ל"כמה יש?" במילה האחרונה, בלי לספור שוב. לאסו מקיף את כל הקבוצה, והקול אומר "שְׁלוֹשָׁה! יֵשׁ שְׁלוֹשָׁה ___".
-- **טעויות · מכניקות · תבנית:** `E.CARD_RECOUNT` · `MECH.TAP_COUNT` (לאסו) · `T.COUNT.OBJ{n:[2,5],ask:"howMany",response:"choose"}`
+- **טעויות · מכניקות · תבנית:** `EM.CARD_RECOUNT` · `MECH.TAP_COUNT` (לאסו) · `T.COUNT.OBJ{n:[2,5],ask:"howMany",response:"choose"}`
 - **דוגמאות:** (1) סופרים 4 חתולים, ואז "כמה חתולים?" עם תשובות 3/4. (2) "ספרת חמישה ניצוצות. כמה ניצוצות יש במדורה?". (3) "שלוש בובות במיטה. כמה בובות?".
 
 #### `M.NUM.CARD.GIVE5` — נותן/ת N עד 5 (cardinal-principle knower)
 - **מטא:** T · `IL:GAN.NUM`(V) · C&S: Producer (Small Numbers) · CPA: C · קדם: `M.NUM.CARD.LAST5`
 - **תיאור:** Give-N עם N בין 1 ל-5, מערימה של 8–10. הצלחה ב-N=4/5 מסמנת שהעיקרון הקרדינלי נרכש, ואז נפתחות ספרות.
-- **טעויות · מכניקות · תבנית:** `E.GIVE_GRAB`, `E.NEAR` · `MECH.FEED` · `T.GIVE.N{n:[1,5],pile:[8,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.GIVE_GRAB`, `EM.NEAR` · `MECH.FEED` · `T.GIVE.N{n:[1,5],pile:[8,10]}`
 - **דוגמאות:** (1) "חמישה דגים לפינגווין". (2) "ארבע גחליליות לפנס". (3) "שלושה בלוקים למגדל".
 
 #### `M.NUM.COMP.PERCEPT` — יותר/פחות במבט
 - **מטא:** T · `IL:GAN.QTY`(V) · C&S: Perceptual Comparer · CPA: C · קדם: `M.NUM.SUBIT.P2`
 - **תיאור:** בוחר/ת "איפה יש יותר?" כשההבדל גדול (יחס 1:3 לפחות). גודל הפריטים זהה.
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND` · `MECH.DUEL` · `T.COMP.SETS{a:[1,3],ratioMin:3,sizeConfound:false}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND` · `MECH.DUEL` · `T.COMP.SETS{a:[1,3],ratioMin:3,sizeConfound:false}`
 - **דוגמאות:** (1) צלחת עם 1 עוגייה מול 4: "איפה יותר?". (2) "באיזה עץ פחות תפוחים?". (3) "מי קיבל יותר בלונים?".
 
 #### `M.NUM.COMP.MATCH` — התאמה אחד-לאחד ("לכל אחד יש?")
 - **מטא:** T · `IL:GAN.QTY`(V) · C&S: Matching Comparer · CPA: C · קדם: `M.NUM.COUNT.TAG3`
 - **תיאור:** גורר/ת לכל דמות פריט אחד (כוס לכל בובה). אחר כך עונה: האם יש מספיק, יותר או חסר.
-- **טעויות · מכניקות · תבנית:** `E.1TO1_DOUBLE`, `E.SIZE_CONFOUND` · `MECH.FEED`, `MECH.SORT_BINS` · `T.COMP.MATCH{n:[2,5],surplus:[-2,2]}`
+- **טעויות · מכניקות · תבנית:** `EM.1TO1_DOUBLE`, `EM.SIZE_CONFOUND` · `MECH.FEED`, `MECH.SORT_BINS` · `T.COMP.MATCH{n:[2,5],surplus:[-2,2]}`
 - **דוגמאות:** (1) כובע לכל גמד: "חסר כובע?". (2) צלחת לכל ילד בשולחן שבת. (3) כרית לכל צללון ישן.
 
 #### `M.NUM.NUMERAL.ID5` — מכירים את הספרות 1–5
 - **מטא:** T+ · `IL:GAN.NUM`(V) · C&S: Numeral recognizer (BK) · CPA: P→A · קדם: `M.NUM.CARD.GIVE5`
 - **תיאור:** שומע/ת מספר ונוגע/ת בספרה. מתאים/ה ספרה לכמות עד 5. אין כתיבה. (לפי v1: לא דוחפים ספרות מעבר ל-5 לפני שהקרדינליות יציבה.)
-- **טעויות · מכניקות · תבנית:** `E.NUMERAL_CONFUSE` · `MECH.FEED` · `T.NUMERAL.ID{range:[1,5],dir:"hear→numeral|numeral→set"}`
+- **טעויות · מכניקות · תבנית:** `EM.NUMERAL_CONFUSE` · `MECH.FEED` · `T.NUMERAL.ID{range:[1,5],dir:"hear→numeral|numeral→set"}`
 - **דוגמאות:** (1) "איפה הספרה שלוש?" ושלוש אבנים עם ספרות. (2) הגחלילית עם הספרה 4 רוצה 4 ניצוצות. (3) "גע/געי ב-2".
 
 #### `M.NUM.COUNT.ROTE20` — ספירה בעל-פה עד 20
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Counter (10+) · CPA: C · קדם: `M.NUM.COUNT.ROTE10`
 - **תיאור:** סופר/ת 1–20 בצורה הנקבית המופשטת ("אחת-עשרה, שתים-עשרה…"), גם מנקודת התחלה כלשהי. שימת לב למעבר "תשע-עשרה → עשרים".
-- **טעויות · מכניקות · תבנית:** `E.SEQ_SKIP` (14↔15, 16↔17), `E.TEEN_DECADE` · `MECH.SONG`, `MECH.PATH_RACE` · `T.COUNT.SEQ{from:[1,15],to:20,mode:"complete"}`
+- **טעויות · מכניקות · תבנית:** `EM.SEQ_SKIP` (14↔15, 16↔17), `EM.TEEN_DECADE` · `MECH.SONG`, `MECH.PATH_RACE` · `T.COUNT.SEQ{from:[1,15],to:20,mode:"complete"}`
 - **דוגמאות:** (1) "שתים-עשרה, שלוש-עשרה, …". (2) "מה בא אחרי תשע-עשרה?". (3) "שיר המדרגות" עד 20 על שביל מגדלור.
 
 #### `M.NUM.COUNT.ROTE30` — ספירה בעל-פה עד 30 ומעבר עשרות
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Counter to 100 (חלקי) · CPA: C→P · קדם: `M.NUM.COUNT.ROTE20`
 - **תיאור:** סופר/ת עד 30 ועובר/ת עשרות ("עשרים ותשע ← שלושים"). מתחיל/ה לראות את המבנה "עשרים ו-x".
-- **טעויות · מכניקות · תבנית:** `E.TEEN_DECADE` (29→20) · `MECH.SONG`, `MECH.PATH_RACE` · `T.COUNT.SEQ{from:[15,27],to:30,mode:"complete",decadeCross:true}`
+- **טעויות · מכניקות · תבנית:** `EM.TEEN_DECADE` (29→20) · `MECH.SONG`, `MECH.PATH_RACE` · `T.COUNT.SEQ{from:[15,27],to:30,mode:"complete",decadeCross:true}`
 - **דוגמאות:** (1) "עשרים ושמונה, עשרים ותשע, …" ← "שלושים". (2) "מה בא לפני עשרים?". (3) ספירת 30 צעדים במסדרון (`MECH.HOME`).
 
 #### `M.NUM.COUNT.ROTE100` — ספירה עד 100
 - **מטא:** G+ · `IL:G1.N100`(V) · C&S: Counter to 100 · CPA: P (טבלת 100) · קדם: `M.NUM.COUNT.ROTE30`, `~M.NUM.COUNT.SKIP10`
 - **תיאור:** ממשיך/ה לספור מכל מספר עד 100, כולל מעברי עשרות. מוצגת טבלת מאה (שורות של 10).
-- **טעויות · מכניקות · תבנית:** `E.TEEN_DECADE`, `E.SEQ_SKIP` · `MECH.PATH_RACE` (לוח 100) · `T.COUNT.SEQ{from:[20,95],to:100,mode:"complete",decadeCross:true}`
+- **טעויות · מכניקות · תבנית:** `EM.TEEN_DECADE`, `EM.SEQ_SKIP` · `MECH.PATH_RACE` (לוח 100) · `T.COUNT.SEQ{from:[20,95],to:100,mode:"complete",decadeCross:true}`
 - **דוגמאות:** (1) "שישים ושמונה, …, …". (2) "מה בא אחרי שבעים ותשע?". (3) מרוץ על לוח 100 עם הטלה.
 
 #### `M.NUM.COUNT.ON` — ממשיכים לספור מ-N
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Counter from N (N+1, N−1) · CPA: C→P · קדם: `M.NUM.COUNT.ROTE20`, `M.NUM.CARD.GIVE5`
 - **תיאור:** מתחיל/ה לספור מהמספר הנתון ולא מ-1, למשל אחרי מכסה מסומן ב-"6": "שבע, שמונה". זו הליבה של ספירה ממשיכה בחיבור.
-- **טעויות · מכניקות · תבנית:** `E.COUNT_ALL` (מזוהה מזמן ומהקשות), `E.COUNT_ON_INCL` · `MECH.PATH_RACE`, `MECH.HIDE_HUT` · `T.COUNT.SEQ{from:[3,15],steps:[1,4],mode:"countOn"}`
+- **טעויות · מכניקות · תבנית:** `EM.COUNT_ALL` (מזוהה מזמן ומהקשות), `EM.COUNT_ON_INCL` · `MECH.PATH_RACE`, `MECH.HIDE_HUT` · `T.COUNT.SEQ{from:[3,15],steps:[1,4],mode:"countOn"}`
 - **דוגמאות:** (1) בכד יש 5, ונוספים 2: "חמש… שש, שבע". (2) במרוץ: עומדים על 8 והקובייה 3: "תשע, עשר, אחת-עשרה". (3) "התחילו לספור משתים-עשרה, שלושה צעדים".
 
 #### `M.NUM.COUNT.NEXTPREV` — מספר עוקב וקודם
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Counter from N · CPA: P→A · קדם: `M.NUM.COUNT.ON`
 - **תיאור:** אומר/ת מיד מה בא אחרי N ומה לפניו (עד 20), בלי לספור מ-1. ב-G+ עד 100.
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.TEEN_DECADE` · `MECH.PATH_RACE`, `MECH.NUMLINE_JUMP` · `T.COUNT.SEQ{from:[1,19],mode:"next|prev"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.TEEN_DECADE` · `MECH.PATH_RACE`, `MECH.NUMLINE_JUMP` · `T.COUNT.SEQ{from:[1,19],mode:"next|prev"}`
 - **דוגמאות:** (1) "איזה מספר בא אחרי 14?". (2) "מי השכן שלפני 10?". (3) "הגחלילית על 7 קופצת אחורה אחת. לאן?".
 
 #### `M.NUM.COUNT.BACK10` — ספירה לאחור מ-10
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Counter Backward from 10 · CPA: C · קדם: `M.NUM.COUNT.ROTE10`
 - **תיאור:** סופר/ת לאחור 10→0 ("שיגור"), וגם מנקודת אמצע.
-- **טעויות · מכניקות · תבנית:** `E.SEQ_SKIP`, `E.SEQ_REPEAT` · `MECH.SONG` · `T.COUNT.SEQ{from:10,to:0,dir:-1,mode:"complete"}`
+- **טעויות · מכניקות · תבנית:** `EM.SEQ_SKIP`, `EM.SEQ_REPEAT` · `MECH.SONG` · `T.COUNT.SEQ{from:10,to:0,dir:-1,mode:"complete"}`
 - **דוגמאות:** (1) "עשר, תשע, שמונה, …". (2) "שש, חמש, …". (3) "כמה ניצוצות נשארו?" כשהם כבים אחד-אחד מ-10.
 
 #### `M.NUM.COUNT.BACK20` — ספירה לאחור מ-20
 - **מטא:** G+ · `IL:G1.AS20`(I) · C&S: Counter Backward (20) · CPA: P · קדם: `M.NUM.COUNT.BACK10`, `M.NUM.COUNT.ROTE20`
 - **תיאור:** סופר/ת לאחור מכל מספר עד 20, כולל המעבר "אחת-עשרה, עשר, תשע". זה הבסיס לחיסור בספירה לאחור.
-- **טעויות · מכניקות · תבנית:** `E.TEEN_DECADE`, `E.SEQ_SKIP` · `MECH.PATH_RACE` (הליכה אחורה) · `T.COUNT.SEQ{from:[11,20],dir:-1,steps:[3,6]}`
+- **טעויות · מכניקות · תבנית:** `EM.TEEN_DECADE`, `EM.SEQ_SKIP` · `MECH.PATH_RACE` (הליכה אחורה) · `T.COUNT.SEQ{from:[11,20],dir:-1,steps:[3,6]}`
 - **דוגמאות:** (1) "שלוש-עשרה, שתים-עשרה, …". (2) "מ-20 אחורה ארבעה צעדים". (3) "אחת-עשרה, ואחריה (אחורה)?" ← "עשר".
 
 #### `M.NUM.COUNT.OBJ10` — סופרים ויוצרים קבוצה עד 10
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Counter and Producer (10+) · CPA: C→P · קדם: `M.NUM.COUNT.TAG10`, `M.NUM.CARD.GIVE5`
 - **תיאור:** סופר/ת עד 10 פריטים בכל סידור ועונה "כמה". נותן/ת N עד 10 מערימה.
-- **טעויות · מכניקות · תבנית:** `E.1TO1_SKIP`, `E.1TO1_DOUBLE`, `E.CARD_RECOUNT` · `MECH.TAP_COUNT`, `MECH.FEED` · `T.COUNT.OBJ{n:[5,10],layout:"any"}` + `T.GIVE.N{n:[5,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.1TO1_SKIP`, `EM.1TO1_DOUBLE`, `EM.CARD_RECOUNT` · `MECH.TAP_COUNT`, `MECH.FEED` · `T.COUNT.OBJ{n:[5,10],layout:"any"}` + `T.GIVE.N{n:[5,10]}`
 - **דוגמאות:** (1) "כמה צללונים ישנים מתחת לעץ?" (9 מפוזרים). (2) "שימו 8 גזעים בעגלה". (3) "כמה כוכבים בשמיים?" (7).
 
 #### `M.NUM.COUNT.OBJ20` — סופרים עד 20
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Counter (20) · CPA: C→P · קדם: `M.NUM.COUNT.OBJ10`, `M.NUM.COUNT.ROTE20`
 - **תיאור:** סופר/ת 11–20 פריטים. מעודדים לקבץ ל"עשר ועוד", ושתי מסגרות עשר מוצעות ככלי עזר.
-- **טעויות · מכניקות · תבנית:** `E.1TO1_SKIP`, `E.SEQ_SKIP`, `E.TEEN_DECADE` · `MECH.TAP_COUNT`, `MECH.TENFRAME_CART` · `T.COUNT.OBJ{n:[11,20],layout:"scatter|array",offerFrames:true}`
+- **טעויות · מכניקות · תבנית:** `EM.1TO1_SKIP`, `EM.SEQ_SKIP`, `EM.TEEN_DECADE` · `MECH.TAP_COUNT`, `MECH.TENFRAME_CART` · `T.COUNT.OBJ{n:[11,20],layout:"scatter|array",offerFrames:true}`
 - **דוגמאות:** (1) "כמה גחליליות בצנצנת?" (14). (2) "שימו 17 אבנים בשביל". (3) "כמה רגליים יש לארבעה כלבים?" עם תמונה (16).
 
 #### `M.NUM.COUNT.SKIP10` — ספירה בעשרות
 - **מטא:** G+ · `IL:G1.TENS`(V) · C&S: Skip Counter by 10s · CPA: C→P · קדם: `M.NUM.COUNT.ROTE30`
 - **תיאור:** סופר/ת "עשר, עשרים, שלושים… מאה", גם עם צרורות של 10 מקלות.
-- **טעויות · מכניקות · תבנית:** `E.SEQ_SKIP` (60↔70) · `MECH.SONG`, `MECH.PV_BANK` · `T.COUNT.SEQ{step:10,from:10,to:100}`
+- **טעויות · מכניקות · תבנית:** `EM.SEQ_SKIP` (60↔70) · `MECH.SONG`, `MECH.PV_BANK` · `T.COUNT.SEQ{step:10,from:10,to:100}`
 - **דוגמאות:** (1) "עשר, עשרים, …, …". (2) כמה גפרורים ב-4 צרורות של 10. (3) "שישים, ואחר כך?".
 
 #### `M.NUM.COUNT.SKIP2` — ספירה בדילוגים של 2
 - **מטא:** G+ · `IL:G1.N100`(I) · C&S: Skip Counter · CPA: C→P · קדם: `M.NUM.COUNT.ROTE20`
 - **תיאור:** סופר/ת "שתיים, ארבע, שש… עשרים", למשל זוגות גרביים או זוגות נעליים.
-- **טעויות · מכניקות · תבנית:** `E.SKIP_SLIP` · `MECH.SONG`, `MECH.PATH_RACE` (צפרדע קופצת 2) · `T.COUNT.SEQ{step:2,from:[0,2],to:20}`
+- **טעויות · מכניקות · תבנית:** `EM.SKIP_SLIP` · `MECH.SONG`, `MECH.PATH_RACE` (צפרדע קופצת 2) · `T.COUNT.SEQ{step:2,from:[0,2],to:20}`
 - **דוגמאות:** (1) "כמה גרביים ב-5 זוגות?". (2) "שתיים, ארבע, …". (3) הצפרדע קופצת בשתיים מ-0. איפה היא אחרי 4 קפיצות?
 
 #### `M.NUM.COUNT.CONSERVE` — שימור כמות
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: Number Conserver (מוקדם) · CPA: C · קדם: `M.NUM.COUNT.OBJ10`
 - **תיאור:** יודע/ת שמספר הפריטים לא משתנה כשמפזרים או מקרבים אותם, ועונה בלי לספור שוב ("עדיין 7").
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND` (השורה הארוכה "יותר") · `MECH.DUEL` · `T.COMP.SETS{a:[4,9],equal:true,transform:"spread|bunch"}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND` (השורה הארוכה "יותר") · `MECH.DUEL` · `T.COMP.SETS{a:[4,9],equal:true,transform:"spread|bunch"}`
 - **דוגמאות:** (1) 6 בלונים מתפזרים לאורך השמיים: "עכשיו יש יותר, פחות או אותו דבר?". (2) שתי שורות של 5 כפתורים, אחת מרווחת. (3) 8 גחליליות מתקבצות לכדור.
 
 #### `M.NUM.NUMERAL.ID10` — ספרות 0–10
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Numeral recognizer · CPA: P→A · קדם: `M.NUM.NUMERAL.ID5`, `M.NUM.COUNT.OBJ10`
 - **תיאור:** מזהה ספרות 0–10, בשמיעה ובהתאמה לכמות. 0 מוצג כ"אין בכלל".
-- **טעויות · מכניקות · תבנית:** `E.NUMERAL_CONFUSE` (6↔9, 2↔5) · `MECH.FEED`, `MECH.PATH_RACE` · `T.NUMERAL.ID{range:[0,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.NUMERAL_CONFUSE` (6↔9, 2↔5) · `MECH.FEED`, `MECH.PATH_RACE` · `T.NUMERAL.ID{range:[0,10]}`
 - **דוגמאות:** (1) "איפה 9?" (6/9/8). (2) פנס עם המספר 7 צריך 7 ניצוצות. (3) "על איזו משבצת כתוב 0?".
 
 #### `M.NUM.NUMERAL.ID20` — ספרות 11–20
 - **מטא:** G · `IL:G1.N100`(V) · C&S: — · CPA: A · קדם: `M.NUM.NUMERAL.ID10`, `M.NUM.COUNT.ROTE20`
 - **תיאור:** מזהה ומקריא/ה 11–20, ומבחין/ה בין 12 ל-21 ובין 13 ל-31.
-- **טעויות · מכניקות · תבנית:** `E.REVERSE_DIGITS`, `E.TEEN_WRITE` · `MECH.PATH_RACE` · `T.NUMERAL.ID{range:[11,20],distractors:["reverse"]}`
+- **טעויות · מכניקות · תבנית:** `EM.REVERSE_DIGITS`, `EM.TEEN_WRITE` · `MECH.PATH_RACE` · `T.NUMERAL.ID{range:[11,20],distractors:["reverse"]}`
 - **דוגמאות:** (1) "איפה שבע-עשרה?" (17/71/7). (2) "איזו משבצת היא שתים-עשרה?". (3) "מה כתוב על הדגל?" (15).
 
 #### `M.NUM.NUMERAL.WRITE10` — כותבים ספרות 0–10 (בנייר)
 - **מטא:** G · `IL:GAN.NUM`(V) · CPA: A · MP: `MP.X` + אישור הורה בדף המודפס · קדם: `M.NUM.NUMERAL.ID10`
 - **תיאור:** כתיבה חופשית של ספרות בדף מודפס: קודם דוגמה גדולה, אחר כך העתקה חופשית (בלי מעקב נקודות בלבד). באפליקציה יש רק חימום של התחקות.
-- **טעויות · מכניקות · תבנית:** `E.NUMERAL_CONFUSE` (ספרות בהיפוך מראה) · `MECH.PRINT` · `T.NUMERAL.WRITE{range:[0,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.NUMERAL_CONFUSE` (ספרות בהיפוך מראה) · `MECH.PRINT` · `T.NUMERAL.WRITE{range:[0,10]}`
 - **דוגמאות:** (1) "מגילת מספרים": כותבים 3 ומציירים 3 כוכבים. (2) "כתבו את המספר של הבית שלכם". (3) "כמה אנשים במשפחה? כתבו".
 
 #### `M.NUM.NUMERAL.TRIPLE` — נקודות ↔ ספרה ↔ מילה
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: — · CPA: P→A · MP: +`O.REP` · קדם: `M.NUM.NUMERAL.ID10`, `M.NUM.SUBIT.C5`
 - **תיאור:** משלים/ה שלישייה: קבוצת נקודות, ספרה ומילה מושמעת (קוד משולש, The Number Race).
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.NUMERAL_CONFUSE` · `MECH.DUEL`, `MECH.FORGE` · `T.NUMERAL.TRIPLE{range:[1,10],missing:"dots|numeral|word"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.NUMERAL_CONFUSE` · `MECH.DUEL`, `MECH.FORGE` · `T.NUMERAL.TRIPLE{range:[1,10],missing:"dots|numeral|word"}`
 - **דוגמאות:** (1) שומעים "שמונה" ובוחרים ספרה. (2) רואים 6 נקודות ובוחרים מילה מושמעת. (3) רואים "4" ובוחרים מסגרת עשר.
 
 #### `M.NUM.COMP.COUNT10` — משווים קבוצות בספירה
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: Counting Comparer (10) · CPA: C→P · קדם: `M.NUM.COUNT.OBJ10`, `M.NUM.COMP.PERCEPT`
 - **תיאור:** "איפה יותר?" כשההבדל קטן (6 מול 7) או כשהגודל מטעה (5 גדולים מול 7 קטנים). מעודדים לספור את שתי הקבוצות.
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND` · `MECH.DUEL` · `T.COMP.SETS{a:[3,10],ratioMin:1.1,sizeConfound:[0,1]}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND` · `MECH.DUEL` · `T.COMP.SETS{a:[3,10],ratioMin:1.1,sizeConfound:[0,1]}`
 - **דוגמאות:** (1) 7 עכברים קטנים מול 5 פילים: "איפה יש יותר חיות?". (2) "באיזו צנצנת פחות גחליליות?" (8 מול 9). (3) "יש אותו מספר?" (6 ו-6 בסידורים שונים).
 
 #### `M.NUM.COMP.SYM10` — איזה מספר גדול יותר (עד 10, ב-G+ עד 20)
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Mental Number Line to 10 · CPA: A · קדם: `M.NUM.NUMERAL.ID10`, `M.NUM.COMP.COUNT10`
 - **תיאור:** בוחר/ת את הגדול או הקטן משתי ספרות בלי לספור. מרחק קטן (8 מול 9) קשה ממרחק גדול. ב-G+ הטווח מגיע ל-20.
-- **טעויות · מכניקות · תבנית:** `E.NUMERAL_CONFUSE`, `E.REVERSE_DIGITS` (12↔21 ב-G+) · `MECH.DUEL` · `T.COMP.SYM{range:[0,10],dist:[1,8]; G+:range:[0,20]}`
+- **טעויות · מכניקות · תבנית:** `EM.NUMERAL_CONFUSE`, `EM.REVERSE_DIGITS` (12↔21 ב-G+) · `MECH.DUEL` · `T.COMP.SYM{range:[0,10],dist:[1,8]; G+:range:[0,20]}`
 - **דוגמאות:** (1) "איזה לפיד חזק יותר, 6 או 4?". (2) "בחרו את הקטן: 9 / 7". (3) "מה גדול יותר: 13 או 17?" (G+).
 
 #### `M.NUM.COMP.DIFF10` — "בכמה יותר?"
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: Counting Comparer + Find Change · CPA: C→P · קדם: `M.NUM.COMP.COUNT10`, `~M.OPS.BOND.MISSING`
 - **תיאור:** מוצא/ת את ההפרש בין שתי קבוצות עד 10 בהתאמה (המודל: שתי שורות מיושרות), ואחר כך בלי התאמה.
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP` (מחבר/ת את שתי הקבוצות), `E.NEAR` · `MECH.DUEL` · `T.COMP.SETS{a:[2,10],ask:"diff",aligned:[true,false]}` + `T.COMP.MATCH{n:[2,10],surplus:[-5,5]}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP` (מחבר/ת את שתי הקבוצות), `EM.NEAR` · `MECH.DUEL` · `T.COMP.SETS{a:[2,10],ask:"diff",aligned:[true,false]}` + `T.COMP.MATCH{n:[2,10],surplus:[-5,5]}`
 - **דוגמאות:** (1) לדני 7 מדבקות, לנועה 4: "כמה יותר לדני?". (2) שורת 6 כוסות מול 9 צלחות: "כמה צלחות בלי כוס?". (3) "כמה חסרים כדי שיהיה אותו דבר?".
 
 #### `M.NUM.LINE.RACE10` — מרוץ השביל 0–10
 - **מטא:** G (וגם T+ ב-1–5) · `IL:GAN.NUM`(V) · C&S: Ordinal Counter/Mental Number Line · CPA: C→P · MP: מינון (§5.2) + `MP.G` על פריט ההערכה · קדם: `M.NUM.COUNT.ROTE10`, `M.NUM.COUNT.TAG10`
 - **תיאור:** משחק לוח ליניארי במספרים 1–10. בכל צעד אומרים בקול את מספר המשבצת וממשיכים מהמשבצת הנוכחית. 4 מרוצים לפחות על פני שבועיים.
-- **טעויות · מכניקות · תבנית:** `E.COUNT_ALL` (מתחיל/ה מ-1), `E.LINE_TICKS` (סופר/ת את המשבצת הנוכחית) · `MECH.PATH_RACE`, `MECH.COOP_FIRE` · `T.BOARD.RACE{range:[0,10],die:"1-2|1-3",sayAloud:true}`
+- **טעויות · מכניקות · תבנית:** `EM.COUNT_ALL` (מתחיל/ה מ-1), `EM.LINE_TICKS` (סופר/ת את המשבצת הנוכחית) · `MECH.PATH_RACE`, `MECH.COOP_FIRE` · `T.BOARD.RACE{range:[0,10],die:"1-2|1-3",sayAloud:true}`
 - **דוגמאות:** (1) עומדים על 4, סביבון 2: נוגעים ב-5 ("חמש") ובשש ("שש"). (2) "מי קרוב יותר למגדלור, 7 או 9?" באמצע המרוץ. (3) מרוץ משפחתי: K2 על שביל 1–10 ליד K1.
 
 #### `M.NUM.LINE.EST10` — "איפה גר המספר?" 0–10
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Mental Number Line to 10 · CPA: P · MP: שגיאה ≤10% מהטווח ב-7/8 · קדם: `M.NUM.LINE.RACE10`, `M.NUM.NUMERAL.ID10`
 - **תיאור:** גורר/ת סמן למיקום של N על ישר 0–10 שרק הקצוות שלו מסומנים. המשוב מראה את הגיבור קופץ למקום האמיתי, ואת המרחק כ"גשר" צבעוני.
-- **טעויות · מכניקות · תבנית:** `E.LINE_LOG` (צפיפות בצד ימין) · `MECH.NUMLINE_JUMP` · `T.NUMLINE.PLACE{min:0,max:10,ticks:"ends|halves",target:[1,9]}`
+- **טעויות · מכניקות · תבנית:** `EM.LINE_LOG` (צפיפות בצד ימין) · `MECH.NUMLINE_JUMP` · `T.NUMLINE.PLACE{min:0,max:10,ticks:"ends|halves",target:[1,9]}`
 - **דוגמאות:** (1) "איפה 5?" על ישר ריק. (2) "איפה 8?". (3) "שימו את הגחלילית על 2".
 
 #### `M.NUM.LINE.RACE20` — מרוץ השביל 0–20
 - **מטא:** G · `IL:G1.AS20`(I) · C&S: Mental Number Line · CPA: P · MP: מינון · קדם: `M.NUM.LINE.RACE10`, `M.NUM.COUNT.ROTE20`
 - **תיאור:** כמו RACE10, אבל על 20 משבצות וקובייה 1–6. ב-10 יש "גשר" מודגש.
-- **טעויות · מכניקות · תבנית:** `E.COUNT_ALL`, `E.TEEN_DECADE` · `MECH.PATH_RACE` · `T.BOARD.RACE{range:[0,20],die:"1-6"}`
+- **טעויות · מכניקות · תבנית:** `EM.COUNT_ALL`, `EM.TEEN_DECADE` · `MECH.PATH_RACE` · `T.BOARD.RACE{range:[0,20],die:"1-6"}`
 - **דוגמאות:** (1) על 12, קובייה 4. (2) "קלף קסם: חזרו 2 אחורה". (3) "כמה חסר עד 20?" לפני ההטלה האחרונה.
 
 #### `M.NUM.LINE.EST20` — אומדן על 0–20
 - **מטא:** G · `IL:G1.AS20`(I) · C&S: Mental Number Line · CPA: P · MP: שגיאה ≤8% · קדם: `M.NUM.LINE.EST10`, `M.NUM.LINE.RACE20`
 - **תיאור:** ממקם/ת 0–20 על ישר עם ציון אמצע (10) ובלעדיו.
-- **טעויות · מכניקות · תבנית:** `E.LINE_LOG` · `MECH.NUMLINE_JUMP` · `T.NUMLINE.PLACE{min:0,max:20,ticks:"ends|mid",target:[1,19]}`
+- **טעויות · מכניקות · תבנית:** `EM.LINE_LOG` · `MECH.NUMLINE_JUMP` · `T.NUMLINE.PLACE{min:0,max:20,ticks:"ends|mid",target:[1,19]}`
 - **דוגמאות:** (1) "איפה 15?". (2) "איפה 3?". (3) "איזה מספר מסומן כאן?" (קריאה, בערך 18).
 
 #### `M.NUM.LINE.RACE100` — מרוץ על לוח 100
 - **מטא:** G+ / S-R · `IL:G1.N100`(V) · C&S: Mental Number Line to 100 · CPA: P · MP: מינון · קדם: `M.NUM.LINE.RACE20`, `M.NUM.COUNT.ROTE100`
 - **תיאור:** לוח 10×10 בצורת נחש. קלפי "+10" ו-"−10" מלמדים קפיצה של שורה.
-- **טעויות · מכניקות · תבנית:** `E.TEEN_DECADE`, `E.COUNT_ALL` · `MECH.PATH_RACE` · `T.BOARD.RACE{range:[1,100],die:"1-6",cards:["+10","-10"]}`
+- **טעויות · מכניקות · תבנית:** `EM.TEEN_DECADE`, `EM.COUNT_ALL` · `MECH.PATH_RACE` · `T.BOARD.RACE{range:[1,100],die:"1-6",cards:["+10","-10"]}`
 - **דוגמאות:** (1) על 37, קלף +10 ← 47. (2) על 58, קובייה 5 ← "חמישים ותשע, שישים…". (3) "מי יגיע ראשון ל-100?" מול ענק ידידותי (בלי הפסד).
 
 #### `M.NUM.ORD.TEN` — מספרים סודרים: ראשון–עשירי
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Ordinal Counter · CPA: C→P · קדם: `M.NUM.COUNT.ROTE10`, `M.NUM.COUNT.OBJ10`
 - **תיאור:** מזהה ומציין/ת מקום בתור (ראשון/ה…עשירי/ת), בהתאמה למגדר הדמות, ומבחין/ה בין "השלישי" ל"שלושה".
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.CARD_RECOUNT` (מסמן/ת שלושה פריטים במקום את השלישי) · `MECH.PATH_RACE`, `MECH.SORT_BINS` · `T.ORD.POS{n:[1,10],gender:"m|f",ask:"which|whichPos"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.CARD_RECOUNT` (מסמן/ת שלושה פריטים במקום את השלישי) · `MECH.PATH_RACE`, `MECH.SORT_BINS` · `T.ORD.POS{n:[1,10],gender:"m|f",ask:"which|whichPos"}`
 - **דוגמאות:** (1) "מי עומדת שלישית בתור לגלישה?". (2) "צבעו את הקרון החמישי". (3) "יום ראשון הוא היום ה___ בשבוע".
 
 #### `M.NUM.PARITY.PAIRS` — זוגי/אי-זוגי כזוגות
 - **מטא:** G+ · `IL:G1.N100`(I) · C&S: — · CPA: C→P · קדם: `M.NUM.COUNT.OBJ20`, `~M.NUM.COUNT.SKIP2`
 - **תיאור:** מסדר/ת פריטים בזוגות ובודק/ת אם נשאר "בודד". מספר זוגי הוא מספר שכל פריט בו מקבל בן זוג.
-- **טעויות · מכניקות · תבנית:** `E.NEAR` · `MECH.SHARE_LOOT` · `T.PARITY{n:[2,20],mode:"pairUp"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` · `MECH.SHARE_LOOT` · `T.PARITY{n:[2,20],mode:"pairUp"}`
 - **דוגמאות:** (1) 9 ילדים מתחלקים לזוגות לריקוד: "מישהו נשאר לבד?". (2) "האם 14 גרביים הם זוגות שלמים?". (3) "חלקו 7 סוכריות בין שני אחים, שווה בשווה" (אי אפשר).
 
 #### `M.NUM.COUNT.SKIP5` — ספירה בחמישיות
 - **מטא:** S-R · `IL:G2.MD`(C) · C&S: Skip Counter · CPA: P · קדם: `M.NUM.COUNT.ROTE100`
 - **תיאור:** סופר/ת 5, 10, … 100 וגם מ-35 קדימה. זה הבסיס ל-×5 ולשעון.
-- **טעויות · מכניקות · תבנית:** `E.SKIP_SLIP` · `MECH.PATH_RACE`, `MECH.CLOCK_CAMP` · `T.COUNT.SEQ{step:5,from:[0,50],to:100}`
+- **טעויות · מכניקות · תבנית:** `EM.SKIP_SLIP` · `MECH.PATH_RACE`, `MECH.CLOCK_CAMP` · `T.COUNT.SEQ{step:5,from:[0,50],to:100}`
 - **דוגמאות:** (1) "חמש, עשר, …". (2) "כמה אצבעות ב-6 ידיים?". (3) "מה בא אחרי 45 בספירה בחמישיות?".
 
 #### `M.NUM.LINE.EST100` — אומדן על ישר 0–100
 - **מטא:** S-R · `IL:G2.AS100`(I) · C&S: Mental Number Line to 100 · CPA: P · MP: שגיאה ≤6% · קדם: `M.NUM.LINE.RACE100`, `M.PV.TENS100`
 - **תיאור:** ממקם/ת וקורא/ת מספרים על 0–100. משתמש/ת בנקודות ציון (50, 25, 75).
-- **טעויות · מכניקות · תבנית:** `E.LINE_LOG`, `E.REVERSE_DIGITS` · `MECH.NUMLINE_JUMP` · `T.NUMLINE.PLACE{min:0,max:100,ticks:"ends|tens",target:[3,97]}`
+- **טעויות · מכניקות · תבנית:** `EM.LINE_LOG`, `EM.REVERSE_DIGITS` · `MECH.NUMLINE_JUMP` · `T.NUMLINE.PLACE{min:0,max:100,ticks:"ends|tens",target:[3,97]}`
 - **דוגמאות:** (1) "איפה 72?". (2) "איזה מספר בחץ?" (בערך 30). (3) "שימו 49 ו-51. מה ביניהם?".
 
 #### `M.NUM.LINE.EST1000` — אומדן על ישר 0–1,000
 - **מטא:** S · `IL:G3.N10K`(V) · C&S: Mental Number Line to 1000s · CPA: P · MP: שגיאה ≤5% · קדם: `M.NUM.LINE.EST100`, `M.PV.HUND1000`
 - **תיאור:** ממקם/ת מספרים עד 1,000 גם על ישר שלא מתחיל באפס (300–400).
-- **טעויות · מכניקות · תבנית:** `E.LINE_LOG`, `E.LINE_TICKS` · `MECH.NUMLINE_JUMP` · `T.NUMLINE.PLACE{min:[0,900],span:[100,1000],target:"any"}`
+- **טעויות · מכניקות · תבנית:** `EM.LINE_LOG`, `EM.LINE_TICKS` · `MECH.NUMLINE_JUMP` · `T.NUMLINE.PLACE{min:[0,900],span:[100,1000],target:"any"}`
 - **דוגמאות:** (1) "איפה 650 על 0–1000?". (2) "על ישר 300–400, איפה 375?". (3) "איזה מספר בחץ?" (בערך 820).
 
 #### `M.NUM.LINE.EST10K` — אומדן על ישר 0–10,000
 - **מטא:** S · `IL:G3.N10K`(V) · C&S: Mental Number Line to 1000s · CPA: P · MP: שגיאה ≤5% · קדם: `M.NUM.LINE.EST1000`, `M.PV.THOU10K`
 - **תיאור:** ממקם/ת וקורא/ת מספרים בתחום הרבבה, וגם מבצע/ת "זום" (בין 4,000 ל-5,000).
-- **טעויות · מכניקות · תבנית:** `E.LINE_LOG`, `E.PV_ZERO_OMIT` · `MECH.NUMLINE_JUMP` · `T.NUMLINE.PLACE{min:[0,9000],span:[1000,10000],zoom:true}`
+- **טעויות · מכניקות · תבנית:** `EM.LINE_LOG`, `EM.PV_ZERO_OMIT` · `MECH.NUMLINE_JUMP` · `T.NUMLINE.PLACE{min:[0,9000],span:[1000,10000],zoom:true}`
 - **דוגמאות:** (1) "איפה 7,500?". (2) "בין 4,000 ל-5,000, איפה 4,250?". (3) "המטמון קבור ב-9,900. סמנו".
 
 #### `M.NUM.COMP.SYM100` — השוואה עד 100 עם <, >, =
 - **מטא:** S-R · `IL:G2.AS100`(V) · C&S: Mental Number Line to 100 · CPA: A · קדם: `M.PV.TENS100`, `M.NUM.COMP.SYM10`
 - **תיאור:** משווה/ה מספרים דו-ספרתיים וכותב/ת סימן. הסימן נקרא LTR: "‎47 < 74" נקרא "47 קטן מ-74".
-- **טעויות · מכניקות · תבנית:** `E.REVERSE_DIGITS`, `E.PV_FACE` (משווה רק יחידות) · `MECH.DUEL` · `T.COMP.SYM{range:[10,99],pairs:"sameTens|reversed|any",symbol:true}`
+- **טעויות · מכניקות · תבנית:** `EM.REVERSE_DIGITS`, `EM.PV_FACE` (משווה רק יחידות) · `MECH.DUEL` · `T.COMP.SYM{range:[10,99],pairs:"sameTens|reversed|any",symbol:true}`
 - **דוגמאות:** (1) "‎56 __ 65". (2) "‎38 __ 83". (3) "‎90 __ 9 עשרות".
 
 #### `M.NUM.COMP.SYM10K` — השוואה וסידור עד רבבה
 - **מטא:** S · `IL:G3.N10K`(V) "סדר בין מספרים" · C&S: Mental Number Line to 1000s · CPA: A · קדם: `M.PV.THOU10K`
 - **תיאור:** משווה מספרים עד 10,000, מסדר/ת 4–5 מספרים מהקטן לגדול, ומוצא/ת מספר "בין".
-- **טעויות · מכניקות · תבנית:** `E.PV_FACE` (3,999 מול 4,001: "יותר תשיעיות"), `E.REVERSE_DIGITS` · `MECH.DUEL`, `MECH.SORT_BINS` · `T.COMP.SYM{range:[100,10000],mode:"pair|order|between",items:[2,5]}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_FACE` (3,999 מול 4,001: "יותר תשיעיות"), `EM.REVERSE_DIGITS` · `MECH.DUEL`, `MECH.SORT_BINS` · `T.COMP.SYM{range:[100,10000],mode:"pair|order|between",items:[2,5]}`
 - **דוגמאות:** (1) ‎"‎4,099 __ 4,909". (2) סדרו: 2,305 · 2,035 · 3,250 · 2,530. (3) "כתבו מספר בין 6,990 ל-7,010".
 
 #### `M.NUM.ROUND` — עיגול לעשרות ולמאות (ב-S+ לאלפים)
 - **מטא:** S · `IL:G3.EST`(V) · C&S: — · CPA: P→A · קדם: `M.NUM.LINE.EST1000`
 - **תיאור:** מעגל/ת לעשרת או למאה הקרובה בעזרת ישר מספרים (איזו "תחנה" קרובה יותר). 5 מעוגל למעלה, לפי המוסכמה בבית הספר.
-- **טעויות · מכניקות · תבנית:** `E.ROUND_DIR` · `MECH.NUMLINE_JUMP` · `T.ROUND{unit:[10,100,1000],range:[10,9999]}`
+- **טעויות · מכניקות · תבנית:** `EM.ROUND_DIR` · `MECH.NUMLINE_JUMP` · `T.ROUND{unit:[10,100,1000],range:[10,9999]}`
 - **דוגמאות:** (1) "לאיזו עשרת קרוב 67?". (2) "עגלו 450 למאה". (3) "בערך כמה אנשים: 3,820 → בערך 4,000" (S+).
 
 #### `M.NUM.EST.SENSE` — חוש מספרי: אומדן כמויות ונקודות ציון
 - **מטא:** S (וגם G בגרסה של עד 20) · `IL:G3.EST`(V) · C&S: — · CPA: P · MP: `MP.X` (לא חוסם) · קדם: `M.NUM.LINE.EST100`
 - **תיאור:** אומד/ת כמות לפני ספירה ("בערך כמה גחליליות בצנצנת?") ומשפר/ת את האומדן לפי "דגימה" (כמה יש ברבע). המשוב הוא ציון קרבה ולא נכון/לא נכון.
-- **טעויות · מכניקות · תבנית:** `E.LINE_LOG` (אומדן חסר בכמויות גדולות) · `MECH.NUMBER_TALK`, `MECH.HOME` · `T.EST.QTY{n:[20,500],sample:"quarter|row"}`
+- **טעויות · מכניקות · תבנית:** `EM.LINE_LOG` (אומדן חסר בכמויות גדולות) · `MECH.NUMBER_TALK`, `MECH.HOME` · `T.EST.QTY{n:[20,500],sample:"quarter|row"}`
 - **דוגמאות:** (1) צנצנת עם כ-120 גחליליות: אומדן, ואחרי זה ספירת רבע. (2) "בערך כמה עמודים בספר הזה?". (3) "בערך כמה צעדים מהבית לגן?" (משימת בית).
 
 #### `M.NUM.PARITY.RULE` — זוגי/אי-זוגי לפי ספרת היחידות
 - **מטא:** S-R · `IL:G2.MD`(I) · C&S: — · CPA: P→A · קדם: `M.NUM.PARITY.PAIRS`, `M.PV.TENS100`
 - **תיאור:** מזהה זוגיות של מספרים עד 10,000 לפי ספרת היחידות ומסביר/ה למה זה עובד, כי עשרות שלמות הן תמיד זוגיות.
-- **טעויות · מכניקות · תבנית:** `E.PV_FACE` (בודק/ת את הספרה הראשונה) · `MECH.SORT_BINS` · `T.PARITY{n:[10,9999],mode:"rule"}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_FACE` (בודק/ת את הספרה הראשונה) · `MECH.SORT_BINS` · `T.PARITY{n:[10,9999],mode:"rule"}`
 - **דוגמאות:** (1) "האם 3,457 זוגי?". (2) מיינו לשני סלים: 48, 71, 230, 999. (3) "זוגי ועוד זוגי, זוגי או אי-זוגי?".
 
 ### 6.2 ציר `PV`: ערך מקומי
@@ -806,61 +819,61 @@ function buildChoices(item, skill, profile): Choice[] {
 #### `M.PV.TEEN` — "עשר ועוד": מספרי 11–19
 - **מטא:** G+ · `IL:G1.N100`(V) · C&S: Composer with Tens and Ones (מוקדם) · CPA: C→P→A · MP: +`O.REP` · קדם: `M.NUM.SUBIT.C10`, `M.NUM.COUNT.OBJ20`
 - **תיאור:** בונה/ה 11–19 מעגלה מלאה (10) ועוד יחידות. מבין/ה ש"שלוש-עשרה" = 10 + 3, ונכתב 13 ולא 31.
-- **טעויות · מכניקות · תבנית:** `E.TEEN_WRITE`, `E.REVERSE_DIGITS` · `MECH.TENFRAME_CART`, `MECH.PV_BANK` · `T.PV.BUILD{range:[11,19],units:["ten","one"],dir:"build|read"}`
+- **טעויות · מכניקות · תבנית:** `EM.TEEN_WRITE`, `EM.REVERSE_DIGITS` · `MECH.TENFRAME_CART`, `MECH.PV_BANK` · `T.PV.BUILD{range:[11,19],units:["ten","one"],dir:"build|read"}`
 - **דוגמאות:** (1) "עגלה מלאה ועוד 4. כמה גזעים?". (2) "בנו 16". (3) "איזה מספר הוא עשר ועוד שבע?" (17/71/107).
 
 #### `M.PV.TENS100` — עשרות ויחידות עד 100: בנייה, קריאה, כתיבה
 - **מטא:** S-R · `IL:G1.N100`/`IL:G2.AS100`(V) · C&S: Composer with Tens and Ones · CPA: C→P→A · MP: +`O.REP` · קדם: `M.PV.TEEN`, `M.NUM.COUNT.SKIP10`
 - **תיאור:** בונה/ה, קורא/ת וכותב/ת מספרים עד 100 בעשרות וביחידות, כולל מספרים עם 0 (40, 100), ומקשר/ת אותם למילים ("ארבעים ושבע").
-- **טעויות · מכניקות · תבנית:** `E.REVERSE_DIGITS`, `E.PV_CONCAT` (407 ל"ארבעים ושבע"), `E.PV_FACE` · `MECH.PV_BANK` · `T.PV.BUILD{range:[10,100]}` + `T.PV.WORDS{range:[10,100]}`
+- **טעויות · מכניקות · תבנית:** `EM.REVERSE_DIGITS`, `EM.PV_CONCAT` (407 ל"ארבעים ושבע"), `EM.PV_FACE` · `MECH.PV_BANK` · `T.PV.BUILD{range:[10,100]}` + `T.PV.WORDS{range:[10,100]}`
 - **דוגמאות:** (1) 6 צרורות ו-3 מקלות: "כמה?". (2) "כתבו במספר: שמונים ותשע". (3) "ב-58, כמה עשרות?".
 
 #### `M.PV.HUND1000` — מאות, עשרות ויחידות עד 1,000
 - **מטא:** S · `IL:G3.N10K`(V) · C&S: Place Value (100s) · CPA: C→P→A · MP: +`O.REP` · קדם: `M.PV.TENS100`
 - **תיאור:** בונה/ה מספרים תלת-ספרתיים מגבישים (גדול = 100, בינוני = 10, קטן = 1), קורא/ת וכותב/ת אותם במספרים ובמילים, כולל אפסים פנימיים (305).
-- **טעויות · מכניקות · תבנית:** `E.PV_ZERO_OMIT` (35 ל-305), `E.PV_CONCAT` (3005), `E.REVERSE_DIGITS` · `MECH.PV_BANK` · `T.PV.BUILD{range:[100,1000],zeroInside:[0,1]}` + `T.PV.WORDS{range:[100,1000]}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_ZERO_OMIT` (35 ל-305), `EM.PV_CONCAT` (3005), `EM.REVERSE_DIGITS` · `MECH.PV_BANK` · `T.PV.BUILD{range:[100,1000],zeroInside:[0,1]}` + `T.PV.WORDS{range:[100,1000]}`
 - **דוגמאות:** (1) "3 גבישי מאה ו-5 קטנים. איזה מספר?". (2) "כתבו: שבע מאות ושמונה". (3) "מה המספר: 4 מאות, 0 עשרות, 9 יחידות?".
 
 #### `M.PV.THOU10K` — מספרים עד רבבה (10,000)
 - **מטא:** S · `IL:G3.N10K`(V) · C&S: Place Value (1000s) · CPA: C→P→A · MP: +`O.REP` · קדם: `M.PV.HUND1000`
 - **תיאור:** מכיר/ה את האלף, ואת "עשרה אלפים = רבבה". בונה/ה וקורא/ת מספרים בני 4 ספרות ואת 10,000. מבין/ה ש-10 מאות הן אלף.
-- **טעויות · מכניקות · תבנית:** `E.PV_ZERO_OMIT`, `E.PV_ZERO_EXTRA`, `E.PV_CONCAT` · `MECH.PV_BANK` · `T.PV.BUILD{range:[1000,10000],zeroInside:[0,2]}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_ZERO_OMIT`, `EM.PV_ZERO_EXTRA`, `EM.PV_CONCAT` · `MECH.PV_BANK` · `T.PV.BUILD{range:[1000,10000],zeroInside:[0,2]}`
 - **דוגמאות:** (1) "10 ארגזים של מאה גבישים מוחלפים ב…?" ← אלף. (2) "בנו 3,072". (3) "כמה אלפים יש ברבבה?".
 
 #### `M.PV.RW10K` — קריאה וכתיבה של מספרים עד רבבה (ספרות ↔ מילים)
 - **מטא:** S · `IL:G3.N10K`(V) · C&S: — · CPA: A · קדם: `M.PV.THOU10K`
 - **תיאור:** קורא/ת מספר בקול (בבחירה מתוך הקלטות) וכותב/ת אותו בספרות מתוך מילים, למשל "אַלְפַּיִם וַחֲמִשָּׁה" ← 2,005. המילים בצורה המופשטת (נקבית) לפי הטבלה ב-§10.4.
-- **טעויות · מכניקות · תבנית:** `E.PV_ZERO_OMIT`, `E.PV_ZERO_EXTRA` (20005), `E.TEEN_WRITE` (ב-x,x13) · `MECH.PV_BANK`, `MECH.TOWER` · `T.PV.WORDS{range:[1000,10000],zeroPattern:"any"}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_ZERO_OMIT`, `EM.PV_ZERO_EXTRA` (20005), `EM.TEEN_WRITE` (ב-x,x13) · `MECH.PV_BANK`, `MECH.TOWER` · `T.PV.WORDS{range:[1000,10000],zeroPattern:"any"}`
 - **דוגמאות:** (1) "כתבו בספרות: שלושת אלפים וארבע-עשרה". (2) "איך קוראים 6,600?" (שלוש הקלטות לבחירה). (3) "כתבו: תשעת אלפים תשע מאות תשעים ותשע".
 
 #### `M.PV.DIGITVAL` — ערך הספרה לפי המקום
 - **מטא:** S · `IL:G3.N10K`(V) · C&S: — · CPA: P→A · קדם: `M.PV.THOU10K`
 - **תיאור:** קובע/ת את ערך הספרה במספר (ב-5,372 ערך ה-3 הוא 300), ומשנה/ה ספרה כדי לשנות את המספר ב-100.
-- **טעויות · מכניקות · תבנית:** `E.PV_FACE`, `E.TENS_COUNT` · `MECH.PV_BANK` · `T.PV.DIGIT{range:[100,9999],ask:"value|place|changeBy"}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_FACE`, `EM.TENS_COUNT` · `MECH.PV_BANK` · `T.PV.DIGIT{range:[100,9999],ask:"value|place|changeBy"}`
 - **דוגמאות:** (1) "מה ערך הספרה 7 ב-7,215?". (2) "באיזה מקום ה-4 ב-1,246?". (3) "שנו ספרה אחת ב-3,508 כדי לקבל מספר גדול ב-100".
 
 #### `M.PV.EXPAND` — פירוק עשרוני ופירוקים לא סטנדרטיים
 - **מטא:** S · `IL:G3.N10K`(V) "המבנה העשרוני" · C&S: — · CPA: P→A · MP: +`O.REP` · קדם: `M.PV.DIGITVAL`
 - **תיאור:** כותב/ת 4,307 = 4,000 + 300 + 7, וגם פירוקים כמו "43 מאות ו-7". זה הבסיס לחישוב בעל-פה ולפריטה.
-- **טעויות · מכניקות · תבנית:** `E.PV_CONCAT`, `E.PV_ZERO_EXTRA` (מוסיף/ה "+ 0") · `MECH.PV_BANK` · `T.PV.DIGIT{range:[100,9999],ask:"expand|compose|nonStandard"}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_CONCAT`, `EM.PV_ZERO_EXTRA` (מוסיף/ה "+ 0") · `MECH.PV_BANK` · `T.PV.DIGIT{range:[100,9999],ask:"expand|compose|nonStandard"}`
 - **דוגמאות:** (1) ‎"‎6,000 + 50 + 3 = ?". (2) ‎"‎2,468 = 2,000 + ___ + 60 + 8". (3) "כתבו 1,250 כ-___ מאות ו-___ יחידות".
 
 #### `M.PV.UNITIZE` — "כמה עשרות/מאות יש במספר?" (יחידות מורכבות)
 - **מטא:** S · `IL:G3.N10K`(V) · C&S: Counter of Quantitative Units · CPA: C→P→A · קדם: `M.PV.EXPAND`
 - **תיאור:** יודע/ת ש-340 = 34 עשרות ו-2,600 = 26 מאות. זה התנאי לפריטה, ל-×10/:10 ולהמרת יחידות.
-- **טעויות · מכניקות · תבנית:** `E.TENS_COUNT` (4 במקום 34), `E.PV_FACE` · `MECH.PV_BANK` · `T.PV.DIGIT{range:[100,9999],ask:"howManyTens|howManyHundreds"}`
+- **טעויות · מכניקות · תבנית:** `EM.TENS_COUNT` (4 במקום 34), `EM.PV_FACE` · `MECH.PV_BANK` · `T.PV.DIGIT{range:[100,9999],ask:"howManyTens|howManyHundreds"}`
 - **דוגמאות:** (1) "כמה שטרות של 10 ש"ח צריך ל-340 ש"ח?". (2) "כמה מאות יש ב-2,600?". (3) "פרטו מאה אחת: 5 מאות ו-0 עשרות ← 4 מאות ו-___ עשרות".
 
 #### `M.PV.JUMPS` — קפיצות של 10, 100 ו-1,000 מכל מספר
 - **מטא:** S · `IL:G3.N10K`(V) · C&S: Skip counting from N · CPA: P→A · קדם: `M.PV.THOU10K`, `~M.NUM.COUNT.SKIP10`
 - **תיאור:** אומר/ת מה יוצא ±10, ±100 או ±1,000 ממספר נתון, כולל מעברים (3,995 + 10).
-- **טעויות · מכניקות · תבנית:** `E.PV_FACE`, `E.TEEN_DECADE` (במעבר ‎…9X) · `MECH.NUMLINE_JUMP`, `MECH.PATH_RACE` · `T.PV.JUMP{range:[0,10000],step:[10,100,1000],dir:[1,-1],chain:[1,4]}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_FACE`, `EM.TEEN_DECADE` (במעבר ‎…9X) · `MECH.NUMLINE_JUMP`, `MECH.PATH_RACE` · `T.PV.JUMP{range:[0,10000],step:[10,100,1000],dir:[1,-1],chain:[1,4]}`
 - **דוגמאות:** (1) "4,560 + 100 = ?". (2) "המשיכו: 2,970, 2,980, ___, ___". (3) "מה גדול ב-1,000 מ-9,005?".
 
 #### `M.PV.BEYOND` — מעבר לרבבה: עד 100,000 ומיליון
 - **מטא:** S+ · `IL:G4.N`(I) · CPA: P→A · MP: `MP.S` (אתגר) · קדם: `M.PV.RW10K`, `M.PV.UNITIZE`
 - **תיאור:** קורא/ת, כותב/ת ומשווה מספרים עד מיליון, עם מבנה שלשות ("מאתיים חמישים אלף").
-- **טעויות · מכניקות · תבנית:** `E.PV_ZERO_OMIT`, `E.PV_ZERO_EXTRA` · `MECH.PV_BANK` · `T.PV.WORDS{range:[10000,1000000]}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_ZERO_OMIT`, `EM.PV_ZERO_EXTRA` · `MECH.PV_BANK` · `T.PV.WORDS{range:[10000,1000000]}`
 - **דוגמאות:** (1) "כתבו: שלושים ואחד אלף ומאה". (2) "כמה רבבות במאה אלף?". (3) "איזה גדול יותר: 99,999 או 100,001?".
 
 ### 6.3 ציר `OPS`: הרכבה, פירוק, חיבור וחיסור
@@ -868,163 +881,163 @@ function buildChoices(item, skill, profile): Choice[] {
 #### `M.OPS.JOIN.NV` — "עוד אחד / אחד הלך" בלי מילים
 - **מטא:** T+ · `IL:GAN.NUM`(V) · C&S: Nonverbal +/− → Small Number +/− · CPA: C · קדם: `M.NUM.CARD.LAST5`
 - **תיאור:** רואה קבוצה של 1–3 שנכנסת לקופסה, ואחריה עוד אחד או אחד יוצא. בוחר/ת קבוצה מתאימה (לא מילה).
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.OP_SWAP` · `MECH.HIDE_HUT` · `T.JOIN.STORY{start:[1,3],delta:[-1,1],answerAs:"set"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.OP_SWAP` · `MECH.HIDE_HUT` · `T.JOIN.STORY{start:[1,3],delta:[-1,1],answerAs:"set"}`
 - **דוגמאות:** (1) 2 ברווזים בבקתה, נכנס עוד 1: "כמה בפנים?" (בחירה מתוך תמונות). (2) 3 עוגיות, הדובה אכלה אחת. (3) 1 פרח ועוד 1.
 
 #### `M.OPS.BOND.5` — פירוקים של מספרים עד 5
-- **מטא:** G · `IL:GAN.NUM`(V) · C&S: Composer to 5 · CPA: C→P · MP: +`O.REP` · קדם: `M.NUM.CARD.GIVE5`, `M.NUM.SUBIT.C5`
+- **מטא:** G · `IL:GAN.NUM`(V) · C&S: Composer to 5 · CPA: C→P · קדם: `M.NUM.CARD.GIVE5`, `M.NUM.SUBIT.C5`
 - **תיאור:** מוצא/ת את כל הדרכים לחלק 2–5 לשתי קבוצות (בשתי ידיים, בשני ענפים), כולל 0.
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.X0_IDENTITY` (מתעלם/ת מ-0+5) · `MECH.FORGE`, `MECH.HIDE_HUT` · `T.BOND{whole:[2,5],mode:"allSplits|missingPart"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.X0_IDENTITY` (מתעלם/ת מ-0+5) · `MECH.FORGE`, `MECH.HIDE_HUT` · `T.BOND{whole:[2,5],mode:"allSplits|missingPart"}`
 - **דוגמאות:** (1) "5 גחליליות על שני ענפים. 3 על זה, כמה על השני?". (2) "מצאו עוד דרך לחלק 4". (3) "איזה זוג עושה 5: 2 ו-3 / 2 ו-2?".
 
 #### `M.OPS.BOND.10` — פירוקים של 6–10
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Composer to 7 → to 10 · CPA: C→P→A · MP: +`O.REP` · קדם: `M.OPS.BOND.5`, `M.NUM.SUBIT.C10`
 - **תיאור:** מפרק/ת 6–10 לשני חלקים בכל הדרכים, עם מסגרת עשר. ב-G+ כותב/ת גם כ-‎7 = 4 + 3.
-- **טעויות · מכניקות · תבנית:** `E.NEAR` · `MECH.FORGE`, `MECH.TENFRAME_CART` · `T.BOND{whole:[6,10],mode:"allSplits|missingPart",repr:"tenframe|bar|numeral"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` · `MECH.FORGE`, `MECH.TENFRAME_CART` · `T.BOND{whole:[6,10],mode:"allSplits|missingPart",repr:"tenframe|bar|numeral"}`
 - **דוגמאות:** (1) "8 = 5 ו-___". (2) "בכמה דרכים אפשר לחלק 7 גזרים לשני סלים?". (3) "יש 9 בעגלה, 4 אדומים. כמה כחולים?".
 
 #### `M.OPS.BOND.MISSING` — "כמה מתחבאים?" (חלק חסר)
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Find Change / Make It N · CPA: C→P · קדם: `M.OPS.BOND.5`
 - **תיאור:** יודע/ת את השלם ואת החלק הגלוי, ומוצא/ת את החלק המוסתר (השלם עד 10). נכנס/ת לבקתה ובודק/ת.
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP` (עונה את השלם ועוד החלק), `E.NEAR` · `MECH.HIDE_HUT` · `T.BOND{whole:[3,10],mode:"missingPart",hidden:"count"}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP` (עונה את השלם ועוד החלק), `EM.NEAR` · `MECH.HIDE_HUT` · `T.BOND{whole:[3,10],mode:"missingPart",hidden:"count"}`
 - **דוגמאות:** (1) "7 ארנבים. 3 בחוץ. כמה בבקתה?". (2) "הייתה צנצנת עם 6 גחליליות; עכשיו רואים 2". (3) "היו 10 צללונים, 8 כבר התיידדו. כמה עוד?".
 
 #### `M.OPS.MAKE10` — חברים של 10
 - **מטא:** G · `IL:G1.AS20`(V) · C&S: Composer to 10 · CPA: C→P→A · קדם: `M.OPS.BOND.10`
 - **תיאור:** יודע/ת לכל מספר 0–10 כמה חסר עד 10 (העגלה מתמלאת). ב-G+ זה כבר כמעט שליפה.
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.OP_SWAP` · `MECH.TENFRAME_CART`, `MECH.TOWER` · `T.TENFRAME{target:10,start:[0,10],ask:"howManyMore"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.OP_SWAP` · `MECH.TENFRAME_CART`, `MECH.TOWER` · `T.TENFRAME{target:10,start:[0,10],ask:"howManyMore"}`
 - **דוגמאות:** (1) בעגלה 6. "כמה עוד?". (2) "3 ו-___ הם 10". (3) "איזה גבישים מתאימים זה לזה כדי להיות 10?" (זוגות).
 
 #### `M.OPS.JOIN.C5` — חיבור וחיסור עם חפצים עד 5
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Small Number +/− → Find Result · CPA: C · קדם: `M.NUM.CARD.GIVE5`
 - **תיאור:** פותר/ת סיפור "היו… הגיעו/הלכו" עד 5 עם חפצים שאפשר לגרור (מותר לספור הכול).
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP`, `E.NEAR` · `MECH.FEED`, `MECH.HIDE_HUT` · `T.JOIN.STORY{start:[1,4],delta:[-3,3],sumMax:5}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP`, `EM.NEAR` · `MECH.FEED`, `MECH.HIDE_HUT` · `T.JOIN.STORY{start:[1,4],delta:[-3,3],sumMax:5}`
 - **דוגמאות:** (1) "2 ציפורים על העץ, באו עוד 2". (2) "4 בלונים, 1 עף". (3) "לגחלילית 3 ניצוצות. נתנו לה עוד אחד".
 
 #### `M.OPS.JOIN.C10` — סיפורי חיבור וחיסור עד 10 (חפצים ותמונות)
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Find Result +/− · CPA: C→P · קדם: `M.OPS.JOIN.C5`, `M.NUM.COUNT.OBJ10`
 - **תיאור:** פותר/ת סיפורי צירוף והפרדה עד 10 עם מודל, ואחר כך עם תמונה בלבד.
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP`, `E.NEAR`, `E.1TO1_SKIP` · `MECH.FEED`, `MECH.FORGE` · `T.JOIN.STORY{start:[1,9],delta:[-5,5],sumMax:10,repr:"objects|picture"}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP`, `EM.NEAR`, `EM.1TO1_SKIP` · `MECH.FEED`, `MECH.FORGE` · `T.JOIN.STORY{start:[1,9],delta:[-5,5],sumMax:10,repr:"objects|picture"}`
 - **דוגמאות:** (1) "היו 6 גזעים, הבאנו 3". (2) "8 צללונים ישנו, 2 התעוררו". (3) "בסל 5 תפוחים ו-4 אגסים. כמה פירות?".
 
 #### `M.OPS.COUNTON.ADD` — חיבור בספירה ממשיכה מהגדול
 - **מטא:** G · `IL:G1.AS20`(V) · C&S: Counting Strategies +/− · CPA: C→P→A · קדם: `M.NUM.COUNT.ON`, `M.OPS.JOIN.C10`
 - **תיאור:** בחיבור, מתחיל/ה מהמחובר הגדול וממשיך/ה לספור (2 + 7: "שבע… שמונה, תשע"). הגדול מוסתר ב"כד".
-- **טעויות · מכניקות · תבנית:** `E.COUNT_ON_INCL`, `E.COUNT_ALL` · `MECH.PATH_RACE`, `MECH.HIDE_HUT` · `T.FACT{op:"+",a:[1,15],b:[1,4],sumMax:20,repr:"jar|line|numeral",strategy:"countOn"}`
+- **טעויות · מכניקות · תבנית:** `EM.COUNT_ON_INCL`, `EM.COUNT_ALL` · `MECH.PATH_RACE`, `MECH.HIDE_HUT` · `T.FACT{op:"+",a:[1,15],b:[1,4],sumMax:20,repr:"jar|line|numeral",strategy:"countOn"}`
 - **דוגמאות:** (1) בכד 8, ועוד 3 בחוץ. (2) "‎2 + 9 = ?" (מעודדים להתחיל מ-9). (3) על השביל: על 11, קובייה 3.
 
 #### `M.OPS.COUNTBACK.SUB` — חיסור בספירה לאחור (−1 עד −3)
 - **מטא:** G · `IL:G1.AS20`(V) · C&S: Counting Strategies · CPA: C→P→A · קדם: `M.NUM.COUNT.BACK10`, `M.OPS.JOIN.C10`
 - **תיאור:** מחסר/ת מספר קטן בספירה לאחור (9 − 2: "שמונה, שבע").
-- **טעויות · מכניקות · תבנית:** `E.COUNT_ON_INCL` (כולל/ת את 9), `E.OP_SWAP` · `MECH.PATH_RACE` (אחורה) · `T.FACT{op:"-",a:[3,20],b:[1,3],repr:"line|numeral",strategy:"countBack"}`
+- **טעויות · מכניקות · תבנית:** `EM.COUNT_ON_INCL` (כולל/ת את 9), `EM.OP_SWAP` · `MECH.PATH_RACE` (אחורה) · `T.FACT{op:"-",a:[3,20],b:[1,3],repr:"line|numeral",strategy:"countBack"}`
 - **דוגמאות:** (1) "‎10 − 3 = ?". (2) "הצפרדע על 7 קופצת 2 אחורה". (3) "היו 12 עוגיות, אכלו 2".
 
 #### `M.OPS.SYM.PLUSMINUS` — הסימנים +, − ו-=
 - **מטא:** G+ · `IL:G1.AS20`(V) · C&S: — · CPA: P→A · קדם: `M.OPS.JOIN.C10`, `M.NUM.NUMERAL.ID10`
 - **תיאור:** מקשר/ת סיפור או תמונה לתרגיל כתוב ולהפך. התרגיל נקרא בקול: "חמש ועוד שתיים שווה שבע".
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP` · `MECH.FORGE` · `T.EQ{mode:"storyToEquation|equationToPicture",range:[0,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP` · `MECH.FORGE` · `T.EQ{mode:"storyToEquation|equationToPicture",range:[0,10]}`
 - **דוגמאות:** (1) תמונה של 4 ועוד 2: איזה תרגיל מתאים? (2) "‎7 − 3" ← בחרו תמונה. (3) "השלימו סימן: ‎5 ☐ 1 = 6".
 
 #### `M.OPS.EQ.MEANING` — "=" פירושו "שווה בכמות" (מאזניים)
 - **מטא:** G+ / S-R · `IL:G1.AS20`(I) · C&S: — · CPA: C→P→A · MP: +`O.REP` · קדם: `M.OPS.SYM.PLUSMINUS`, `~M.MEAS.WEIGHT.BALANCE`
 - **תיאור:** מבין/ה ש"=" הוא יחס (מאזניים מאוזנות), לא "התשובה היא". קובע/ת אם ‎3 + 4 = 5 + 2 נכון, ואם ‎7 = 7 נכון.
-- **טעויות · מכניקות · תבנית:** `E.EQ_OPERATIONAL`, `E.EQ_ALL_ADD` · `MECH.BALANCE` · `T.EQ{mode:"trueFalse|balance",forms:["a+b=c","c=a+b","a+b=c+d","a=a"],range:[0,20]}`
+- **טעויות · מכניקות · תבנית:** `EM.EQ_OPERATIONAL`, `EM.EQ_ALL_ADD` · `MECH.BALANCE` · `T.EQ{mode:"trueFalse|balance",forms:["a+b=c","c=a+b","a+b=c+d","a=a"],range:[0,20]}`
 - **דוגמאות:** (1) "האם ‎8 = 5 + 3 נכון?". (2) "המאזניים מאוזנות? ‎4 + 4 | 6 + 2". (3) "‎9 = 9: נכון או לא?".
 
 #### `M.OPS.EQ.MISSING` — נעלם בכל מקום בתרגיל
 - **מטא:** S-R · `IL:G2.AS100`(I) · C&S: Part-Whole +/− · CPA: P→A · קדם: `M.OPS.EQ.MEANING`, `~M.FACT.AS20.MIXED`
 - **תיאור:** פותר/ת ‎☐ + 5 = 12, ‏‎12 − ☐ = 7, ‏‎8 + 4 = ☐ + 5. בגרסת S עד 100.
-- **טעויות · מכניקות · תבנית:** `E.EQ_OPERATIONAL`, `E.EQ_ALL_ADD`, `E.OP_SWAP` · `MECH.BALANCE`, `MECH.HIDE_HUT` · `T.EQ{mode:"missing",unknownPos:["a","b","c","both-sides"],range:[0,100]}`
+- **טעויות · מכניקות · תבנית:** `EM.EQ_OPERATIONAL`, `EM.EQ_ALL_ADD`, `EM.OP_SWAP` · `MECH.BALANCE`, `MECH.HIDE_HUT` · `T.EQ{mode:"missing",unknownPos:["a","b","c","both-sides"],range:[0,100]}`
 - **דוגמאות:** (1) "‎☐ + 6 = 14". (2) "‎15 − ☐ = 9". (3) "‎7 + 5 = ☐ + 4".
 
 #### `M.OPS.PROP.COMMUT_ADD` — חוק החילוף בחיבור
 - **מטא:** G+ · `IL:G1.AS20`(I) · C&S: Deriver (מוקדם) · CPA: C→P→A · קדם: `M.OPS.JOIN.C10`
 - **תיאור:** יודע/ת ש-3 + 8 = 8 + 3 בלי לחשב, ומנצל/ת את זה כדי להתחיל מהגדול. המחשה: מגל של פסים שמסתובב.
-- **טעויות · מכניקות · תבנית:** `E.NEAR` · `MECH.FORGE` · `T.EQ{mode:"commuteTrueFalse|useCommute",range:[0,20]}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` · `MECH.FORGE` · `T.EQ{mode:"commuteTrueFalse|useCommute",range:[0,20]}`
 - **דוגמאות:** (1) "‎2 + 9 = 9 + ☐". (2) "בלי לחשב: ‎6 + 3 ו-‎3 + 6, שווה?". (3) "איזה קל יותר להתחיל: 1 + 8 או 8 + 1?".
 
 #### `M.OPS.PROP.ASSOC_ADD` — קיבוץ וסדר נוח (משלימים לעשר)
 - **מטא:** S-R · `IL:G2.AS100`(I) · C&S: Deriver · CPA: P→A · קדם: `M.OPS.MAKE10`, `M.OPS.PROP.COMMUT_ADD`
 - **תיאור:** מחבר/ת 3–4 מספרים בסדר נוח (8 + 7 + 2 = 8 + 2 + 7), ומחפש/ת זוגות של 10 או של 100.
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.NO_CARRY` · `MECH.FORGE`, `MECH.NUMBER_TALK` · `T.ADDSUB.MENTAL{op:"+",terms:[3,4],pairsTo:[10,100]}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.NO_CARRY` · `MECH.FORGE`, `MECH.NUMBER_TALK` · `T.ADDSUB.MENTAL{op:"+",terms:[3,4],pairsTo:[10,100]}`
 - **דוגמאות:** (1) "‎6 + 9 + 4". (2) "‎25 + 17 + 75". (3) "איזה שני מספרים כדאי לחבר קודם: 3 + 8 + 7?".
 
 #### `M.OPS.TENS.ADDSUB` — חיבור וחיסור של עשרות שלמות
 - **מטא:** S-R · `IL:G1.TENS`(V) · C&S: Composer with Tens and Ones · CPA: C→P→A · קדם: `M.PV.TENS100`, `~M.FACT.ADD.WITHIN10`
 - **תיאור:** ‎30 + 40, ‏‎90 − 60, ‏‎53 + 20, וגם 100 − 30, בהקבלה לעובדות עד 10 ("3 + 4 = 7, ולכן 30 + 40 = 70").
-- **טעויות · מכניקות · תבנית:** `E.PV_CONCAT` (‎30 + 40 = 3040), `E.PV_FACE` (7) · `MECH.PV_BANK` · `T.ADDSUB.MENTAL{op:"+|-",a:"tens|2d",b:"tens",range:[0,100]}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_CONCAT` (‎30 + 40 = 3040), `EM.PV_FACE` (7) · `MECH.PV_BANK` · `T.ADDSUB.MENTAL{op:"+|-",a:"tens|2d",b:"tens",range:[0,100]}`
 - **דוגמאות:** (1) "‎50 + 30". (2) "‎80 − 50". (3) "‎47 + 30".
 
 #### `M.OPS.ADD.2D1D` — חיבור דו-ספרתי + חד-ספרתי (כולל מעבר עשרת)
 - **מטא:** S-R · `IL:G2.AS100`(V) · C&S: Part-Whole / Deriver · CPA: P→A · קדם: `M.PV.TENS100`, `M.FACT.ADD.BRIDGE10`
 - **תיאור:** ‎47 + 5 בקפיצה לעשרת (47 + 3 + 2) על ישר ריק.
-- **טעויות · מכניקות · תבנית:** `E.NO_CARRY` (42), `E.PV_CONCAT` · `MECH.NUMLINE_JUMP` · `T.ADDSUB.MENTAL{op:"+",a:[11,95],b:[1,9],cross:[0,1],repr:"emptyLine|numeral"}`
+- **טעויות · מכניקות · תבנית:** `EM.NO_CARRY` (42), `EM.PV_CONCAT` · `MECH.NUMLINE_JUMP` · `T.ADDSUB.MENTAL{op:"+",a:[11,95],b:[1,9],cross:[0,1],repr:"emptyLine|numeral"}`
 - **דוגמאות:** (1) "‎38 + 6". (2) "‎64 + 9". (3) "‎75 + 5".
 
 #### `M.OPS.SUB.2D1D` — חיסור חד-ספרתי מדו-ספרתי (כולל מעבר עשרת)
 - **מטא:** S-R · `IL:G2.AS100`(V) · C&S: Deriver · CPA: P→A · קדם: `M.PV.TENS100`, `M.FACT.SUB.BRIDGE10`
 - **תיאור:** ‎52 − 7 = 52 − 2 − 5 על ישר ריק.
-- **טעויות · מכניקות · תבנית:** `E.SUB_SMALL_FROM_LARGE` (55), `E.BORROW_NO_DEC` · `MECH.NUMLINE_JUMP` · `T.ADDSUB.MENTAL{op:"-",a:[11,99],b:[1,9],cross:[0,1]}`
+- **טעויות · מכניקות · תבנית:** `EM.SUB_SMALL_FROM_LARGE` (55), `EM.BORROW_NO_DEC` · `MECH.NUMLINE_JUMP` · `T.ADDSUB.MENTAL{op:"-",a:[11,99],b:[1,9],cross:[0,1]}`
 - **דוגמאות:** (1) "‎43 − 8". (2) "‎70 − 4". (3) "‎91 − 3".
 
 #### `M.OPS.ADD.2D2D` — חיבור דו-ספרתי בעל-פה (פירוק לעשרות ויחידות, קפיצות)
 - **מטא:** S-R · `IL:G2.AS100`(V) · C&S: Problem Solver +/− · CPA: P→A · קדם: `M.OPS.ADD.2D1D`, `M.OPS.TENS.ADDSUB`
 - **תיאור:** ‎36 + 47 בשתי אסטרטגיות לפחות: פירוק (30 + 40, 6 + 7) או קפיצה (36 + 40 + 7). ב-`MECH.NUMBER_TALK` משווים בין האסטרטגיות.
-- **טעויות · מכניקות · תבנית:** `E.NO_CARRY`, `E.CARRY_WRITE`, `E.PV_CONCAT` · `MECH.NUMLINE_JUMP`, `MECH.NUMBER_TALK` · `T.ADDSUB.MENTAL{op:"+",a:[10,89],b:[10,89],sumMax:100,cross:[0,1],strategyTag:"split|jump"}`
+- **טעויות · מכניקות · תבנית:** `EM.NO_CARRY`, `EM.CARRY_WRITE`, `EM.PV_CONCAT` · `MECH.NUMLINE_JUMP`, `MECH.NUMBER_TALK` · `T.ADDSUB.MENTAL{op:"+",a:[10,89],b:[10,89],sumMax:100,cross:[0,1],strategyTag:"split|jump"}`
 - **דוגמאות:** (1) "‎28 + 35". (2) "‎46 + 46". (3) "‎19 + 54: איך פתרת?".
 
 #### `M.OPS.SUB.2D2D` — חיסור דו-ספרתי בעל-פה
 - **מטא:** S-R · `IL:G2.AS100`(V) · C&S: Problem Solver · CPA: P→A · קדם: `M.OPS.SUB.2D1D`, `M.OPS.TENS.ADDSUB`
 - **תיאור:** ‎83 − 47 בקפיצות אחורה (83 − 40 − 7) או בהשלמה (47 → 50 → 83).
-- **טעויות · מכניקות · תבנית:** `E.SUB_SMALL_FROM_LARGE`, `E.BORROW_NO_DEC`, `E.OP_SWAP` · `MECH.NUMLINE_JUMP` · `T.ADDSUB.MENTAL{op:"-",a:[20,99],b:[10,a-1],cross:[0,1],strategyTag:"jumpBack|addUp"}`
+- **טעויות · מכניקות · תבנית:** `EM.SUB_SMALL_FROM_LARGE`, `EM.BORROW_NO_DEC`, `EM.OP_SWAP` · `MECH.NUMLINE_JUMP` · `T.ADDSUB.MENTAL{op:"-",a:[20,99],b:[10,a-1],cross:[0,1],strategyTag:"jumpBack|addUp"}`
 - **דוגמאות:** (1) "‎72 − 35". (2) "‎60 − 24". (3) "‎91 − 88".
 
 #### `M.OPS.ADD.COMPENSATE` — פיצוי (‎+29 = ‎+30 − 1)
 - **מטא:** S · `IL:G3.AS`(C) · C&S: Deriver · CPA: P→A · קדם: `M.OPS.ADD.2D2D`
 - **תיאור:** מחבר/ת או מחסר/ת מספר שקרוב לעשרת או למאה בעזרת עיגול ותיקון (‎456 + 199 = 456 + 200 − 1).
-- **טעויות · מכניקות · תבנית:** `E.NEAR` (שוכח/ת לתקן או מתקן/ת לכיוון הלא נכון: ±2) · `MECH.NUMBER_TALK` · `T.ADDSUB.MENTAL{op:"+|-",b:"nearRound",range:[0,1000],strategyTag:"compensate"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` (שוכח/ת לתקן או מתקן/ת לכיוון הלא נכון: ±2) · `MECH.NUMBER_TALK` · `T.ADDSUB.MENTAL{op:"+|-",b:"nearRound",range:[0,1000],strategyTag:"compensate"}`
 - **דוגמאות:** (1) "‎47 + 29". (2) "‎365 − 98". (3) "‎1,250 + 999".
 
 #### `M.OPS.SUB.ADDUP` — חיסור כהפרש: משלימים מלמטה
 - **מטא:** S · `IL:G3.AS`(C) · C&S: Part-Whole · CPA: P→A · קדם: `M.OPS.SUB.2D2D`, `~M.NUM.COMP.DIFF10`
 - **תיאור:** במספרים קרובים (‎803 − 797) משלים/ה מהקטן לגדול במקום לפרוט.
-- **טעויות · מכניקות · תבנית:** `E.ZERO_BORROW`, `E.SUB_SMALL_FROM_LARGE` · `MECH.NUMLINE_JUMP`, `MECH.NUMBER_TALK` · `T.ADDSUB.MENTAL{op:"-",distance:[1,30],range:[50,10000],strategyTag:"addUp"}`
+- **טעויות · מכניקות · תבנית:** `EM.ZERO_BORROW`, `EM.SUB_SMALL_FROM_LARGE` · `MECH.NUMLINE_JUMP`, `MECH.NUMBER_TALK` · `T.ADDSUB.MENTAL{op:"-",distance:[1,30],range:[50,10000],strategyTag:"addUp"}`
 - **דוגמאות:** (1) "‎2,003 − 1,998". (2) "‎61 − 57". (3) "כמה שנים עברו מ-1948 עד 2027?".
 
 #### `M.OPS.ADD.HUND` — חיבור וחיסור של מספרים עגולים (מאות ואלפים)
 - **מטא:** S · `IL:G3.AS`(C) · C&S: — · CPA: P→A · קדם: `M.PV.HUND1000`, `M.OPS.TENS.ADDSUB`
 - **תיאור:** ‎300 + 500, ‏‎740 + 200, ‏‎6,000 − 2,500, ‏‎1,000 − 350 בעזרת מבנה עשרוני.
-- **טעויות · מכניקות · תבנית:** `E.PV_CONCAT`, `E.PV_ZERO_OMIT` · `MECH.PV_BANK` · `T.ADDSUB.MENTAL{op:"+|-",a:"round100|round1000",b:"round10|round100",range:[0,10000]}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_CONCAT`, `EM.PV_ZERO_OMIT` · `MECH.PV_BANK` · `T.ADDSUB.MENTAL{op:"+|-",a:"round100|round1000",b:"round10|round100",range:[0,10000]}`
 - **דוגמאות:** (1) "‎400 + 800". (2) "‎1,000 − 250". (3) "‎5,300 + 700".
 
 #### `M.OPS.ADD.COL3` — חיבור במאונך עד 1,000
 - **מטא:** S · `IL:G3.AS`(C) · C&S: Multidigit +/− · CPA: C(קוביות)→P→A · MP: +`O.STEP` · קדם: `M.PV.HUND1000`, `M.OPS.ADD.2D2D`
 - **תיאור:** חיבור בעמודות עם נשיאה, בהתחלה ליד "בנק" קוביות שמראה כל פריטה, ואחר כך בלי. אומדן לפני ובדיקה אחרי.
-- **טעויות · מכניקות · תבנית:** `E.NO_CARRY`, `E.CARRY_WRITE`, `E.NEAR` · `MECH.PV_BANK`, `MECH.BLUEPRINT` · `T.ADDSUB.COL{op:"+",digits:[2,3],carries:[0,2],sumMax:1000}`
+- **טעויות · מכניקות · תבנית:** `EM.NO_CARRY`, `EM.CARRY_WRITE`, `EM.NEAR` · `MECH.PV_BANK`, `MECH.BLUEPRINT` · `T.ADDSUB.COL{op:"+",digits:[2,3],carries:[0,2],sumMax:1000}`
 - **דוגמאות:** (1) "‎358 + 276". (2) "‎409 + 391". (3) "‎87 + 645".
 
 #### `M.OPS.SUB.COL3` — חיסור במאונך עד 1,000 (פריטה)
 - **מטא:** S · `IL:G3.AS`(C) · C&S: Multidigit +/− · CPA: C→P→A · MP: +`O.STEP` · קדם: `M.PV.UNITIZE`, `M.OPS.SUB.2D2D`
 - **תיאור:** חיסור בעמודות עם פריטה גלויה ("פורטים מאה לעשר עשרות").
-- **טעויות · מכניקות · תבנית:** `E.SUB_SMALL_FROM_LARGE`, `E.BORROW_NO_DEC`, `E.NEAR` · `MECH.PV_BANK` · `T.ADDSUB.COL{op:"-",digits:[3,3],borrows:[0,2],zeroInMinuend:false}`
+- **טעויות · מכניקות · תבנית:** `EM.SUB_SMALL_FROM_LARGE`, `EM.BORROW_NO_DEC`, `EM.NEAR` · `MECH.PV_BANK` · `T.ADDSUB.COL{op:"-",digits:[3,3],borrows:[0,2],zeroInMinuend:false}`
 - **דוגמאות:** (1) "‎642 − 375". (2) "‎815 − 268". (3) "‎730 − 412".
 
 #### `M.OPS.SUB.ZERO` — חיסור כשיש אפסים במחוסר
 - **מטא:** S · `IL:G3.AS`(C) · C&S: Multidigit · CPA: C→P→A · MP: +`O.STEP` · קדם: `M.OPS.SUB.COL3`
 - **תיאור:** ‎403 − 158, ‏‎1,000 − 237. פריטה דרך אפס מוצגת כ"פריטה של מאה לעשר עשרות, ואחת מהן ל-10 יחידות". כאלטרנטיבה מוצגת השלמה (`M.OPS.SUB.ADDUP`).
-- **טעויות · מכניקות · תבנית:** `E.ZERO_BORROW`, `E.SUB_SMALL_FROM_LARGE`, `E.BORROW_NO_DEC` · `MECH.PV_BANK` · `T.ADDSUB.COL{op:"-",digits:[3,4],zeroInMinuend:true,borrows:[1,3]}`
+- **טעויות · מכניקות · תבנית:** `EM.ZERO_BORROW`, `EM.SUB_SMALL_FROM_LARGE`, `EM.BORROW_NO_DEC` · `MECH.PV_BANK` · `T.ADDSUB.COL{op:"-",digits:[3,4],zeroInMinuend:true,borrows:[1,3]}`
 - **דוגמאות:** (1) "‎500 − 263". (2) "‎702 − 345". (3) "‎1,000 − 1".
 
 #### `M.OPS.COL4` — חיבור וחיסור במאונך עד רבבה
 - **מטא:** S · `IL:G3.AS`(I) · C&S: Multidigit · CPA: P→A · MP: +`O.STEP` · קדם: `M.OPS.ADD.COL3`, `M.OPS.SUB.ZERO`, `M.PV.THOU10K`
 - **תיאור:** חיבור וחיסור במאונך במספרים בני 4 ספרות. התוצאה לכל היותר 10,000.
-- **טעויות · מכניקות · תבנית:** `E.NO_CARRY`, `E.ZERO_BORROW`, `E.SUB_SMALL_FROM_LARGE`, `E.CARRY_WRITE` · `MECH.BLUEPRINT`, `MECH.PV_BANK` · `T.ADDSUB.COL{op:"+|-",digits:[4,4],carries:[0,3],range:[1000,10000]}`
+- **טעויות · מכניקות · תבנית:** `EM.NO_CARRY`, `EM.ZERO_BORROW`, `EM.SUB_SMALL_FROM_LARGE`, `EM.CARRY_WRITE` · `MECH.BLUEPRINT`, `MECH.PV_BANK` · `T.ADDSUB.COL{op:"+|-",digits:[4,4],carries:[0,3],range:[1000,10000]}`
 - **דוגמאות:** (1) "‎3,456 + 2,789". (2) "‎6,004 − 2,357". (3) "‎9,999 + 1".
 
 #### `M.OPS.CHECK.INVERSE` — בדיקה בפעולה הפוכה ובאומדן
 - **מטא:** S · `IL:G3.EST`(V) · C&S: — · CPA: A · קדם: `M.OPS.ADD.COL3`, `M.OPS.SUB.COL3`, `M.NUM.ROUND`
 - **תיאור:** בודק/ת תוצאה בפעולה ההפוכה ובאומדן ("האם 812 סביר ל-389 + 427?"), ומזהה תוצאה לא סבירה של "ילד אחר".
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP` · `MECH.NUMBER_TALK` · `T.ADDSUB.COL{mode:"checkGiven",givenError:["E.NO_CARRY","E.SUB_SMALL_FROM_LARGE",null]}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP` · `MECH.NUMBER_TALK` · `T.ADDSUB.COL{mode:"checkGiven",givenError:["EM.NO_CARRY","EM.SUB_SMALL_FROM_LARGE",null]}`
 - **דוגמאות:** (1) "נועה כתבה ‎562 − 278 = 316. איך בודקים?". (2) "בלי לחשב: האם ‎498 + 305 גדול מ-800?". (3) "איזה תרגיל בודק את ‎900 − 365 = 535?".
 
 ### 6.4 ציר `FACT`: שטף עובדות (התוכנית המלאה ב-§9)
@@ -1033,169 +1046,169 @@ function buildChoices(item, skill, profile): Choice[] {
 #### `M.FACT.ADD.PLUS012` — ‎+0, ‏‎+1, ‏‎+2
 - **מטא:** G (עד 10) / S-R (עד 20) · `IL:G1.AS20`(V) · C&S: Counting Strategies · CPA: P→A · קדם: `M.OPS.COUNTON.ADD`
 - **תיאור:** ‎n+1 הוא "השכן הבא", ‏‎n+2 הוא "הבא-הבא", ‏‎n+0 הוא n.
-- **טעויות · מכניקות · תבנית:** `E.X0_IDENTITY`, `E.COUNT_ON_INCL` · `MECH.TOWER`, `MECH.PATH_RACE` · `T.FACT{op:"+",factSet:"plus012",max:[10,20]}`
+- **טעויות · מכניקות · תבנית:** `EM.X0_IDENTITY`, `EM.COUNT_ON_INCL` · `MECH.TOWER`, `MECH.PATH_RACE` · `T.FACT{op:"+",factSet:"plus012",max:[10,20]}`
 - **דוגמאות:** (1) "‎7 + 1". (2) "‎0 + 9". (3) "‎15 + 2".
 
 #### `M.FACT.ADD.DOUBLES` — כפולים (5+5, 8+8)
 - **מטא:** G (עד 5+5) / S-R (עד 10+10) · `IL:G1.AS20`(V) · CPA: P(מראה/אצבעות)→A · קדם: `M.OPS.JOIN.C10`, `~M.NUM.SUBIT.C10`
 - **תיאור:** שולף/ת כפולים. ההמחשה: חרק עם רגליים כפולות, קסם המראה, שתי ידיים.
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.MUL_ADD` (רלוונטי ל-K1 בהמשך) · `MECH.MIRROR`, `MECH.TOWER` · `T.FACT{op:"+",factSet:"doubles",max:[5,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.MUL_ADD` (רלוונטי ל-K1 בהמשך) · `MECH.MIRROR`, `MECH.TOWER` · `T.FACT{op:"+",factSet:"doubles",max:[5,10]}`
 - **דוגמאות:** (1) "‎4 + 4". (2) "‎7 + 7". (3) "שתי עכבישות, ולכל אחת 8 רגליים: כמה רגליים?".
 
 #### `M.FACT.ADD.MAKE10` — חיבורים שהם 10
 - **מטא:** G+ / S-R · `IL:G1.AS20`(V) · CPA: P→A · קדם: `M.OPS.MAKE10`
 - **תיאור:** שליפה של ‎a + b = 10 וגם ‎a + ☐ = 10.
-- **טעויות · מכניקות · תבנית:** `E.NEAR` · `MECH.TOWER`, `MECH.TENFRAME_CART` · `T.FACT{op:"+",factSet:"make10",unknown:["c","b"]}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` · `MECH.TOWER`, `MECH.TENFRAME_CART` · `T.FACT{op:"+",factSet:"make10",unknown:["c","b"]}`
 - **דוגמאות:** (1) "‎6 + 4". (2) "‎3 + ☐ = 10". (3) "‎☐ + 8 = 10".
 
 #### `M.FACT.ADD.TENPLUS` — ‎10 + n
 - **מטא:** G+ / S-R · `IL:G1.AS20`(V) · CPA: P→A · קדם: `M.PV.TEEN`
 - **תיאור:** ‎10 + 6 = 16 לפי המבנה, בלי לספור.
-- **טעויות · מכניקות · תבנית:** `E.TEEN_WRITE`, `E.REVERSE_DIGITS` · `MECH.TOWER` · `T.FACT{op:"+",factSet:"tenPlus"}`
+- **טעויות · מכניקות · תבנית:** `EM.TEEN_WRITE`, `EM.REVERSE_DIGITS` · `MECH.TOWER` · `T.FACT{op:"+",factSet:"tenPlus"}`
 - **דוגמאות:** (1) "‎10 + 3". (2) "‎8 + 10". (3) "‎10 + 9".
 
 #### `M.FACT.ADD.NEARDBL` — כמעט-כפולים (6+7 = 6+6+1)
 - **מטא:** S-R · `IL:G1.AS20`/`IL:G2.FACTS`(V) · CPA: P→A · קדם: `M.FACT.ADD.DOUBLES`
 - **תיאור:** משתמש/ת בכפול הקרוב ועוד או פחות אחד.
-- **טעויות · מכניקות · תבנית:** `E.NEAR` (שוכח/ת את ה-1), `E.SQUARE_CONFUSE` (ענה/תה את הכפול) · `MECH.FORGE`, `MECH.TOWER` · `T.FACT{op:"+",factSet:"nearDoubles",strategy:"double±1"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` (שוכח/ת את ה-1), `EM.SQUARE_CONFUSE` (ענה/תה את הכפול) · `MECH.FORGE`, `MECH.TOWER` · `T.FACT{op:"+",factSet:"nearDoubles",strategy:"double±1"}`
 - **דוגמאות:** (1) "‎7 + 8". (2) "‎5 + 6". (3) "אם ‎8 + 8 = 16, כמה ‎8 + 9?".
 
 #### `M.FACT.ADD.BRIDGE10` — השלמה לעשר (8 + 5 = 8 + 2 + 3)
 - **מטא:** S-R · `IL:G1.AS20`(V) · C&S: Deriver · CPA: P(שתי מסגרות עשר)→A · קדם: `M.FACT.ADD.MAKE10`, `M.FACT.ADD.TENPLUS`, `M.OPS.BOND.10`
 - **תיאור:** מפרק/ת את המחובר השני כדי להשלים לעשר. ההמחשה: גבישים "קופצים" מעגלה לעגלה.
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.NO_CARRY` (13 ← 3) · `MECH.TENFRAME_CART`, `MECH.FORGE` · `T.FACT{op:"+",factSet:"bridge10",strategy:"make10"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.NO_CARRY` (13 ← 3) · `MECH.TENFRAME_CART`, `MECH.FORGE` · `T.FACT{op:"+",factSet:"bridge10",strategy:"make10"}`
 - **דוגמאות:** (1) "‎9 + 6". (2) "‎8 + 7". (3) "‎7 + 5: כמה מה-5 קופצים כדי להשלים את 7 לעשר?".
 
 #### `M.FACT.ADD.PLUS9` — ‎+9 כ-‎+10 − 1
 - **מטא:** S-R · `IL:G2.FACTS`(V) · CPA: P→A · קדם: `M.FACT.ADD.TENPLUS`
 - **תיאור:** ‎n + 9 = n + 10 − 1, וגם ‎+8 כ-‎+10 − 2.
-- **טעויות · מכניקות · תבנית:** `E.NEAR` (n + 10, או n + 11) · `MECH.TOWER` · `T.FACT{op:"+",factSet:"plus9_8",strategy:"compensate"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` (n + 10, או n + 11) · `MECH.TOWER` · `T.FACT{op:"+",factSet:"plus9_8",strategy:"compensate"}`
 - **דוגמאות:** (1) "‎9 + 7". (2) "‎6 + 9". (3) "‎8 + 5 (דרך ‎+10 − 2)".
 
 #### `M.FACT.ADD.WITHIN10` — כל עובדות החיבור עד 10 (שליפה)
 - **מטא:** G+ · `IL:G1.AS20`(V) · CPA: A · MP: `MP.G` (דיוק בלבד) · קדם: `M.FACT.ADD.PLUS012`, `M.FACT.ADD.DOUBLES`, `M.FACT.ADD.MAKE10`
 - **תיאור:** שליפה מעורבבת של כל 66 עובדות החיבור שסכומן עד 10, לפי מתזמן לכל עובדה (§9.4).
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.OP_SWAP` · `MECH.TOWER` · `T.FACT{op:"+",factSet:"all",sumMax:10}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.OP_SWAP` · `MECH.TOWER` · `T.FACT{op:"+",factSet:"all",sumMax:10}`
 - **דוגמאות:** (1) "‎3 + 4". (2) "‎2 + 6". (3) "‎5 + 4".
 
 #### `M.FACT.SUB.THINKADD` — חיסור כחיבור חסר (משפחת עובדות)
 - **מטא:** S-R · `IL:G1.AS20`(V) · C&S: Part-Whole · CPA: P(משולש עובדות)→A · קדם: `M.FACT.ADD.WITHIN10`, `M.OPS.BOND.MISSING`
 - **תיאור:** פותר/ת ‎13 − 8 כ-"8 ועוד כמה הם 13?", וממלא/ה משולש של משפחת עובדות (3 מספרים ו-4 תרגילים).
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP` (21), `E.NEAR` · `MECH.HIDE_HUT`, `MECH.FORGE` · `T.FACT{op:"-",factSet:"all20",strategy:"thinkAdd",repr:"triangle|numeral"}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP` (21), `EM.NEAR` · `MECH.HIDE_HUT`, `MECH.FORGE` · `T.FACT{op:"-",factSet:"all20",strategy:"thinkAdd",repr:"triangle|numeral"}`
 - **דוגמאות:** (1) "‎14 − 6 = ?   (‎6 + ? = 14)". (2) משולש 5/7/12: כתבו את 4 התרגילים. (3) "‎11 − 9".
 
 #### `M.FACT.SUB.BACK012` — ‎−0, ‏‎−1, ‏‎−2
 - **מטא:** G (עד 10) / S-R · `IL:G1.AS20`(V) · CPA: P→A · קדם: `M.OPS.COUNTBACK.SUB`
 - **תיאור:** ‎n − 1 הוא השכן הקודם, ‏‎n − 0 הוא n, ‏‎n − n הוא 0.
-- **טעויות · מכניקות · תבנית:** `E.X0_IDENTITY` (‎n − 0 = 0), `E.COUNT_ON_INCL` · `MECH.TOWER` · `T.FACT{op:"-",factSet:"minus012",max:[10,20]}`
+- **טעויות · מכניקות · תבנית:** `EM.X0_IDENTITY` (‎n − 0 = 0), `EM.COUNT_ON_INCL` · `MECH.TOWER` · `T.FACT{op:"-",factSet:"minus012",max:[10,20]}`
 - **דוגמאות:** (1) "‎9 − 1". (2) "‎6 − 0". (3) "‎17 − 2".
 
 #### `M.FACT.SUB.FROM10` — ‎10 − n
 - **מטא:** G+ / S-R · `IL:G1.AS20`(V) · CPA: P→A · קדם: `M.FACT.ADD.MAKE10`
 - **תיאור:** שליפה של ‎10 − n מתוך "חברים של 10".
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.OP_SWAP` · `MECH.TENFRAME_CART`, `MECH.TOWER` · `T.FACT{op:"-",factSet:"from10"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.OP_SWAP` · `MECH.TENFRAME_CART`, `MECH.TOWER` · `T.FACT{op:"-",factSet:"from10"}`
 - **דוגמאות:** (1) "‎10 − 7". (2) "‎10 − 4". (3) "‎10 − ☐ = 2".
 
 #### `M.FACT.SUB.TEENMINUS` — ‎1n − n, ‏‎1n − 10
 - **מטא:** S-R · `IL:G1.AS20`(V) · CPA: P→A · קדם: `M.FACT.ADD.TENPLUS`
 - **תיאור:** ‎16 − 6 = 10, ‏‎16 − 10 = 6, לפי המבנה.
-- **טעויות · מכניקות · תבנית:** `E.PV_FACE`, `E.REVERSE_DIGITS` · `MECH.TOWER` · `T.FACT{op:"-",factSet:"teenMinus"}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_FACE`, `EM.REVERSE_DIGITS` · `MECH.TOWER` · `T.FACT{op:"-",factSet:"teenMinus"}`
 - **דוגמאות:** (1) "‎14 − 4". (2) "‎18 − 10". (3) "‎13 − 3".
 
 #### `M.FACT.SUB.BRIDGE10` — חיסור דרך העשר (13 − 5)
 - **מטא:** S-R · `IL:G1.AS20`(V) · C&S: Deriver · CPA: P→A · קדם: `M.FACT.SUB.FROM10`, `M.FACT.ADD.BRIDGE10`
 - **תיאור:** בשתי אסטרטגיות: "יורדים לעשר ועוד" (13 − 3 − 2) או "לוקחים מהעשר" (10 − 5 + 3).
-- **טעויות · מכניקות · תבנית:** `E.SUB_SMALL_FROM_LARGE` (‎13 − 5 → 12, כי 5 − 3 = 2), `E.NEAR` · `MECH.TENFRAME_CART`, `MECH.NUMLINE_JUMP` · `T.FACT{op:"-",factSet:"bridge10",strategy:"backThrough10|takeFrom10"}`
+- **טעויות · מכניקות · תבנית:** `EM.SUB_SMALL_FROM_LARGE` (‎13 − 5 → 12, כי 5 − 3 = 2), `EM.NEAR` · `MECH.TENFRAME_CART`, `MECH.NUMLINE_JUMP` · `T.FACT{op:"-",factSet:"bridge10",strategy:"backThrough10|takeFrom10"}`
 - **דוגמאות:** (1) "‎12 − 5". (2) "‎15 − 8". (3) "‎11 − 4".
 
 #### `M.FACT.SUB.MINUS9` — ‎−9 כ-‎−10 + 1
 - **מטא:** S-R · `IL:G2.FACTS`(V) · CPA: P→A · קדם: `M.FACT.SUB.TEENMINUS`
 - **תיאור:** ‎n − 9 = n − 10 + 1, וגם ‎−8 כ-‎−10 + 2.
-- **טעויות · מכניקות · תבנית:** `E.NEAR` (מתקן/ת לכיוון הלא נכון: n − 11) · `MECH.TOWER` · `T.FACT{op:"-",factSet:"minus9_8",strategy:"compensate"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` (מתקן/ת לכיוון הלא נכון: n − 11) · `MECH.TOWER` · `T.FACT{op:"-",factSet:"minus9_8",strategy:"compensate"}`
 - **דוגמאות:** (1) "‎15 − 9". (2) "‎12 − 9". (3) "‎16 − 8".
 
 #### `M.FACT.AS20.MIXED` — כל עובדות החיבור והחיסור עד 20 (שליפה ושטף)
 - **מטא:** S-R · `IL:G2.FACTS`(V) "עובדות עד 9+9" · CPA: A · MP: +`O.FLU` · קדם: `M.FACT.ADD.BRIDGE10`, `M.FACT.ADD.NEARDBL`, `M.FACT.ADD.PLUS9`, `M.FACT.SUB.BRIDGE10`, `M.FACT.SUB.THINKADD`, `M.FACT.SUB.MINUS9`
 - **תיאור:** שליפה מעורבבת של 100 עובדות החיבור (0–9 + 0–9) ושל עובדות החיסור ההפוכות, עם כרטיס חזרה לכל עובדה (§9.4) ושטף שקט.
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.OP_SWAP`, `E.COUNT_ALL` (מזוהה מזמן) · `MECH.TOWER` · `T.FACT{op:"+|-",factSet:"all20",scheduler:"perFact"}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.OP_SWAP`, `EM.COUNT_ALL` (מזוהה מזמן) · `MECH.TOWER` · `T.FACT{op:"+|-",factSet:"all20",scheduler:"perFact"}`
 - **דוגמאות:** (1) "‎8 + 6". (2) "‎17 − 9". (3) "‎7 + ☐ = 15".
 
 #### `M.FACT.MUL.X2` — ‎×2 ככפולים
 - **מטא:** S-R · `IL:G2.MD`(C) · C&S: — · CPA: P(מערך 2 שורות)→A · MP: +`O.FLU` · קדם: `M.MUL.GROUPS`, `M.FACT.ADD.DOUBLES`
 - **תיאור:** ‎n × 2 = n + n. משתמשים בחוק החילוף כדי לכסות גם ‎2 × n.
-- **טעויות · מכניקות · תבנית:** `E.MUL_ADD` (n + 2), `E.SKIP_SLIP` · `MECH.TOWER`, `MECH.ARRAY_BUILD` · `T.FACT{op:"×",factSet:"x2"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_ADD` (n + 2), `EM.SKIP_SLIP` · `MECH.TOWER`, `MECH.ARRAY_BUILD` · `T.FACT{op:"×",factSet:"x2"}`
 - **דוגמאות:** (1) "‎2 × 7". (2) "‎9 × 2". (3) "לכמה נעליים יש 6 ילדים?".
 
 #### `M.FACT.MUL.X10` — ‎×10
 - **מטא:** S-R · `IL:G2.MD`(C) · CPA: P(צרורות)→A · MP: +`O.FLU` · קדם: `M.MUL.GROUPS`, `M.NUM.COUNT.SKIP10`
 - **תיאור:** ‎n × 10 הוא n עשרות. מנמקים לפי ערך מקומי ("n עשרות"), לא כ"מוסיפים אפס".
-- **טעויות · מכניקות · תבנית:** `E.MUL_ADD` (n + 10), `E.PV_CONCAT` · `MECH.TOWER`, `MECH.PV_BANK` · `T.FACT{op:"×",factSet:"x10"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_ADD` (n + 10), `EM.PV_CONCAT` · `MECH.TOWER`, `MECH.PV_BANK` · `T.FACT{op:"×",factSet:"x10"}`
 - **דוגמאות:** (1) "‎10 × 6". (2) "‎8 × 10". (3) "כמה אצבעות ל-7 ילדים?".
 
 #### `M.FACT.MUL.X5` — ‎×5 (חצי מ-‎×10, השעון)
 - **מטא:** S-R · `IL:G2.MD`(C) "×5" · CPA: P→A · MP: +`O.FLU` · קדם: `M.FACT.MUL.X10`, `M.NUM.COUNT.SKIP5`
 - **תיאור:** ‎n × 5 בספירה בחמישיות, או כחצי מ-‎n × 10. קישור לשעון: כל מספר הוא 5 דקות.
-- **טעויות · מכניקות · תבנית:** `E.SKIP_SLIP`, `E.MUL_NEIGHBOR` · `MECH.TOWER`, `MECH.CLOCK_CAMP` · `T.FACT{op:"×",factSet:"x5",strategy:"halfOf10|skip"}`
+- **טעויות · מכניקות · תבנית:** `EM.SKIP_SLIP`, `EM.MUL_NEIGHBOR` · `MECH.TOWER`, `MECH.CLOCK_CAMP` · `T.FACT{op:"×",factSet:"x5",strategy:"halfOf10|skip"}`
 - **דוגמאות:** (1) "‎5 × 7". (2) "‎8 × 5 (חצי מ-80)". (3) "המחוג הגדול על 9: כמה דקות?".
 
 #### `M.FACT.MUL.X1X0` — ‎×1 ו-‎×0
 - **מטא:** S-R · `IL:G2.MD`(I) · CPA: P(סיפור)→A · MP: +`O.FLU` · קדם: `M.MUL.GROUPS`
 - **תיאור:** ‎n × 1 = n ("קבוצה אחת"), ‏‎n × 0 = 0 ("אפס קבוצות" או "קבוצות ריקות"), מסיפורים.
-- **טעויות · מכניקות · תבנית:** `E.X0_IDENTITY`, `E.MUL_ADD` · `MECH.TOWER` · `T.FACT{op:"×",factSet:"x1x0"}`
+- **טעויות · מכניקות · תבנית:** `EM.X0_IDENTITY`, `EM.MUL_ADD` · `MECH.TOWER` · `T.FACT{op:"×",factSet:"x1x0"}`
 - **דוגמאות:** (1) "‎6 × 0". (2) "‎1 × 9". (3) "5 סלים ריקים: כמה תפוחים?".
 
 #### `M.FACT.MUL.X4` — ‎×4 ככפול של כפול
 - **מטא:** S · `IL:G3.MT`(V) · CPA: P(מערך מפוצל)→A · MP: +`O.FLU` · קדם: `M.FACT.MUL.X2`
 - **תיאור:** ‎n × 4 = (n × 2) × 2.
-- **טעויות · מכניקות · תבנית:** `E.MUL_NEIGHBOR`, `E.MUL_ADD` · `MECH.ARRAY_BUILD`, `MECH.TOWER` · `T.FACT{op:"×",factSet:"x4",strategy:"doubleDouble"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_NEIGHBOR`, `EM.MUL_ADD` · `MECH.ARRAY_BUILD`, `MECH.TOWER` · `T.FACT{op:"×",factSet:"x4",strategy:"doubleDouble"}`
 - **דוגמאות:** (1) "‎4 × 7 (14, ואז 28)". (2) "‎6 × 4". (3) "לכמה רגליים יש 9 כלבים?".
 
 #### `M.FACT.MUL.X3` — ‎×3 כ-‎×2 ועוד קבוצה
 - **מטא:** S · `IL:G3.MT`(V) · CPA: P→A · MP: +`O.FLU` · קדם: `M.FACT.MUL.X2`, `M.MUL.ARRAY`
 - **תיאור:** ‎n × 3 = n × 2 + n.
-- **טעויות · מכניקות · תבנית:** `E.MUL_NEIGHBOR`, `E.SKIP_SLIP` · `MECH.ARRAY_BUILD`, `MECH.TOWER` · `T.FACT{op:"×",factSet:"x3",strategy:"doublePlusOne"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_NEIGHBOR`, `EM.SKIP_SLIP` · `MECH.ARRAY_BUILD`, `MECH.TOWER` · `T.FACT{op:"×",factSet:"x3",strategy:"doublePlusOne"}`
 - **דוגמאות:** (1) "‎3 × 8". (2) "‎7 × 3". (3) "3 משולשים, 6 צלעות בסך הכול? בדקו".
 
 #### `M.FACT.MUL.X6` — ‎×6 כ-‎×5 ועוד קבוצה (או כפול של ‎×3)
 - **מטא:** S · `IL:G3.MT`(V) · CPA: P→A · MP: +`O.FLU` · קדם: `M.FACT.MUL.X5`, `M.MUL.PROP.DISTRIB`, `~M.FACT.MUL.X3`
 - **תיאור:** ‎n × 6 = n × 5 + n, או ‎(n × 3) × 2.
-- **טעויות · מכניקות · תבנית:** `E.MUL_NEIGHBOR`, `E.NEAR` · `MECH.ARRAY_BUILD`, `MECH.TOWER` · `T.FACT{op:"×",factSet:"x6",strategy:"fivePlusOne|doubleThree"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_NEIGHBOR`, `EM.NEAR` · `MECH.ARRAY_BUILD`, `MECH.TOWER` · `T.FACT{op:"×",factSet:"x6",strategy:"fivePlusOne|doubleThree"}`
 - **דוגמאות:** (1) "‎6 × 7 (35 + 7)". (2) "‎8 × 6". (3) "כמה ביצים ב-4 תבניות של 6?".
 
 #### `M.FACT.MUL.X9` — ‎×9 כ-‎×10 פחות קבוצה (ודפוסי ‎×9)
 - **מטא:** S · `IL:G3.MT`(V) · CPA: P→A · MP: +`O.FLU` · קדם: `M.FACT.MUL.X10`, `M.MUL.PROP.DISTRIB`
 - **תיאור:** ‎n × 9 = n × 10 − n. חוקרים את הדפוס: סכום הספרות 9, ספרת העשרות היא n − 1.
-- **טעויות · מכניקות · תבנית:** `E.MUL_NEIGHBOR` (n × 10 / n × 8), `E.REVERSE_DIGITS` (‎7 × 9 → 36) · `MECH.TABLE_MAP`, `MECH.TOWER` · `T.FACT{op:"×",factSet:"x9",strategy:"tenMinusOne"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_NEIGHBOR` (n × 10 / n × 8), `EM.REVERSE_DIGITS` (‎7 × 9 → 36) · `MECH.TABLE_MAP`, `MECH.TOWER` · `T.FACT{op:"×",factSet:"x9",strategy:"tenMinusOne"}`
 - **דוגמאות:** (1) "‎9 × 6 (60 − 6)". (2) "‎9 × 8". (3) "מה משותף ל-18, 27, 36?".
 
 #### `M.FACT.MUL.X8` — ‎×8 ככפול של ‎×4
 - **מטא:** S · `IL:G3.MT`(V) · CPA: P→A · MP: +`O.FLU` · קדם: `M.FACT.MUL.X4`
 - **תיאור:** ‎n × 8 = ((n × 2) × 2) × 2.
-- **טעויות · מכניקות · תבנית:** `E.MUL_NEIGHBOR` (‎7 × 8 → 54/64/49), `E.NEAR` · `MECH.ARRAY_BUILD`, `MECH.TOWER` · `T.FACT{op:"×",factSet:"x8",strategy:"doubleThrice"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_NEIGHBOR` (‎7 × 8 → 54/64/49), `EM.NEAR` · `MECH.ARRAY_BUILD`, `MECH.TOWER` · `T.FACT{op:"×",factSet:"x8",strategy:"doubleThrice"}`
 - **דוגמאות:** (1) "‎8 × 6 (12, 24, 48)". (2) "‎8 × 8". (3) "לכמה רגליים יש 7 עכבישים?".
 
 #### `M.FACT.MUL.X7` — ‎×7 בחוק הפילוג (‎×5 + ‎×2)
 - **מטא:** S · `IL:G3.MT`(V) · CPA: P(מערך מפוצל)→A · MP: +`O.FLU` · קדם: `M.FACT.MUL.X5`, `M.FACT.MUL.X2`, `M.MUL.PROP.DISTRIB`
 - **תיאור:** ‎n × 7 = n × 5 + n × 2. העובדות הקשות (‎7 × 6, ‏‎7 × 7, ‏‎7 × 8) מקבלות כרטיס אסטרטגיה משלהן.
-- **טעויות · מכניקות · תבנית:** `E.MUL_NEIGHBOR`, `E.SQUARE_CONFUSE` · `MECH.ARRAY_BUILD`, `MECH.TOWER` · `T.FACT{op:"×",factSet:"x7",strategy:"fivePlusTwo"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_NEIGHBOR`, `EM.SQUARE_CONFUSE` · `MECH.ARRAY_BUILD`, `MECH.TOWER` · `T.FACT{op:"×",factSet:"x7",strategy:"fivePlusTwo"}`
 - **דוגמאות:** (1) "‎7 × 8 = 7 × 5 + 7 × 3 = ?". (2) "‎7 × 7". (3) "כמה ימים ב-6 שבועות?".
 
 #### `M.FACT.MUL.MIXED` — כל לוח הכפל (שליפה ושטף)
 - **מטא:** S · `IL:G3.MT`(V) "ביסוס לוח הכפל" · CPA: A · MP: +`O.FLU` · קדם: `M.FACT.MUL.X1X0`, `M.FACT.MUL.X3`, `M.FACT.MUL.X6`, `M.FACT.MUL.X7`, `M.FACT.MUL.X8`, `M.FACT.MUL.X9`
 - **תיאור:** שליפה מעורבבת של 100 עובדות (0–10 × 0–10, ‏55 ייחודיות לפי חוק החילוף), כרטיס חזרה לכל עובדה, ומפת לוח הכפל.
-- **טעויות · מכניקות · תבנית:** `E.MUL_NEIGHBOR`, `E.MUL_ADD`, `E.SQUARE_CONFUSE` · `MECH.TOWER`, `MECH.TABLE_MAP` · `T.FACT{op:"×",factSet:"all",scheduler:"perFact"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_NEIGHBOR`, `EM.MUL_ADD`, `EM.SQUARE_CONFUSE` · `MECH.TOWER`, `MECH.TABLE_MAP` · `T.FACT{op:"×",factSet:"all",scheduler:"perFact"}`
 - **דוגמאות:** (1) "‎6 × 8". (2) "‎9 × 7". (3) "‎☐ × 4 = 36".
 
 #### `M.FACT.DIV.INVERSE` — עובדות חילוק כגורם חסר
 - **מטא:** S · `IL:G3.MT`(V) · CPA: P(משולש עובדות)→A · MP: +`O.FLU` · קדם: `M.MUL.DIV.MEANING`, `M.FACT.MUL.X2`, `M.FACT.MUL.X5`, `M.FACT.MUL.X10`
 - **תיאור:** ‎24 : 6 נפתר כ-"6 כפול כמה הם 24?". משולש עובדות כפל וחילוק. מתקדם לפי משפחות הכפל השולטות.
-- **טעויות · מכניקות · תבנית:** `E.DIV_REVERSE`, `E.MUL_NEIGHBOR` (‎56 : 8 → 6/8) · `MECH.SHARE_LOOT`, `MECH.TOWER` · `T.FACT{op:":",factSet:"inverseOfMastered",strategy:"thinkMultiply"}`
+- **טעויות · מכניקות · תבנית:** `EM.DIV_REVERSE`, `EM.MUL_NEIGHBOR` (‎56 : 8 → 6/8) · `MECH.SHARE_LOOT`, `MECH.TOWER` · `T.FACT{op:":",factSet:"inverseOfMastered",strategy:"thinkMultiply"}`
 - **דוגמאות:** (1) "‎35 : 5". (2) "‎42 : 7 (‎7 × ? = 42)". (3) משולש 4/9/36: ארבעה תרגילים.
 
 #### `M.FACT.DIV.MIXED` — כל עובדות החילוק בלוח
 - **מטא:** S · `IL:G3.MT`(V) · CPA: A · MP: +`O.FLU` · קדם: `M.FACT.DIV.INVERSE`, `M.FACT.MUL.MIXED`
 - **תיאור:** שליפה של ‎a : b לכל ‎a = b × c בלוח (b ≠ 0), כולל ‎n : 1 ו-‎n : n. גם ‎0 : n, אבל לא חילוק באפס.
-- **טעויות · מכניקות · תבנית:** `E.MUL_NEIGHBOR`, `E.DIV_REVERSE`, `E.X0_IDENTITY` · `MECH.TOWER` · `T.FACT{op:":",factSet:"all",scheduler:"perFact"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_NEIGHBOR`, `EM.DIV_REVERSE`, `EM.X0_IDENTITY` · `MECH.TOWER` · `T.FACT{op:":",factSet:"all",scheduler:"perFact"}`
 - **דוגמאות:** (1) "‎72 : 9". (2) "‎0 : 6". (3) "‎☐ : 4 = 7".
 
 ### 6.5 ציר `MUL`: משמעויות כפל וחילוק, חוקים, מעבר ללוח
@@ -1203,121 +1216,121 @@ function buildChoices(item, skill, profile): Choice[] {
 #### `M.MUL.SHARE.FAIR` — חלוקה הוגנת ("כל אחד מקבל אותו דבר")
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: — (Fair sharing, BK) · CPA: C · קדם: `M.NUM.COUNT.OBJ10`
 - **תיאור:** מחלק/ת 4–12 פריטים בין 2–4 דמויות "אחד לך, אחד לך" ובודק/ת שלכולן אותו מספר. כולל סיפורים שבהם החלוקה מסתיימת בשארית ("נשאר אחד, מה נעשה?").
-- **טעויות · מכניקות · תבנית:** `E.1TO1_SKIP`, `E.NEAR` (חלוקה לא שווה) · `MECH.SHARE_LOOT` · `T.DIV.SHARE{total:[4,12],groups:[2,4],remainder:[0,1],mode:"deal"}`
+- **טעויות · מכניקות · תבנית:** `EM.1TO1_SKIP`, `EM.NEAR` (חלוקה לא שווה) · `MECH.SHARE_LOOT` · `T.DIV.SHARE{total:[4,12],groups:[2,4],remainder:[0,1],mode:"deal"}`
 - **דוגמאות:** (1) "חלקו 6 עוגיות בין שני הדובים". (2) "8 גזעים ל-4 אוהלים, כמה לכל אוהל?". (3) "7 תותים לשני ילדים. מה עם האחרון?".
 
 #### `M.MUL.GROUPS` — קבוצות שוות (משמעות הכפל)
 - **מטא:** S-R · `IL:G2.MD`(C) · C&S: Multiplication: Parts and Wholes (BK) · CPA: C→P→A · MP: +`O.REP` · קדם: `M.NUM.COUNT.SKIP5`, `M.NUM.COUNT.SKIP2`, `~M.OPS.ADD.2D1D`
 - **תיאור:** מזהה ויוצר/ת "a קבוצות של b", קורא/ת "a פעמים b" וכותב/ת ‎a × b. בכיתה הישראלית הסדר הוא "מספר הקבוצות × גודל הקבוצה" (C, יש לבדוק). בשני הסדרים התשובה זהה, והמסיחים לא מענישים על הסדר.
-- **טעויות · מכניקות · תבנית:** `E.MUL_ADD`, `E.SKIP_SLIP` · `MECH.ARRAY_BUILD`, `MECH.SHARE_LOOT` · `T.MUL.GROUPS{groups:[2,6],size:[2,10],mode:"build|read|write"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_ADD`, `EM.SKIP_SLIP` · `MECH.ARRAY_BUILD`, `MECH.SHARE_LOOT` · `T.MUL.GROUPS{groups:[2,6],size:[2,10],mode:"build|read|write"}`
 - **דוגמאות:** (1) "4 אוהלים, בכל אחד 3 צללונים. כתבו תרגיל". (2) "בנו 5 קבוצות של 2". (3) "איזו תמונה מתאימה ל-‎3 × 6?".
 
 #### `M.MUL.ARRAY` — מערכים (שורות × טורים)
 - **מטא:** S-R · `IL:G2.MD`(C) · CPA: C→P→A · MP: +`O.REP` · קדם: `M.MUL.GROUPS`
 - **תיאור:** בונה/ה מערך של ‎a × b לבנים (`MECH.ARRAY_BUILD`), קורא/ת מערך כתרגיל, ומסובב/ת אותו כדי לראות את ‎b × a.
-- **טעויות · מכניקות · תבנית:** `E.MUL_ADD` (סופר/ת שורה ועמודה), `E.1TO1_DOUBLE` (פינה נספרת פעמיים) · `MECH.ARRAY_BUILD` · `T.MUL.GROUPS{repr:"array",rows:[2,10],cols:[2,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_ADD` (סופר/ת שורה ועמודה), `EM.1TO1_DOUBLE` (פינה נספרת פעמיים) · `MECH.ARRAY_BUILD` · `T.MUL.GROUPS{repr:"array",rows:[2,10],cols:[2,10]}`
 - **דוגמאות:** (1) "בנו קיר של 3 שורות ו-7 לבנים בכל שורה". (2) "כמה חלונות בבניין 4 × 5?". (3) "כתבו שני תרגילים לאותו מערך".
 
 #### `M.MUL.REPADD` — כפל כחיבור חוזר ולהפך
 - **מטא:** S-R · `IL:G2.MD`(C) · CPA: P→A · קדם: `M.MUL.GROUPS`
 - **תיאור:** מתרגם/ת ‎6 + 6 + 6 + 6 ל-‎4 × 6 ולהפך. מזהה סכום שאינו קבוצות שוות (‎3 + 4 + 3 אינו כפל).
-- **טעויות · מכניקות · תבנית:** `E.MUL_ADD` (‎4 × 6 → 4 + 6), `E.SKIP_SLIP` · `MECH.ARRAY_BUILD` · `T.MUL.GROUPS{mode:"addToMul|mulToAdd|isItMul"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_ADD` (‎4 × 6 → 4 + 6), `EM.SKIP_SLIP` · `MECH.ARRAY_BUILD` · `T.MUL.GROUPS{mode:"addToMul|mulToAdd|isItMul"}`
 - **דוגמאות:** (1) "‎7 + 7 + 7 = ☐ × 7". (2) "‎5 × 3 = ☐ + ☐ + ☐ + ☐ + ☐". (3) "האם ‎2 + 2 + 3 אפשר לכתוב ככפל?".
 
 #### `M.MUL.DIV.MEANING` — שתי משמעויות החילוק (חלוקה למספר קבוצות ומדידה)
 - **מטא:** S-R · `IL:G2.MD`(C) · CPA: C→P→A · MP: +`O.REP` · קדם: `M.MUL.SHARE.FAIR`, `M.MUL.GROUPS`
 - **תיאור:** בחלוקה למספר קבוצות: "12 ל-3 אוהלים, כמה בכל אחד?". במדידה: "12, ‏3 בכל אוהל, כמה אוהלים?". כותב/ת ‎12 : 3 = 4 בשני המקרים ומקשר/ת לכפל.
-- **טעויות · מכניקות · תבנית:** `E.DIV_REVERSE`, `E.OP_SWAP` (12 − 3), `E.MUL_ADD` · `MECH.SHARE_LOOT` · `T.DIV.SHARE{total:[6,40],mode:"partitive|quotative",divisor:[2,5]}`
+- **טעויות · מכניקות · תבנית:** `EM.DIV_REVERSE`, `EM.OP_SWAP` (12 − 3), `EM.MUL_ADD` · `MECH.SHARE_LOOT` · `T.DIV.SHARE{total:[6,40],mode:"partitive|quotative",divisor:[2,5]}`
 - **דוגמאות:** (1) "15 חיצים ל-5 קשתים, כמה לכל אחד?". (2) "15 חיצים, בכל אשפה 3. כמה אשפות?". (3) "איזה סיפור מתאים ל-‎20 : 4?".
 
 #### `M.MUL.PROP.COMMUT` — חוק החילוף בכפל
 - **מטא:** S · `IL:G3.MT`(V) · CPA: P(מערך מסתובב)→A · קדם: `M.MUL.ARRAY`
 - **תיאור:** ‎a × b = b × a. מנצל/ת את זה כדי לחצות את מספר העובדות (מפת לוח הכפל נצבעת סימטרית).
-- **טעויות · מכניקות · תבנית:** `E.MUL_NEIGHBOR` · `MECH.ARRAY_BUILD`, `MECH.TABLE_MAP` · `T.EQ{mode:"commuteTrueFalse|useCommute",op:"×",range:[0,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_NEIGHBOR` · `MECH.ARRAY_BUILD`, `MECH.TABLE_MAP` · `T.EQ{mode:"commuteTrueFalse|useCommute",op:"×",range:[0,10]}`
 - **דוגמאות:** (1) "‎3 × 8 = 8 × ☐". (2) "אם ‎9 × 4 = 36, כמה ‎4 × 9?". (3) "האם ‎6 × 2 = 2 × 6 לפי המערך?".
 
 #### `M.MUL.PROP.DISTRIB` — חוק הפילוג (מפצלים מערך)
 - **מטא:** S · `IL:G3.MT`(V) "חוק הפילוג" · CPA: P(מערך מפוצל בחיתוך)→A · MP: +`O.REP` · קדם: `M.MUL.ARRAY`, `M.FACT.MUL.X2`, `M.FACT.MUL.X5`
 - **תיאור:** חותך/ת מערך ‎a × b לשני מערכים, ‎a × b = a × c + a × (b − c). זה הבסיס לעובדות הקשות ול-‎2D×1D.
-- **טעויות · מכניקות · תבנית:** `E.MUL_ADD` (‎7 × (5 + 3) → 7 × 5 + 3), `E.NEAR` · `MECH.ARRAY_BUILD` · `T.MUL.SPLIT{a:[3,9],b:[6,10],splitAt:[2,5],mode:"cut|fill|equation"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_ADD` (‎7 × (5 + 3) → 7 × 5 + 3), `EM.NEAR` · `MECH.ARRAY_BUILD` · `T.MUL.SPLIT{a:[3,9],b:[6,10],splitAt:[2,5],mode:"cut|fill|equation"}`
 - **דוגמאות:** (1) "חתכו את מערך ‎6 × 8 לשניים שקל לחשב". (2) "‎7 × 6 = 7 × 5 + 7 × ☐". (3) "‎8 × 9 = 8 × 10 − 8 × ☐".
 
 #### `M.MUL.PROP.ASSOC` — חוק הקיבוץ בכפל
 - **מטא:** S+ · `IL:G4.MD`(I) · CPA: P(תיבה תלת-ממדית)→A · קדם: `M.MUL.PROP.COMMUT`, `~M.FACT.MUL.MIXED`
 - **תיאור:** ‎(2 × 5) × 7 = 2 × (5 × 7), ושימוש בזה: ‎4 × 25 × 7.
-- **טעויות · מכניקות · תבנית:** `E.NEAR`, `E.ORDER_LTR` · `MECH.ARRAY_BUILD` (קוביות) · `T.EQ{mode:"assoc",op:"×",terms:3}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR`, `EM.ORDER_LTR` · `MECH.ARRAY_BUILD` (קוביות) · `T.EQ{mode:"assoc",op:"×",terms:3}`
 - **דוגמאות:** (1) "‎5 × 7 × 2". (2) "‎4 × 9 × 25". (3) "כמה קוביות בתיבה ‎2 × 3 × 4?".
 
 #### `M.MUL.TABLE.PATTERNS` — חקר לוח הכפל
 - **מטא:** S · `IL:G3.MT`(V) "חקר לוח הכפל" · CPA: P (הלוח) · MP: `MP.S` (מושגי; תשובות פתוחות נבדקות בקוד) · קדם: `M.FACT.MUL.X2`, `M.FACT.MUL.X5`, `M.FACT.MUL.X10`, `M.MUL.PROP.COMMUT`
 - **תיאור:** מגלה דפוסים בלוח: סימטריה סביב האלכסון, ‎×5 מסתיים ב-0/5, ‎×9 עם סכום ספרות 9, טור ‎×4 כפול מטור ‎×2, ריבועים על האלכסון, וזוגיות.
-- **טעויות · מכניקות · תבנית:** `E.MUL_NEIGHBOR`, `E.PATTERN_UNIT` · `MECH.TABLE_MAP`, `MECH.NUMBER_TALK` · `T.MUL.EXPLORE{mode:"findCells|ruleTrueFalse|completeColumn"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_NEIGHBOR`, `EM.PATTERN_UNIT` · `MECH.TABLE_MAP`, `MECH.NUMBER_TALK` · `T.MUL.EXPLORE{mode:"findCells|ruleTrueFalse|completeColumn"}`
 - **דוגמאות:** (1) "צבעו את כל התאים שבהם 24". (2) "נכון או לא: כל המספרים בטור של 4 זוגיים". (3) "למה בטור של 9 סכום הספרות הוא 9?" (בחירה מבין 3 הסברים).
 
 #### `M.MUL.MULTIPLES` — כפולות וכפולות משותפות
 - **מטא:** S · `IL:G3.MT`(C) · CPA: P(ישר עם קפיצות)→A · קדם: `M.MUL.TABLE.PATTERNS`
 - **תיאור:** מזהה כפולות של n עד 100, וכפולה משותפת קטנה של שני מספרים, למשל "צפרדע קופצת 3, ארנב 4, איפה ייפגשו?".
-- **טעויות · מכניקות · תבנית:** `E.SKIP_SLIP`, `E.MUL_ADD` · `MECH.NUMLINE_JUMP`, `MECH.TABLE_MAP` · `T.MUL.EXPLORE{mode:"isMultiple|listMultiples|commonMultiple",n:[2,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.SKIP_SLIP`, `EM.MUL_ADD` · `MECH.NUMLINE_JUMP`, `MECH.TABLE_MAP` · `T.MUL.EXPLORE{mode:"isMultiple|listMultiples|commonMultiple",n:[2,10]}`
 - **דוגמאות:** (1) "האם 42 הוא כפולה של 6?". (2) "כתבו את 5 הכפולות הראשונות של 7". (3) "איפה ייפגשו הקופץ ב-4 והקופץ ב-6?" (12).
 
 #### `M.MUL.X10X100` — כפל בעשרות ובמאות שלמות
 - **מטא:** S · `IL:G3.MD`(C) "כפל בעשרות ומאות" · CPA: P(גבישי בנק)→A · קדם: `M.PV.UNITIZE`, `~M.FACT.MUL.MIXED`
 - **תיאור:** ‎3 × 40 = 3 × 4 עשרות = 12 עשרות = 120, ‏‎6 × 300, ‏‎20 × 10, ‏‎50 × 4.
-- **טעויות · מכניקות · תבנית:** `E.PV_ZERO_OMIT` (12), `E.PV_ZERO_EXTRA` (1200), `E.MUL_NEIGHBOR` · `MECH.PV_BANK` · `T.MUL.SCALE{a:[2,9],b:"tens|hundreds",fact:"mastered"}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_ZERO_OMIT` (12), `EM.PV_ZERO_EXTRA` (1200), `EM.MUL_NEIGHBOR` · `MECH.PV_BANK` · `T.MUL.SCALE{a:[2,9],b:"tens|hundreds",fact:"mastered"}`
 - **דוגמאות:** (1) "‎4 × 70". (2) "‎200 × 5". (3) "‎30 × 3".
 
 #### `M.MUL.2D1D.SPLIT` — דו-ספרתי × חד-ספרתי בעל-פה (פילוג)
 - **מטא:** S · `IL:G3.MD`(C) · CPA: P(מודל שטח)→A · MP: +`O.REP` · קדם: `M.MUL.PROP.DISTRIB`, `M.MUL.X10X100`
 - **תיאור:** ‎14 × 3 = 10 × 3 + 4 × 3, עם מלבן שטח שמפוצל לעשרות וליחידות.
-- **טעויות · מכניקות · תבנית:** `E.MUL_ADD` (‎10 × 3 + 4), `E.NO_CARRY` · `MECH.ARRAY_BUILD`, `MECH.BLUEPRINT` · `T.MUL.SPLIT{a:[11,99],b:[2,9],mode:"areaModel|equation"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_ADD` (‎10 × 3 + 4), `EM.NO_CARRY` · `MECH.ARRAY_BUILD`, `MECH.BLUEPRINT` · `T.MUL.SPLIT{a:[11,99],b:[2,9],mode:"areaModel|equation"}`
 - **דוגמאות:** (1) "‎23 × 4". (2) "‎18 × 6". (3) "‎45 × 2 (שתי דרכים)".
 
 #### `M.MUL.2D1D.COL` — כפל במאונך (דו/תלת-ספרתי × חד-ספרתי)
 - **מטא:** S (סוף שנה; ייתכן שבתוכנית החדשה זה ד', R3) · `IL:G3.MD`(C) · CPA: P→A · MP: +`O.STEP` · קדם: `M.MUL.2D1D.SPLIT`, `M.OPS.ADD.COL3`
 - **תיאור:** אלגוריתם הכפל במאונך עם נשיאה. כל שלב מקושר למודל השטח שלידו.
-- **טעויות · מכניקות · תבנית:** `E.NO_CARRY`, `E.CARRY_WRITE`, `E.MUL_NEIGHBOR` · `MECH.BLUEPRINT` · `T.MUL.COL{a:[11,999],b:[2,9],carries:[0,2]}`
+- **טעויות · מכניקות · תבנית:** `EM.NO_CARRY`, `EM.CARRY_WRITE`, `EM.MUL_NEIGHBOR` · `MECH.BLUEPRINT` · `T.MUL.COL{a:[11,999],b:[2,9],carries:[0,2]}`
 - **דוגמאות:** (1) "‎47 × 6". (2) "‎128 × 3". (3) "‎305 × 4".
 
 #### `M.MUL.DIV.REM` — חילוק עם שארית
 - **מטא:** S · `IL:G3.MD`(C) · CPA: C(חלוקת שלל)→P→A · MP: +`O.REP` · קדם: `M.FACT.DIV.INVERSE`
 - **תיאור:** ‎23 : 4 = 5 (שארית 3). מבין/ה שהשארית קטנה מהמחלק, ובודק/ת: ‎4 × 5 + 3 = 23.
-- **טעויות · מכניקות · תבנית:** `E.REM_TOO_BIG`, `E.MUL_NEIGHBOR`, `E.REM_IGNORE` · `MECH.SHARE_LOOT` · `T.DIV.REM{divisor:[2,9],quotient:[1,10],remainder:[1,"divisor-1"]}`
+- **טעויות · מכניקות · תבנית:** `EM.REM_TOO_BIG`, `EM.MUL_NEIGHBOR`, `EM.REM_IGNORE` · `MECH.SHARE_LOOT` · `T.DIV.REM{divisor:[2,9],quotient:[1,10],remainder:[1,"divisor-1"]}`
 - **דוגמאות:** (1) "חלקו 17 גבישים ל-3 אוהלים". (2) "‎38 : 5". (3) "‎29 : 6 = 4 (שארית 5): בדקו בכפל".
 
 #### `M.MUL.DIV.BY10` — חילוק בעשרות ובמאות שלמות
 - **מטא:** S · `IL:G3.MD`(I) · CPA: P→A · קדם: `M.PV.UNITIZE`, `M.FACT.DIV.INVERSE`
 - **תיאור:** ‎340 : 10 = 34, ‏‎600 : 100 = 6, ‏‎240 : 6 = 40 (24 עשרות : 6).
-- **טעויות · מכניקות · תבנית:** `E.PV_ZERO_OMIT`, `E.TENS_COUNT`, `E.PV_ZERO_EXTRA` · `MECH.PV_BANK` · `T.MUL.SCALE{op:":",dividend:"tens|hundreds",divisor:[2,10,100]}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_ZERO_OMIT`, `EM.TENS_COUNT`, `EM.PV_ZERO_EXTRA` · `MECH.PV_BANK` · `T.MUL.SCALE{op:":",dividend:"tens|hundreds",divisor:[2,10,100]}`
 - **דוגמאות:** (1) "‎560 : 10". (2) "‎3,000 : 100". (3) "‎420 : 7".
 
 #### `M.MUL.DIV.2D1D` — חילוק דו-ספרתי בחד-ספרתי בעל-פה
 - **מטא:** S+ · `IL:G4.MD`(I) · CPA: P→A · קדם: `M.MUL.DIV.REM`, `M.MUL.2D1D.SPLIT`
 - **תיאור:** ‎84 : 4 = 80 : 4 + 4 : 4, ‏‎96 : 3, ‏‎75 : 5, בפילוג של המחולק.
-- **טעויות · מכניקות · תבנית:** `E.DIV_REVERSE`, `E.REM_TOO_BIG`, `E.NEAR` · `MECH.SHARE_LOOT` · `T.MUL.SPLIT{op:":",dividend:[24,99],divisor:[2,9],exact:[true,false]}`
+- **טעויות · מכניקות · תבנית:** `EM.DIV_REVERSE`, `EM.REM_TOO_BIG`, `EM.NEAR` · `MECH.SHARE_LOOT` · `T.MUL.SPLIT{op:":",dividend:[24,99],divisor:[2,9],exact:[true,false]}`
 - **דוגמאות:** (1) "‎72 : 4". (2) "‎91 : 7". (3) "‎65 : 5".
 
 #### `M.MUL.ORDER.OPS` — סדר פעולות חשבון וסוגריים
 - **מטא:** S · `IL:G3.MD`(I) · CPA: P(סיפור בשני שלבים)→A · קדם: `M.MUL.PROP.DISTRIB`, `~M.FACT.MUL.MIXED`
 - **תיאור:** כפל וחילוק לפני חיבור וחיסור, וסוגריים קודם. מקשר/ת תרגיל לסיפור ("3 שקיות של 4, ועוד 2").
-- **טעויות · מכניקות · תבנית:** `E.ORDER_LTR`, `E.MUL_ADD` · `MECH.NUMBER_TALK`, `MECH.BAR_BUILDER` · `T.ORDER.OPS{terms:3,ops:["+","−","×",":"],parens:[0,1]}`
+- **טעויות · מכניקות · תבנית:** `EM.ORDER_LTR`, `EM.MUL_ADD` · `MECH.NUMBER_TALK`, `MECH.BAR_BUILDER` · `T.ORDER.OPS{terms:3,ops:["+","−","×",":"],parens:[0,1]}`
 - **דוגמאות:** (1) "‎2 + 3 × 4". (2) "‎(2 + 3) × 4". (3) "איזה תרגיל מתאים לסיפור: 5 שקיות של 6 תפוחים ועוד 2 תפוחים?".
 
 #### `M.MUL.DIVISIBILITY` — סימני התחלקות ב-2, ב-5 וב-10
 - **מטא:** S+ · `IL:G4.MD`(I) · CPA: P→A · MP: `MP.S` (אתגר) · קדם: `M.MUL.MULTIPLES`, `M.NUM.PARITY.RULE`
 - **תיאור:** בודק/ת התחלקות לפי ספרת היחידות ומסביר/ה לפי ערך מקומי.
-- **טעויות · מכניקות · תבנית:** `E.PV_FACE` · `MECH.SORT_BINS` · `T.MUL.EXPLORE{mode:"divisibleBy",by:[2,5,10],range:[10,9999]}`
+- **טעויות · מכניקות · תבנית:** `EM.PV_FACE` · `MECH.SORT_BINS` · `T.MUL.EXPLORE{mode:"divisibleBy",by:[2,5,10],range:[10,9999]}`
 - **דוגמאות:** (1) "האם 1,235 מתחלק ב-5?". (2) מיינו: 340, 125, 98 לפי "מתחלק ב-10". (3) "מספר שמתחלק ב-10, האם בהכרח מתחלק ב-5?".
 
 #### `M.MUL.2D2D` — דו-ספרתי × דו-ספרתי (מודל שטח)
 - **מטא:** S+ · `IL:G4.MD`(I) · CPA: P→A · MP: +`O.STEP` · קדם: `M.MUL.2D1D.SPLIT`, `M.MUL.X10X100`
 - **תיאור:** ‎23 × 14 במודל שטח של 4 מלבנים.
-- **טעויות · מכניקות · תבנית:** `E.MUL_ADD` (‎20 × 10 + 3 × 4 בלבד), `E.NO_CARRY` · `MECH.BLUEPRINT` · `T.MUL.SPLIT{a:[11,49],b:[11,29],mode:"area4"}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_ADD` (‎20 × 10 + 3 × 4 בלבד), `EM.NO_CARRY` · `MECH.BLUEPRINT` · `T.MUL.SPLIT{a:[11,49],b:[11,29],mode:"area4"}`
 - **דוגמאות:** (1) "‎12 × 15". (2) "‎21 × 13". (3) "‎25 × 24".
 
 #### `M.MUL.FACTORS` — מחלקים, זוגות גורמים ומבוא לראשוניים
 - **מטא:** S+ · `IL:G4.MD`(I) · CPA: P(מערכים אפשריים)→A · MP: `MP.S` (אתגר) · קדם: `M.FACT.DIV.MIXED`
 - **תיאור:** מוצא/ת את כל המערכים האפשריים ל-n לבנים, כלומר את זוגות המחלקים. מספר שיש לו רק מערך אחד הוא "ראשוני".
-- **טעויות · מכניקות · תבנית:** `E.MUL_NEIGHBOR` (מחלק מושמט) · `MECH.ARRAY_BUILD` · `T.MUL.EXPLORE{mode:"allArrays|listFactors",n:[6,60]}`
+- **טעויות · מכניקות · תבנית:** `EM.MUL_NEIGHBOR` (מחלק מושמט) · `MECH.ARRAY_BUILD` · `T.MUL.EXPLORE{mode:"allArrays|listFactors",n:[6,60]}`
 - **דוגמאות:** (1) "בכמה דרכים אפשר לבנות קיר מלבני מ-24 לבנים?". (2) "מה המחלקים של 18?". (3) "ל-13 יש רק קיר אחד. למה?".
 
 ### 6.6 ציר `FRAC`: שברים
@@ -1325,73 +1338,73 @@ function buildChoices(item, skill, profile): Choice[] {
 #### `M.FRAC.HALF.G` — "חצי": חלוקה לשניים שווים
 - **מטא:** G · `IL:GAN.QTY`(V) · CPA: C · קדם: `M.MUL.SHARE.FAIR`
 - **תיאור:** חוצה פיתה או צורה לשני חלקים שווים ומזהה מתי החלוקה "לא הוגנת".
-- **טעויות · מכניקות · תבנית:** `E.FRAC_UNEQUAL` · `MECH.PIZZA_CUT` · `T.FRAC.PART{den:2,shapes:["circle","rect","square"],ask:"cut|isFair"}`
+- **טעויות · מכניקות · תבנית:** `EM.FRAC_UNEQUAL` · `MECH.PIZZA_CUT` · `T.FRAC.PART{den:2,shapes:["circle","rect","square"],ask:"cut|isFair"}`
 - **דוגמאות:** (1) "חצו את הפיתה לשני אחים, שווה בשווה". (2) "איזה ריבוע חולק לחצאים?". (3) "חצי מ-6 תותים".
 
 #### `M.FRAC.EQUALPARTS` — חלקים שווים ושאינם שווים
 - **מטא:** S-R/S · `IL:G3.FR`(C) · CPA: C→P · קדם: `M.FRAC.HALF.G`
 - **תיאור:** מזהה חלוקה לחלקים שווים בשטח, גם כשהצורות שונות (ריבוע מחולק ל-4 משולשים), ושולל/ת חלוקה לא שווה.
-- **טעויות · מכניקות · תבנית:** `E.FRAC_UNEQUAL` · `MECH.PIZZA_CUT` · `T.FRAC.PART{den:[2,8],ask:"isEqual",unequalTrap:true}`
+- **טעויות · מכניקות · תבנית:** `EM.FRAC_UNEQUAL` · `MECH.PIZZA_CUT` · `T.FRAC.PART{den:[2,8],ask:"isEqual",unequalTrap:true}`
 - **דוגמאות:** (1) "באיזה עיגול 4 חלקים שווים?". (2) "חתכו מלבן ל-3 חלקים שווים". (3) "האם ריבוע שחולק באלכסונים מחולק לרבעים?".
 
 #### `M.FRAC.UNIT` — שברי יחידה: חצי, שליש, רבע… עשירית
 - **מטא:** S · `IL:G3.FR`(C) · CPA: C→P→A · MP: +`O.REP` · קדם: `M.FRAC.EQUALPARTS`
 - **תיאור:** מזהה, קורא/ת וכותב/ת ‎1/n (n מ-2 עד 10) לחלק צבוע אחד, ובונה/ה שלם מ-n חלקים של ‎1/n.
-- **טעויות · מכניקות · תבנית:** `E.FRAC_PART_PART`, `E.FRAC_UNEQUAL`, `E.FRAC_BIG_DEN` · `MECH.PIZZA_CUT` · `T.FRAC.PART{num:1,den:[2,10],repr:"area|bar|set"}`
+- **טעויות · מכניקות · תבנית:** `EM.FRAC_PART_PART`, `EM.FRAC_UNEQUAL`, `EM.FRAC_BIG_DEN` · `MECH.PIZZA_CUT` · `T.FRAC.PART{num:1,den:[2,10],repr:"area|bar|set"}`
 - **דוגמאות:** (1) "איזה חלק מהפיתה אכלה הדובה?" (1/6). (2) "צבעו שליש מהדגל". (3) "כמה רבעים בשלם?".
 
 #### `M.FRAC.NONUNIT` — שברים שאינם שברי יחידה (‎3/4, ‏‎2/5)
 - **מטא:** S · `IL:G3.FR`(C) · CPA: P→A · MP: +`O.REP` · קדם: `M.FRAC.UNIT`
 - **תיאור:** ‎m/n הוא m חלקים של ‎1/n. קורא/ת, כותב/ת ובונה/ה, עם המונחים מונה ומכנה.
-- **טעויות · מכניקות · תבנית:** `E.FRAC_PART_PART` (‎3/1 במקום ‎3/4), `E.FRAC_UNEQUAL` · `MECH.PIZZA_CUT` · `T.FRAC.PART{num:[2,"den-1"],den:[3,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.FRAC_PART_PART` (‎3/1 במקום ‎3/4), `EM.FRAC_UNEQUAL` · `MECH.PIZZA_CUT` · `T.FRAC.PART{num:[2,"den-1"],den:[3,10]}`
 - **דוגמאות:** (1) "צבעו ‎3/5 מהמלבן". (2) "איזה שבר צבוע?" (‎5/8). (3) "‎2/3 = ___ שלישים".
 
 #### `M.FRAC.WHOLE` — השלם: ‎n/n = 1, והשלמה לשלם
 - **מטא:** S · `IL:G3.FR`(C) · CPA: P→A · קדם: `M.FRAC.NONUNIT`
 - **תיאור:** ‎4/4 = 1. "כמה חסר לשלם?" (‎3/8 + ☐ = 1).
-- **טעויות · מכניקות · תבנית:** `E.FRAC_PART_PART`, `E.NEAR` · `MECH.PIZZA_CUT` · `T.FRAC.PART{ask:"toWhole",den:[2,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.FRAC_PART_PART`, `EM.NEAR` · `MECH.PIZZA_CUT` · `T.FRAC.PART{ask:"toWhole",den:[2,10]}`
 - **דוגמאות:** (1) "אכלו ‎5/6 מהעוגה. כמה נשאר?". (2) "‎7/7 = ?". (3) "כמה חמישיות חסרות ל-1 אחרי ‎2/5?".
 
 #### `M.FRAC.SET` — שבר של כמות (‎1/3 מ-12)
 - **מטא:** S · `IL:G3.FR`(C) · CPA: C(חלוקת שלל)→P→A · קדם: `M.FRAC.UNIT`, `M.FACT.DIV.INVERSE`
 - **תיאור:** ‎1/n מכמות הוא חלוקה ל-n קבוצות שוות. ‎m/n הוא m קבוצות כאלה (גרסת S+ ל-m > 1).
-- **טעויות · מכניקות · תבנית:** `E.FRAC_SET_WHOLE`, `E.DIV_REVERSE` · `MECH.SHARE_LOOT` · `T.FRAC.SET{den:[2,10],total:"multipleOfDen ≤100",num:[1,3]}`
+- **טעויות · מכניקות · תבנית:** `EM.FRAC_SET_WHOLE`, `EM.DIV_REVERSE` · `MECH.SHARE_LOOT` · `T.FRAC.SET{den:[2,10],total:"multipleOfDen ≤100",num:[1,3]}`
 - **דוגמאות:** (1) "רבע מ-20 גבישים". (2) "‎1/3 מהכיתה (24 ילדים) הלכו לטיול". (3) "‎2/5 מ-15" (S+).
 
 #### `M.FRAC.COMPARE.UNIT` — השוואת שברי יחידה
 - **מטא:** S · `IL:G3.FR`(C) · CPA: P(פסי שברים זה מעל זה)→A · MP: +`O.REP` · קדם: `M.FRAC.UNIT`
 - **תיאור:** ככל שמחלקים ליותר חלקים, כל חלק קטן יותר: ‎1/3 > 1/8.
-- **טעויות · מכניקות · תבנית:** `E.FRAC_BIG_DEN` · `MECH.PIZZA_CUT`, `MECH.DUEL` · `T.FRAC.COMPARE{type:"unit",den:[2,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.FRAC_BIG_DEN` · `MECH.PIZZA_CUT`, `MECH.DUEL` · `T.FRAC.COMPARE{type:"unit",den:[2,10]}`
 - **דוגמאות:** (1) "מה עדיף, ‎1/4 או ‎1/6 מהפיצה?". (2) "‎1/2 __ 1/5". (3) "סדרו: ‎1/3, ‏‎1/10, ‏‎1/2".
 
 #### `M.FRAC.COMPARE.SAME` — השוואה עם מכנה שווה או מונה שווה
 - **מטא:** S · `IL:G3.FR`(I) · CPA: P→A · קדם: `M.FRAC.COMPARE.UNIT`, `M.FRAC.NONUNIT`
 - **תיאור:** ‎3/8 < 5/8 (מכנה שווה), ‏‎3/4 > 3/5 (מונה שווה). משווה גם ל-½ (S+).
-- **טעויות · מכניקות · תבנית:** `E.FRAC_BIG_DEN`, `E.FRAC_PART_PART` · `MECH.DUEL` · `T.FRAC.COMPARE{type:"sameDen|sameNum|vsHalf"}`
+- **טעויות · מכניקות · תבנית:** `EM.FRAC_BIG_DEN`, `EM.FRAC_PART_PART` · `MECH.DUEL` · `T.FRAC.COMPARE{type:"sameDen|sameNum|vsHalf"}`
 - **דוגמאות:** (1) "‎2/7 __ 5/7". (2) "‎2/3 __ 2/9". (3) "‎4/8 __ 1/2".
 
 #### `M.FRAC.LINE` — שברים על ישר המספרים
 - **מטא:** S+ · `IL:G4.FR`(I) · CPA: P · קדם: `M.FRAC.NONUNIT`, `M.NUM.LINE.EST100`
 - **תיאור:** ממקם/ת ‎m/n על 0–1 ואחר כך על 0–2. השבר הוא מספר, נקודה על הישר.
-- **טעויות · מכניקות · תבנית:** `E.LINE_TICKS`, `E.FRAC_BIG_DEN` · `MECH.NUMLINE_JUMP` · `T.FRAC.LINE{den:[2,10],max:[1,2]}`
+- **טעויות · מכניקות · תבנית:** `EM.LINE_TICKS`, `EM.FRAC_BIG_DEN` · `MECH.NUMLINE_JUMP` · `T.FRAC.LINE{den:[2,10],max:[1,2]}`
 - **דוגמאות:** (1) "איפה ‎3/4?". (2) "איזה שבר בחץ?" (‎2/3). (3) "איפה ‎5/4 על 0–2?".
 
 #### `M.FRAC.EQUIV` — שברים שקולים
 - **מטא:** S+ · `IL:G4.FR`(I) · CPA: P(פסי שברים)→A · קדם: `M.FRAC.NONUNIT`, `~M.FRAC.LINE`
 - **תיאור:** ‎1/2 = 2/4 = 4/8 בעזרת קיפול וישר. מוצא/ת שקול חסר.
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP` (מוסיף/ה למונה ולמכנה אותו מספר: ‎1/2 = 2/3) · `MECH.PIZZA_CUT` · `T.FRAC.COMPARE{type:"equivalent",den:[2,12]}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP` (מוסיף/ה למונה ולמכנה אותו מספר: ‎1/2 = 2/3) · `MECH.PIZZA_CUT` · `T.FRAC.COMPARE{type:"equivalent",den:[2,12]}`
 - **דוגמאות:** (1) "‎1/3 = ☐/6". (2) "האם ‎2/4 ו-‎3/6 שווים?". (3) "קפלו את רצועת החצי שוב. מה קיבלנו?".
 
 #### `M.FRAC.MIXED` — מספרים מעורבים (‎1½)
 - **מטא:** S+ · `IL:G4.FR`(I) · CPA: C(מתכון)→P→A · קדם: `M.FRAC.WHOLE`, `M.FRAC.LINE`
 - **תיאור:** ‎1½ כוסות = ‎3/2. ממקם/ת על הישר וממיר/ה בשני הכיוונים.
-- **טעויות · מכניקות · תבנית:** `E.FRAC_PART_PART`, `E.NEAR` · `MECH.HOME` (בישול) · `T.FRAC.LINE{mixed:true,den:[2,4]}`
+- **טעויות · מכניקות · תבנית:** `EM.FRAC_PART_PART`, `EM.NEAR` · `MECH.HOME` (בישול) · `T.FRAC.LINE{mixed:true,den:[2,4]}`
 - **דוגמאות:** (1) "כמה חצאים ב-‎2½?". (2) "‎5/4 = 1 ו-___". (3) "מתכון: ‎1½ כוסות קמח, ‏‎×2 = ?".
 
 #### `M.FRAC.ADD.SAME` — חיבור וחיסור שברים במכנה שווה
 - **מטא:** S+ · `IL:G4.FR`(I) · CPA: P→A · קדם: `M.FRAC.WHOLE`
 - **תיאור:** ‎2/8 + 3/8 = 5/8. "שמיניות ועוד שמיניות".
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP` (מחבר/ת גם מכנים: ‎5/16) · `MECH.PIZZA_CUT` · `T.FRAC.PART{mode:"add|sub",den:[3,10],sumMax:1}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP` (מחבר/ת גם מכנים: ‎5/16) · `MECH.PIZZA_CUT` · `T.FRAC.PART{mode:"add|sub",den:[3,10],sumMax:1}`
 - **דוגמאות:** (1) "‎1/5 + 3/5". (2) "‎7/10 − 4/10". (3) "דני אכל ‎2/6 ודנה ‎3/6. כמה אכלו יחד?".
 
 ### 6.7 ציר `GEO`: צורות, מרחב, הרכבה וסימטריה
@@ -1399,151 +1412,151 @@ function buildChoices(item, skill, profile): Choice[] {
 #### `M.GEO.SHAPE.MATCH` — התאמת צורות זהות
 - **מטא:** T · `IL:GAN.GEO`(V) · C&S: Shape Matcher (identical) · CPA: C · קדם: —
 - **תיאור:** מכניס/ה צורה לחור המתאים (עיגול, ריבוע, משולש, כוכב). בחור לא מתאים הצורה מחליקה חזרה בעדינות.
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_LOOKS` · `MECH.SHAPE_HOLE` · `T.SHAPE.ID{mode:"matchHole",set:["circle","square","triangle","star"],rotate:false}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_LOOKS` · `MECH.SHAPE_HOLE` · `T.SHAPE.ID{mode:"matchHole",set:["circle","square","triangle","star"],rotate:false}`
 - **דוגמאות:** (1) מכניסים עיגול לחור העגול. (2) מוצאים לכל צורה את הצל שלה. (3) מתאימים בלוק ריבועי לריבוע.
 
 #### `M.GEO.SHAPE.TYPICAL` — מזהים עיגול, ריבוע ומשולש טיפוסיים
 - **מטא:** T · `IL:GAN.GEO`(V) · C&S: Shape Recognizer–Typical · CPA: C→P · קדם: `M.GEO.SHAPE.MATCH`
 - **תיאור:** שומע/ת שם ונוגע/ת בצורה (בכיוון טיפוסי). בחפצים: "הכדור עגול כמו עיגול".
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_PROTO` · `MECH.SHAPE_HOLE`, `MECH.FEED` · `T.SHAPE.ID{mode:"tapNamed",set:["circle","square","triangle"],proto:true}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_PROTO` · `MECH.SHAPE_HOLE`, `MECH.FEED` · `T.SHAPE.ID{mode:"tapNamed",set:["circle","square","triangle"],proto:true}`
 - **דוגמאות:** (1) "איפה העיגול?". (2) "מצאו משולש בתמונת החדר". (3) "הגחלילית רוצה רק ריבועים".
 
 #### `M.GEO.SPACE.INONUNDER` — בתוך, על, מתחת
 - **מטא:** T · `IL:GAN.GEO`(V) · C&S: Spatial Orientation (BK) · CPA: C · קדם: —
 - **תיאור:** מניח/ה דמות "על השולחן", "מתחת לכיסא" או "בתוך הקופסה", לפי הוראה קולית.
-- **טעויות · מכניקות · תבנית:** `E.LR_MIRROR` (בלבול "על"/"מתחת") · `MECH.MAP_NAV` · `T.SPACE.POS{words:["בתוך","על","מתחת"],objects:2}`
+- **טעויות · מכניקות · תבנית:** `EM.LR_MIRROR` (בלבול "על"/"מתחת") · `MECH.MAP_NAV` · `T.SPACE.POS{words:["בתוך","על","מתחת"],objects:2}`
 - **דוגמאות:** (1) "שימו את החתול על המיטה". (2) "איפה הכדור? מתחת לשולחן?". (3) "הכניסו את הדובי לקופסה".
 
 #### `M.GEO.COMPOSE.PIECE` — מרכיבים פאזל בצורה (Piece Assembler)
 - **מטא:** T (T+ לשני חלקים ומעלה) · `IL:GAN.GEO`(V) · C&S: Piece Assembler · CPA: C · קדם: `M.GEO.SHAPE.MATCH`
 - **תיאור:** ממלא/ה צללית ב-1–3 חלקים שכל אחד מסומן בקו המתאר שלו.
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_LOOKS` · `MECH.TANGRAM` · `T.SHAPE.COMPOSE{pieces:[1,3],outlines:"each",rotate:false}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_LOOKS` · `MECH.TANGRAM` · `T.SHAPE.COMPOSE{pieces:[1,3],outlines:"each",rotate:false}`
 - **דוגמאות:** (1) בית: ריבוע ועליו גג משולש. (2) פרפר משני משולשים. (3) מכונית משני עיגולים ומלבן.
 
 #### `M.GEO.SHAPE.ID2D` — מזהים צורות גם כשהן "לא טיפוסיות"
-- **מטא:** G · `IL:GAN.GEO`(V) · C&S: Shape Identifier · CPA: P · MP: +`O.REP` · קדם: `M.GEO.SHAPE.TYPICAL`
+- **מטא:** G · `IL:GAN.GEO`(V) · C&S: Shape Identifier · CPA: P · קדם: `M.GEO.SHAPE.TYPICAL`
 - **תיאור:** מזהה משולש, ריבוע, מלבן ועיגול בכל כיוון, גודל ופרופורציה, ושולל/ת "כמעט-צורות" (משולש פתוח, ריבוע עם פינה עגולה).
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_PROTO`, `E.SHAPE_LOOKS` · `MECH.SORT_BINS` · `T.SHAPE.ID{mode:"isIt|sort",set:["triangle","square","rectangle","circle"],proto:false,nonExamples:true}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_PROTO`, `EM.SHAPE_LOOKS` · `MECH.SORT_BINS` · `T.SHAPE.ID{mode:"isIt|sort",set:["triangle","square","rectangle","circle"],proto:false,nonExamples:true}`
 - **דוגמאות:** (1) "מה מכל אלה משולשים?" (כולל משולש "הפוך" וצר). (2) "האם ריבוע מסובב הוא עדיין ריבוע?". (3) "למה זה לא משולש?" (צלע פתוחה).
 
 #### `M.GEO.SHAPE.PARTS` — צלעות וקודקודים
 - **מטא:** G · `IL:GAN.GEO`(V) · C&S: Side Recognizer / Parts of Shapes · CPA: P · קדם: `M.GEO.SHAPE.ID2D`, `M.NUM.COUNT.OBJ10`
 - **תיאור:** סופר/ת צלעות וקודקודים (פינות) ומשתמש/ת בזה כדי לזהות צורה ("לצורה הזו 3 צלעות, לכן היא משולש").
-- **טעויות · מכניקות · תבנית:** `E.1TO1_DOUBLE` (קודקוד נספר פעמיים), `E.SHAPE_LOOKS` · `MECH.TAP_COUNT` · `T.SHAPE.PROPS{ask:"sides|vertices",shapes:"polygons≤8"}`
+- **טעויות · מכניקות · תבנית:** `EM.1TO1_DOUBLE` (קודקוד נספר פעמיים), `EM.SHAPE_LOOKS` · `MECH.TAP_COUNT` · `T.SHAPE.PROPS{ask:"sides|vertices",shapes:"polygons≤8"}`
 - **דוגמאות:** (1) "כמה פינות למלבן?". (2) "גע/געי בכל צלע של המשושה". (3) "צורה עם 5 צלעות: מצאו".
 
 #### `M.GEO.SOLID.ID` — גופים: כדור, קובייה, תיבה, גליל, חרוט
 - **מטא:** G · `IL:GAN.GEO`(V) · C&S: — · CPA: C (חפצים אמיתיים + תלת-ממד) · קדם: `M.GEO.SHAPE.TYPICAL`
 - **תיאור:** מזהה גופים בחפצים יומיומיים ומבחין/ה מה מתגלגל ומה אפשר לערום.
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_LOOKS` (עיגול ↔ כדור) · `MECH.SORT_BINS`, `MECH.HOME` · `T.SOLID{mode:"identify|rollStack",set:["sphere","cube","box","cylinder","cone"]}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_LOOKS` (עיגול ↔ כדור) · `MECH.SORT_BINS`, `MECH.HOME` · `T.SOLID{mode:"identify|rollStack",set:["sphere","cube","box","cylinder","cone"]}`
 - **דוגמאות:** (1) "מה מכל אלה יתגלגל?". (2) "פחית שימורים היא כמו…?" (גליל). (3) "מצאו בבית 3 קופסאות-תיבה".
 
 #### `M.GEO.COMPOSE.PICTURE` — יוצרים תמונה מצורות (Picture Maker)
 - **מטא:** G · `IL:GAN.GEO`(V) · C&S: Picture Maker · CPA: C · קדם: `M.GEO.COMPOSE.PIECE`
 - **תיאור:** ממלא/ה צללית בצורות פסיפס כשקווי החלוקה מוצגים חלקית, ואחר כך יוצר/ת חופשית.
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_LOOKS` · `MECH.TANGRAM` · `T.SHAPE.COMPOSE{pieces:[3,6],outlines:"partial",rotate:true,set:"patternBlocks"}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_LOOKS` · `MECH.TANGRAM` · `T.SHAPE.COMPOSE{pieces:[3,6],outlines:"partial",rotate:true,set:"patternBlocks"}`
 - **דוגמאות:** (1) "בנו רקטה מצורות". (2) "מלאו את הפרח בששה משולשים". (3) "בנו משהו משלכם וספרו כמה משולשים השתמשתם".
 
 #### `M.GEO.COMPOSE.SHAPE` — טנגרם: צללית בלי קווי חלוקה (Shape Composer)
 - **מטא:** G (G+ ל-7 חלקים) · `IL:GAN.GEO`(V) · C&S: Shape Composer → Substitution Composer · CPA: C→P · קדם: `M.GEO.COMPOSE.PICTURE`, `~M.GEO.SPACE.ROTATE`
 - **תיאור:** ממלא/ה צללית שלמה בלי קווים פנימיים, כולל סיבוב והיפוך. מגלה ששני משולשים יוצרים ריבוע.
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_LOOKS`, `E.LR_MIRROR` · `MECH.TANGRAM` · `T.SHAPE.COMPOSE{pieces:[3,7],outlines:"none",rotate:true,flip:true}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_LOOKS`, `EM.LR_MIRROR` · `MECH.TANGRAM` · `T.SHAPE.COMPOSE{pieces:[3,7],outlines:"none",rotate:true,flip:true}`
 - **דוגמאות:** (1) צללית חתול מ-5 חלקי טנגרם. (2) "בנו ריבוע משני משולשים". (3) "יש דרך אחרת לבנות את אותו מגן?".
 
 #### `M.GEO.DECOMPOSE` — מוצאים צורות בתוך צורה
 - **מטא:** G · `IL:GAN.GEO`(V) · C&S: Simple Decomposer · CPA: P · קדם: `M.GEO.COMPOSE.PICTURE`
 - **תיאור:** מזהה כמה משולשים יש בציור, וחותך/ת ריבוע לשני משולשים ומלבן לשני ריבועים.
-- **טעויות · מכניקות · תבנית:** `E.1TO1_SKIP` · `MECH.TANGRAM`, `MECH.PIZZA_CUT` · `T.SHAPE.COMPOSE{mode:"decompose|countInside"}`
+- **טעויות · מכניקות · תבנית:** `EM.1TO1_SKIP` · `MECH.TANGRAM`, `MECH.PIZZA_CUT` · `T.SHAPE.COMPOSE{mode:"decompose|countInside"}`
 - **דוגמאות:** (1) "כמה משולשים בדגל?". (2) "חתכו את המלבן לשני ריבועים". (3) "אילו שתי צורות מרכיבות את הבית?".
 
 #### `M.GEO.SPACE.POSITION` — מילות מיקום וכיוון (כולל ימין ושמאל)
 - **מטא:** G · `IL:GAN.GEO`(V) · C&S: — · CPA: C(גוף)→P · קדם: `M.GEO.SPACE.INONUNDER`
 - **תיאור:** לפני, אחרי, ליד, בין, מעל, מתחת, וימין ושמאל ביחס לעצמו/ה. ב-G+ גם ביחס לדמות שפניה אל הילד.
-- **טעויות · מכניקות · תבנית:** `E.LR_MIRROR` · `MECH.MAP_NAV` · `T.SPACE.POS{words:["לפני","אחרי","ליד","בין","מעל","מתחת","ימין","שמאל"],perspective:["self","facing"]}`
+- **טעויות · מכניקות · תבנית:** `EM.LR_MIRROR` · `MECH.MAP_NAV` · `T.SPACE.POS{words:["לפני","אחרי","ליד","בין","מעל","מתחת","ימין","שמאל"],perspective:["self","facing"]}`
 - **דוגמאות:** (1) "שימו את הפנס בין העץ לאוהל". (2) "הרימו יד ימין" (`MECH.HOME`). (3) "מי עומד מימין לדובה?".
 
 #### `M.GEO.SPACE.ROTATE` — סיבוב והיפוך (Simple Turner)
 - **מטא:** G · `IL:GAN.GEO`(V) · C&S: Simple Turner → Mental rotation (BK) · CPA: P · קדם: `M.GEO.SHAPE.ID2D`
 - **תיאור:** מזהה איזה ציור הוא אותה צורה אחרי סיבוב, ומבחין/ה בין סיבוב להיפוך (מראה).
-- **טעויות · מכניקות · תבנית:** `E.LR_MIRROR` · `MECH.TANGRAM` · `T.SPACE.ROTATE{angles:[90,180,270],flipTrap:[0,1],complexity:[1,3]}`
+- **טעויות · מכניקות · תבנית:** `EM.LR_MIRROR` · `MECH.TANGRAM` · `T.SPACE.ROTATE{angles:[90,180,270],flipTrap:[0,1],complexity:[1,3]}`
 - **דוגמאות:** (1) "איזו כוס היא אותה כוס, רק הפוכה?". (2) "סובבו את החלק כדי שייכנס". (3) "מה מכל אלה לא אותה צורה?" (היפוך).
 
 #### `M.GEO.SPACE.MAP` — מסלול במפה והוראות
 - **מטא:** G/G+ · `IL:GAN.GEO`(V) · C&S: — · CPA: P · קדם: `M.GEO.SPACE.POSITION`, `M.NUM.COUNT.OBJ10`
 - **תיאור:** מוביל/ה דמות במפת רשת לפי הוראות ("3 צעדים קדימה, פנה/י ימינה"), ומתכנן/ת מסלול. זה גם חיבור לחשיבה אלגוריתמית (07).
-- **טעויות · מכניקות · תבנית:** `E.LR_MIRROR`, `E.1TO1_SKIP` · `MECH.MAP_NAV` · `T.SPACE.POS{mode:"followSteps|planRoute",grid:[4,6],steps:[2,6]}`
+- **טעויות · מכניקות · תבנית:** `EM.LR_MIRROR`, `EM.1TO1_SKIP` · `MECH.MAP_NAV` · `T.SPACE.POS{mode:"followSteps|planRoute",grid:[4,6],steps:[2,6]}`
 - **דוגמאות:** (1) "הובילו את הגיבור למטמון: 2 למעלה, 3 ימינה". (2) "כתבו (בחצים) את הדרך לאוהל". (3) "איזו הוראה לא נכונה במסלול?".
 
 #### `M.GEO.SYM.COMPLETE` — משלימים ציור סימטרי
 - **מטא:** G · `IL:GAN.GEO`(V) · C&S: — · CPA: P · קדם: `M.GEO.SHAPE.ID2D`
 - **תיאור:** משלים/ה חצי פרפר או חצי בית לפי קו מראה, ברשת גסה.
-- **טעויות · מכניקות · תבנית:** `E.LR_MIRROR` (העתקה בהזזה ולא בשיקוף) · `MECH.MIRROR` · `T.SYM{mode:"complete",grid:[4,6],axis:"vertical"}`
+- **טעויות · מכניקות · תבנית:** `EM.LR_MIRROR` (העתקה בהזזה ולא בשיקוף) · `MECH.MIRROR` · `T.SYM{mode:"complete",grid:[4,6],axis:"vertical"}`
 - **דוגמאות:** (1) השלימו את כנף הפרפר. (2) "אגם הקסם מראה רק חצי מהעץ". (3) צבעו ריבועים כך שהתמונה תהיה זהה בשני הצדדים.
 
 #### `M.GEO.POLY.CLASSIFY` — מצולעים לפי מספר צלעות
 - **מטא:** S-R · `IL:G2.GEO`(I) · C&S: Shape Class Identifier · CPA: P · קדם: `M.GEO.SHAPE.PARTS`
 - **תיאור:** משולש, מרובע, מחומש, משושה, מתומן. מצולע הוא צורה סגורה עם צלעות ישרות, ולכן עיגול אינו מצולע.
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_LOOKS`, `E.SHAPE_PROTO` (משושה לא סדיר) · `MECH.SORT_BINS` · `T.SHAPE.PROPS{ask:"classifyBySides",irregular:true,nonPolygons:true}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_LOOKS`, `EM.SHAPE_PROTO` (משושה לא סדיר) · `MECH.SORT_BINS` · `T.SHAPE.PROPS{ask:"classifyBySides",irregular:true,nonPolygons:true}`
 - **דוגמאות:** (1) מיינו: מחומש לא סדיר, מעגל, משושה, צורה פתוחה. (2) "כמה צלעות למתומן?". (3) "שרטטו מרובע שאינו מלבן".
 
 #### `M.GEO.ANGLE.RIGHT` — זווית ישרה
 - **מטא:** S · `IL:G3.GEO`(C) · C&S: Angle Recognizer → Angle Matcher · CPA: C(בודק זוויות מנייר מקופל)→P · קדם: `M.GEO.POLY.CLASSIFY`
 - **תיאור:** מזהה זווית ישרה בעזרת "בודק זווית", בצורות ובסביבה, בכל כיוון.
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_PROTO` (זווית ישרה רק כשהיא "עומדת"), `E.ANGLE_SIDE_LEN` · `MECH.BLUEPRINT`, `MECH.HOME` · `T.SHAPE.PROPS{ask:"isRightAngle",rotate:true}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_PROTO` (זווית ישרה רק כשהיא "עומדת"), `EM.ANGLE_SIDE_LEN` · `MECH.BLUEPRINT`, `MECH.HOME` · `T.SHAPE.PROPS{ask:"isRightAngle",rotate:true}`
 - **דוגמאות:** (1) "כמה זוויות ישרות במלבן?". (2) "מצאו 3 זוויות ישרות בחדר" (משימת בית). (3) "איזו זווית ישרה?" (אחת מסובבת ב-30°).
 
 #### `M.GEO.ANGLE.CLASSIFY` — זווית חדה, ישרה וקהה
 - **מטא:** S · `IL:G3.GEO`(C) · C&S: Angle Size Comparer · CPA: P · קדם: `M.GEO.ANGLE.RIGHT`
 - **תיאור:** ממיין/ת זוויות ביחס לזווית ישרה. גודל הזווית הוא "כמה פתוח", לא אורך הקרניים.
-- **טעויות · מכניקות · תבנית:** `E.ANGLE_SIDE_LEN` · `MECH.SORT_BINS`, `MECH.DUEL` · `T.SHAPE.PROPS{ask:"angleType",rayLenTrap:true}`
+- **טעויות · מכניקות · תבנית:** `EM.ANGLE_SIDE_LEN` · `MECH.SORT_BINS`, `MECH.DUEL` · `T.SHAPE.PROPS{ask:"angleType",rayLenTrap:true}`
 - **דוגמאות:** (1) מיינו 6 זוויות לשלושה סלים. (2) "איזו זווית גדולה יותר?" (הקטנה עם קרניים ארוכות). (3) "מחוגי השעון ב-2:00: איזו זווית?".
 
 #### `M.GEO.TRI.CLASSIFY` — מיון משולשים
 - **מטא:** S · `IL:G3.GEO`(V) "מיון משולשים" · C&S: Shape Property Identifier · CPA: P · קדם: `M.GEO.ANGLE.CLASSIFY`, `M.MEAS.LEN.CM`
 - **תיאור:** לפי זוויות: ישר-זווית, חד-זווית, קהה-זווית. לפי צלעות: שווה-צלעות, שווה-שוקיים, שונה-צלעות. מזהה משולש שיש לו שתי תכונות.
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_PROTO` (שווה-שוקיים רק כשהבסיס למטה), `E.ANGLE_SIDE_LEN` · `MECH.SORT_BINS` · `T.SHAPE.PROPS{ask:"triangleType",by:["angles","sides","both"]}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_PROTO` (שווה-שוקיים רק כשהבסיס למטה), `EM.ANGLE_SIDE_LEN` · `MECH.SORT_BINS` · `T.SHAPE.PROPS{ask:"triangleType",by:["angles","sides","both"]}`
 - **דוגמאות:** (1) "למשולש הזה זווית קהה. איזה משולש הוא?". (2) מדדו את הצלעות ומיינו (ס"מ שלמים). (3) "האם משולש ישר-זווית יכול להיות שווה-שוקיים?".
 
 #### `M.GEO.QUAD.CLASSIFY` — מרובעים: ריבוע, מלבן ואחרים
 - **מטא:** S · `IL:G3.GEO`(I) · C&S: Shape Class Identifier · CPA: P · קדם: `M.GEO.ANGLE.RIGHT`, `M.GEO.POLY.CLASSIFY`
 - **תיאור:** מלבן הוא מרובע עם 4 זוויות ישרות. ריבוע הוא מלבן שכל צלעותיו שוות. מזהה גם מרובעים שאינם מלבנים (מקבילית, טרפז, ב-S+ בשמם).
-- **טעויות · מכניקות · תבנית:** `E.SQUARE_NOT_RECT`, `E.SHAPE_PROTO` · `MECH.SORT_BINS` · `T.SHAPE.PROPS{ask:"quadType|isA",hierarchy:true}`
+- **טעויות · מכניקות · תבנית:** `EM.SQUARE_NOT_RECT`, `EM.SHAPE_PROTO` · `MECH.SORT_BINS` · `T.SHAPE.PROPS{ask:"quadType|isA",hierarchy:true}`
 - **דוגמאות:** (1) "נכון או לא: כל ריבוע הוא מלבן". (2) מיינו 6 מרובעים. (3) "מה צריך לשנות במלבן כדי שיהיה ריבוע?".
 
 #### `M.GEO.LINES.PARPERP` — קווים מקבילים ומאונכים
 - **מטא:** S · `IL:G3.GEO`(I) · C&S: — · CPA: P · קדם: `M.GEO.ANGLE.RIGHT`
 - **תיאור:** מזהה ישרים מקבילים (לא נפגשים) ומאונכים (נפגשים בזווית ישרה) בצורות ובמפה.
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_PROTO` (מאונך רק כשיש קו אנכי) · `MECH.MAP_NAV`, `MECH.BLUEPRINT` · `T.SHAPE.PROPS{ask:"parallel|perpendicular",rotate:true}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_PROTO` (מאונך רק כשיש קו אנכי) · `MECH.MAP_NAV`, `MECH.BLUEPRINT` · `T.SHAPE.PROPS{ask:"parallel|perpendicular",rotate:true}`
 - **דוגמאות:** (1) "סמנו צלעות מקבילות במלבן". (2) "אילו רחובות במפה מאונכים?". (3) "האם לכל משולש יש צלעות מקבילות?".
 
 #### `M.GEO.DIAGONAL` — אלכסונים במצולע
 - **מטא:** S · `IL:G3.GEO`(I) · C&S: — · CPA: P · קדם: `M.GEO.POLY.CLASSIFY`
 - **תיאור:** אלכסון מחבר שני קודקודים שאינם שכנים. סופר/ת אלכסונים במרובע (2), במחומש (5) ובמשושה (9, S+).
-- **טעויות · מכניקות · תבנית:** `E.1TO1_DOUBLE` (אותו אלכסון נספר פעמיים), `E.SHAPE_LOOKS` (צלע נספרת כאלכסון) · `MECH.BLUEPRINT` · `T.SHAPE.PROPS{ask:"diagonals",n:[4,6]}`
+- **טעויות · מכניקות · תבנית:** `EM.1TO1_DOUBLE` (אותו אלכסון נספר פעמיים), `EM.SHAPE_LOOKS` (צלע נספרת כאלכסון) · `MECH.BLUEPRINT` · `T.SHAPE.PROPS{ask:"diagonals",n:[4,6]}`
 - **דוגמאות:** (1) "שרטטו את האלכסונים במלבן". (2) "כמה אלכסונים במחומש?". (3) "למשולש יש אלכסון?".
 
 #### `M.GEO.SYM.LINE` — ציר סימטריה
 - **מטא:** S · `IL:G3.GEO`(I) · C&S: — · CPA: P · קדם: `M.GEO.SYM.COMPLETE`, `M.GEO.POLY.CLASSIFY`
 - **תיאור:** מוצא/ת ציר או צירי סימטריה, ומשלים/ה צורה לפי ציר אנכי, אופקי או אלכסוני.
-- **טעויות · מכניקות · תבנית:** `E.LR_MIRROR` (אלכסון במלבן נחשב ציר) · `MECH.MIRROR` · `T.SYM{mode:"findAxes|complete",axis:["vertical","horizontal","diagonal"]}`
+- **טעויות · מכניקות · תבנית:** `EM.LR_MIRROR` (אלכסון במלבן נחשב ציר) · `MECH.MIRROR` · `T.SYM{mode:"findAxes|complete",axis:["vertical","horizontal","diagonal"]}`
 - **דוגמאות:** (1) "כמה צירי סימטריה לריבוע?". (2) "האם האלכסון של מלבן הוא ציר סימטריה?". (3) השלימו את הדגל לפי הציר.
 
 #### `M.GEO.SOLID.PROPS` — פאות, מקצועות וקודקודים של גופים
 - **מטא:** S · `IL:G3.GEO`(I) · C&S: — · CPA: C(גופים מסתובבים)→P · קדם: `M.GEO.SOLID.ID`, `M.GEO.POLY.CLASSIFY`
 - **תיאור:** סופר/ת פאות, מקצועות וקודקודים בקובייה, תיבה, מנסרה ופירמידה, ומזהה את צורת הפאות.
-- **טעויות · מכניקות · תבנית:** `E.1TO1_SKIP` (פאות נסתרות), `E.1TO1_DOUBLE` · `MECH.BLUEPRINT` · `T.SOLID{mode:"countParts",set:["cube","box","prism3","pyramid4"],rotatable:true}`
+- **טעויות · מכניקות · תבנית:** `EM.1TO1_SKIP` (פאות נסתרות), `EM.1TO1_DOUBLE` · `MECH.BLUEPRINT` · `T.SOLID{mode:"countParts",set:["cube","box","prism3","pyramid4"],rotatable:true}`
 - **דוגמאות:** (1) "כמה פאות לקובייה?". (2) "איזו צורה הבסיס של הפירמידה?". (3) "כמה מקצועות לתיבה?".
 
 #### `M.GEO.SOLID.NETS` — פריסות של קובייה ותיבה
 - **מטא:** S+ · `IL:G4.GEO`(I) · CPA: C(הדפסה וקיפול)→P · קדם: `M.GEO.SOLID.PROPS`
 - **תיאור:** מזהה איזו פריסה מתקפלת לקובייה. ההדמיה מקפלת את הפריסה כמשוב.
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_LOOKS` (6 ריבועים בכל סידור) · `MECH.PRINT` · `T.SOLID{mode:"isNet",shape:"cube|box"}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_LOOKS` (6 ריבועים בכל סידור) · `MECH.PRINT` · `T.SOLID{mode:"isNet",shape:"cube|box"}`
 - **דוגמאות:** (1) "מה מבין 4 הפריסות תהפוך לקובייה?". (2) "גזרו וקפלו" (הדפסה). (3) "איזו פאה תהיה מול הפאה הכחולה?".
 
 #### `M.GEO.GRID.COORD` — רשת וקואורדינטות
 - **מטא:** S+ · `IL:G4.GEO`(I) · CPA: P · קדם: `M.GEO.SPACE.MAP`
 - **תיאור:** מאתר/ת משבצת לפי (אות, מספר) או (x, y) במפת מטמון.
-- **טעויות · מכניקות · תבנית:** `E.LR_MIRROR` (החלפת סדר הצירים) · `MECH.MAP_NAV` · `T.SPACE.POS{mode:"coordinates",grid:[6,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.LR_MIRROR` (החלפת סדר הצירים) · `MECH.MAP_NAV` · `T.SPACE.POS{mode:"coordinates",grid:[6,10]}`
 - **דוגמאות:** (1) "המטמון ב-(3, 5)". (2) "באיזו משבצת האוהל?". (3) "שרטטו מסלול מ-(1, 1) ל-(4, 3) ב-5 צעדים".
 
 ### 6.8 ציר `MEAS`: מדידה, זמן וכסף
@@ -1551,151 +1564,151 @@ function buildChoices(item, skill, profile): Choice[] {
 #### `M.MEAS.SIZE.BIGSMALL` — גדול/קטן
 - **מטא:** T · `IL:GAN.QTY`(V) · C&S: Length Quantity Recognizer (גודל) · CPA: C · קדם: —
 - **תיאור:** בוחר/ת "את הגדול" או "את הקטן" מבין שניים כשההבדל ברור. מתאים/ה אבא-דוב לכיסא הגדול.
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND` · `MECH.SORT_BINS`, `MECH.FEED` · `T.MEAS.COMPARE{attr:"size",n:2,ratioMin:1.8}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND` · `MECH.SORT_BINS`, `MECH.FEED` · `T.MEAS.COMPARE{attr:"size",n:2,ratioMin:1.8}`
 - **דוגמאות:** (1) "תנו לדוב הגדול את הקערה הגדולה". (2) "איפה הכדור הקטן?". (3) "הכניסו את הקטנה לבית הקטן".
 
 #### `M.MEAS.LEN.LONGSHORT` — ארוך/קצר, גבוה/נמוך
 - **מטא:** T · `IL:GAN.QTY`(V) · C&S: Length Quantity Recognizer · CPA: C · קדם: `M.MEAS.SIZE.BIGSMALL`
 - **תיאור:** מבחין/ה בין ארוך לקצר ובין גבוה לנמוך כשהקצוות מיושרים.
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND` (עבה = ארוך) · `MECH.SORT_BINS` · `T.MEAS.COMPARE{attr:"length|height",n:2,aligned:true}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND` (עבה = ארוך) · `MECH.SORT_BINS` · `T.MEAS.COMPARE{attr:"length|height",n:2,aligned:true}`
 - **דוגמאות:** (1) "איזה נחש ארוך?". (2) "מי גבוה יותר, הג'ירפה או הברווז?". (3) "בחרו את הענף הקצר למדורה".
 
 #### `M.MEAS.SIZE.SERIATE3` — מסדרים 3 לפי גודל
 - **מטא:** T+ · `IL:GAN.QTY`(V) · C&S: Serial Orderer (3) · CPA: C · קדם: `M.MEAS.SIZE.BIGSMALL`
 - **תיאור:** מסדר/ת שלושה חפצים מהקטן לגדול, כמו שלוש בובות מטריושקה או שלושת הדובים.
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND` · `MECH.SORT_BINS` · `T.MEAS.COMPARE{attr:"size",n:3,mode:"order"}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND` · `MECH.SORT_BINS` · `T.MEAS.COMPARE{attr:"size",n:3,mode:"order"}`
 - **דוגמאות:** (1) שלושת הדובים לפי גודל. (2) שלוש כוסות מהקטנה לגדולה. (3) שלושה מגדלים.
 
 #### `M.MEAS.LEN.DIRECT` — השוואת אורכים ישירה (מיישרים קצוות)
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: Length Direct Comparer · CPA: C · קדם: `M.MEAS.LEN.LONGSHORT`
 - **תיאור:** מיישר/ת את הקצה של שני חפצים לפני ההשוואה. מזהה מצב שבו "נראה ארוך" רק כי החפץ זז.
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND` (הקצה שבולט נחשב ארוך) · `MECH.BLUEPRINT` · `T.MEAS.COMPARE{attr:"length",n:2,aligned:false,mustAlign:true}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND` (הקצה שבולט נחשב ארוך) · `MECH.BLUEPRINT` · `T.MEAS.COMPARE{attr:"length",n:2,aligned:false,mustAlign:true}`
 - **דוגמאות:** (1) שני חבלים לא מיושרים: "איזה ארוך?" (הילד/ה גורר/ת כדי ליישר). (2) "איזה עפרון קצר?". (3) "מי גבוה יותר?" (שתי דמויות במדרגות שונות).
 
 #### `M.MEAS.LEN.SERIATE` — מסדרים 5 ומעלה לפי אורך
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: Serial Orderer to 6+ · CPA: C · קדם: `M.MEAS.LEN.DIRECT`, `M.MEAS.SIZE.SERIATE3`
 - **תיאור:** מסדר/ת 5–7 מקלות לפי אורך ומכניס/ה מקל חדש למקום הנכון.
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND`, `E.NEAR` (שתי עמדות מוחלפות) · `MECH.SORT_BINS` · `T.MEAS.COMPARE{attr:"length",n:[5,7],mode:"order|insert"}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND`, `EM.NEAR` (שתי עמדות מוחלפות) · `MECH.SORT_BINS` · `T.MEAS.COMPARE{attr:"length",n:[5,7],mode:"order|insert"}`
 - **דוגמאות:** (1) סדרו את מקלות המדורה מהקצר לארוך. (2) "איפה המקל הזה נכנס?". (3) "עוגב" של צינורות מהנמוך לגבוה.
 
 #### `M.MEAS.LEN.INDIRECT` — השוואה בעזרת חפץ שלישי
 - **מטא:** G+ · `IL:GAN.QTY`(V) · C&S: Indirect Length Comparer · CPA: C · קדם: `M.MEAS.LEN.DIRECT`
 - **תיאור:** משווה/ה אורכים שאי אפשר להצמיד בעזרת חוט או רצועה.
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND` · `MECH.BLUEPRINT`, `MECH.HOME` · `T.MEAS.COMPARE{attr:"length",mode:"indirect"}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND` · `MECH.BLUEPRINT`, `MECH.HOME` · `T.MEAS.COMPARE{attr:"length",mode:"indirect"}`
 - **דוגמאות:** (1) "האם הדלת רחבה מספיק לספה?" (בעזרת חבל). (2) "איזה שולחן ארוך יותר?" (שני חדרים). (3) "חבל באורך היד: מה בבית ארוך ממנו?".
 
 #### `M.MEAS.LEN.NONSTD` — מודדים ביחידות לא תקניות
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: Length Unit Iterater · CPA: C · קדם: `M.MEAS.LEN.DIRECT`, `M.NUM.COUNT.OBJ10`
 - **תיאור:** מודד/ת אורך במהדקים, בקוביות או בכפות רגליים, בלי רווחים ובלי חפיפות. יחידה קטנה יותר נותנת מספר גדול יותר.
-- **טעויות · מכניקות · תבנית:** `E.UNIT_GAPS`, `E.1TO1_DOUBLE` · `MECH.BLUEPRINT`, `MECH.HOME` · `T.MEAS.UNITS{mode:"iterate",unit:["clip","cube","foot"],len:[3,12]}`
+- **טעויות · מכניקות · תבנית:** `EM.UNIT_GAPS`, `EM.1TO1_DOUBLE` · `MECH.BLUEPRINT`, `MECH.HOME` · `T.MEAS.UNITS{mode:"iterate",unit:["clip","cube","foot"],len:[3,12]}`
 - **דוגמאות:** (1) "כמה מהדקים אורך הנחש?". (2) "מדדו את המיטה בכפות רגליים" (משימת בית). (3) "ביחידות קוביות קטנות נקבל יותר או פחות?".
 
 #### `M.MEAS.WEIGHT.BALANCE` — כבד/קל במאזניים
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: — · CPA: C · קדם: `M.MEAS.SIZE.BIGSMALL`
 - **תיאור:** קורא/ת את המאזניים (הכף הנמוכה היא הכבדה), ומבין/ה שגדול אינו בהכרח כבד (בלון מול אבן).
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND` · `MECH.BALANCE` · `T.MEAS.COMPARE{attr:"weight",n:[2,3],sizeTrap:true}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND` · `MECH.BALANCE` · `T.MEAS.COMPARE{attr:"weight",n:[2,3],sizeTrap:true}`
 - **דוגמאות:** (1) "מה כבד יותר, הנוצה או התפוח?". (2) "המאזניים נוטים לכאן. מה כבד?". (3) "כמה קוביות שוקלות כמו התפוח?".
 
 #### `M.MEAS.CAP.COMPARE` — מה מחזיק יותר?
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: — · CPA: C · קדם: `M.MEAS.SIZE.BIGSMALL`
 - **תיאור:** משווה/ה תכולה במזיגה. כלי גבוה וצר יכול להחזיק פחות מכלי נמוך ורחב.
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND` (גובה = נפח) · `MECH.BALANCE`, `MECH.HOME` · `T.MEAS.COMPARE{attr:"capacity",mode:"pour",heightTrap:true}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND` (גובה = נפח) · `MECH.BALANCE`, `MECH.HOME` · `T.MEAS.COMPARE{attr:"capacity",mode:"pour",heightTrap:true}`
 - **דוגמאות:** (1) "לאיזה כד נכנסים יותר מים?" (מוזגים ובודקים). (2) "כמה כוסות ממלאות את הדלי?". (3) משימת אמבטיה: כלים שונים.
 
 #### `M.MEAS.TIME.SEQ` — רצף אירועים: לפני, אחרי, בוקר, ערב
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: — · CPA: P · קדם: `~M.NUM.ORD.TEN`
 - **תיאור:** מסדר/ת 3–5 תמונות של שגרת יום, ומשתמש/ת ב"אתמול/היום/מחר" ו"קודם/אחר כך".
-- **טעויות · מכניקות · תבנית:** `E.NEAR` (שתי תמונות מוחלפות) · `MECH.CLOCK_CAMP` · `T.TIME.CAL{mode:"sequence",cards:[3,5]}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` (שתי תמונות מוחלפות) · `MECH.CLOCK_CAMP` · `T.TIME.CAL{mode:"sequence",cards:[3,5]}`
 - **דוגמאות:** (1) סדרו: מתעוררים, מצחצחים שיניים, הולכים לגן. (2) "מה עשינו אתמול?" (שאלה קולית להורה). (3) "קודם אופים ואחר כך…?".
 
 #### `M.MEAS.TIME.WEEK` — ימי השבוע
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: — · CPA: P · קדם: `M.MEAS.TIME.SEQ`, `~M.NUM.ORD.TEN`
 - **תיאור:** אומר/ת את ימי השבוע (ראשון…שבת) ויודע/ת מה בא אחרי. מזהה את הקשר "יום שלישי = היום השלישי".
-- **טעויות · מכניקות · תבנית:** `E.SEQ_SKIP`, `E.NEAR` · `MECH.SONG`, `MECH.CLOCK_CAMP` · `T.TIME.CAL{mode:"weekdays",ask:"next|prev|nth"}`
+- **טעויות · מכניקות · תבנית:** `EM.SEQ_SKIP`, `EM.NEAR` · `MECH.SONG`, `MECH.CLOCK_CAMP` · `T.TIME.CAL{mode:"weekdays",ask:"next|prev|nth"}`
 - **דוגמאות:** (1) "היום רביעי. מה מחר?". (2) "באיזה יום לא הולכים לגן?". (3) "כמה ימים עד שבת?".
 
 #### `M.MEAS.MONEY.ID` — מטבעות ושטרות בישראל
 - **מטא:** G+ · `IL:GAN.QTY`(I) · C&S: — · CPA: C→P · קדם: `M.NUM.NUMERAL.ID10`
 - **תיאור:** מזהה את המטבעות 10 אג', ½ ₪, ‏1, 2, 5 ו-10 ₪ ואת השטרות 20, 50, 100 ו-200, ויודע/ת איזה שווה יותר. מטבע גדול אינו תמיד שווה יותר.
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND`, `E.MONEY_COUNT_COINS` · `MECH.MAKOLET` · `T.MONEY{mode:"identify|compareValue",set:"coins"}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND`, `EM.MONEY_COUNT_COINS` · `MECH.MAKOLET` · `T.MONEY{mode:"identify|compareValue",set:"coins"}`
 - **דוגמאות:** (1) "איפה 5 שקלים?". (2) "מה שווה יותר: 10 אגורות או 1 שקל?". (3) "שלמו 2 שקלים במכולת".
 
 #### `M.MEAS.LEN.CM` — מודדים בסרגל בסנטימטרים
 - **מטא:** S-R · `IL:G2.MEAS`(I) · C&S: Length Measurer · CPA: C(סרגל וירטואלי)→P · קדם: `M.MEAS.LEN.NONSTD`, `M.NUM.LINE.EST20`
 - **תיאור:** מניח/ה סרגל מהאפס וקורא/ת ס"מ שלמים, וגם מודד/ת חפץ שלא מתחיל באפס (מ-3 עד 9 = 6 ס"מ).
-- **טעויות · מכניקות · תבנית:** `E.RULER_ONE`, `E.LINE_TICKS` · `MECH.BLUEPRINT` · `T.MEAS.UNITS{mode:"ruler",unit:"cm",len:[2,20],startOffset:[0,5]}`
+- **טעויות · מכניקות · תבנית:** `EM.RULER_ONE`, `EM.LINE_TICKS` · `MECH.BLUEPRINT` · `T.MEAS.UNITS{mode:"ruler",unit:"cm",len:[2,20],startOffset:[0,5]}`
 - **דוגמאות:** (1) "כמה ס"מ העיפרון?". (2) "החרק מ-4 עד 11. מה אורכו?". (3) "שרטטו קו של 8 ס"מ".
 
 #### `M.MEAS.LEN.UNITS` — מ"מ, ס"מ, מטר וק"מ: קשרים והמרות
 - **מטא:** S · `IL:G3.MEAS`(I) · C&S: Length Unit Relater · CPA: P→A · קדם: `M.MEAS.LEN.CM`, `~M.PV.UNITIZE`, `~M.MUL.X10X100`
 - **תיאור:** 1 מ' = 100 ס"מ, ‏1 ס"מ = 10 מ"מ, ‏1 ק"מ = 1,000 מ'. ממיר/ה ובוחר/ת יחידה מתאימה. אומד/ת אורכים לפי נקודות ייחוס (הדלת היא בערך 2 מ').
-- **טעויות · מכניקות · תבנית:** `E.UNIT_CONVERT`, `E.PV_ZERO_OMIT` · `MECH.BLUEPRINT` · `T.MEAS.UNITS{mode:"convert|chooseUnit|estimate",units:["mm","cm","m","km"]}`
+- **טעויות · מכניקות · תבנית:** `EM.UNIT_CONVERT`, `EM.PV_ZERO_OMIT` · `MECH.BLUEPRINT` · `T.MEAS.UNITS{mode:"convert|chooseUnit|estimate",units:["mm","cm","m","km"]}`
 - **דוגמאות:** (1) "3 מ' = ___ ס"מ". (2) "באיזו יחידה מודדים את המרחק לתל אביב?". (3) "250 ס"מ = ___ מ' ו-___ ס"מ".
 
 #### `M.MEAS.PERIM` — היקף מצולע
 - **מטא:** S · `IL:G3.MEAS`(V) · C&S: — · CPA: C(גדר)→P→A · MP: +`O.REP` · קדם: `M.MEAS.LEN.CM`, `M.OPS.ADD.2D2D`
 - **תיאור:** היקף הוא אורך הגדר סביב השטח. מחבר/ת את כל הצלעות, ובמלבן מנצל/ת את זה שצלעות נגדיות שוות.
-- **טעויות · מכניקות · תבנית:** `E.PERIM_TWO_SIDES`, `E.PERIM_AREA` · `MECH.BLUEPRINT` · `T.PERIM.AREA{ask:"perimeter",shape:["rect","square","polygon"],sides:[2,30]}`
+- **טעויות · מכניקות · תבנית:** `EM.PERIM_TWO_SIDES`, `EM.PERIM_AREA` · `MECH.BLUEPRINT` · `T.PERIM.AREA{ask:"perimeter",shape:["rect","square","polygon"],sides:[2,30]}`
 - **דוגמאות:** (1) "כמה מטר גדר צריך לגינה 6 × 4?". (2) "היקף ריבוע שצלעו 7 ס"מ". (3) "למחומש צלעות 3, 4, 5, 3, 4: מה ההיקף?".
 
 #### `M.MEAS.AREA.SQUARES` — שטח בספירת ריבועי יחידה
 - **מטא:** S · `IL:G3.MEAS`(V) · C&S: Area Unit Relater (BK) · CPA: C(אריחים)→P · קדם: `M.MUL.ARRAY`
 - **תיאור:** שטח הוא כמה אריחים מכסים את הצורה, בלי רווחים ובלי חפיפות. סופר/ת ומשווה שטחים של צורות שונות.
-- **טעויות · מכניקות · תבנית:** `E.PERIM_AREA`, `E.UNIT_GAPS` · `MECH.BLUEPRINT` · `T.PERIM.AREA{ask:"areaCount",grid:true,shape:"polyomino",cells:[4,30]}`
+- **טעויות · מכניקות · תבנית:** `EM.PERIM_AREA`, `EM.UNIT_GAPS` · `MECH.BLUEPRINT` · `T.PERIM.AREA{ask:"areaCount",grid:true,shape:"polyomino",cells:[4,30]}`
 - **דוגמאות:** (1) "כמה אריחים ברצפת האוהל?". (2) "לאיזו צורה שטח גדול יותר?". (3) "בנו צורה אחרת עם אותו שטח".
 
 #### `M.MEAS.AREA.RECT` — שטח מלבן כשורות × טורים
 - **מטא:** S · `IL:G3.MEAS`(V) "שטח והיקף מלבנים" · CPA: P→A · קדם: `M.MEAS.AREA.SQUARES`, `~M.FACT.MUL.MIXED`
 - **תיאור:** שטח מלבן = אורך × רוחב, כי זה מערך. היחידה היא סמ"ר (ריבוע של 1 ס"מ).
-- **טעויות · מכניקות · תבנית:** `E.PERIM_AREA` (מחבר/ת), `E.MUL_NEIGHBOR` · `MECH.BLUEPRINT` · `T.PERIM.AREA{ask:"areaRect",l:[2,12],w:[2,10],grid:[true,false]}`
+- **טעויות · מכניקות · תבנית:** `EM.PERIM_AREA` (מחבר/ת), `EM.MUL_NEIGHBOR` · `MECH.BLUEPRINT` · `T.PERIM.AREA{ask:"areaRect",l:[2,12],w:[2,10],grid:[true,false]}`
 - **דוגמאות:** (1) "שטח מלבן 7 × 5". (2) "רצפה של 9 × 6 אריחים: כמה אריחים?". (3) "שטח 24, אורך 6: מה הרוחב?".
 
 #### `M.MEAS.PERIM_AREA` — היקף ושטח: מה ההבדל?
-- **מטא:** S · `IL:G3.MEAS`(V) · C&S: — · CPA: P · MP: +`O.REP` · קדם: `M.MEAS.PERIM`, `M.MEAS.AREA.RECT`
+- **מטא:** S · `IL:G3.MEAS`(V) · C&S: — · CPA: P(רשת)→A(מידות במספרים, `T.PERIM.AREA{grid:false}`) · MP: +`O.REP` · קדם: `M.MEAS.PERIM`, `M.MEAS.AREA.RECT`
 - **תיאור:** מבחין/ה מתי שואלים על גדר ומתי על רצפה. מוצא/ת שני מלבנים עם אותו היקף ושטח שונה, ולהפך.
-- **טעויות · מכניקות · תבנית:** `E.PERIM_AREA` · `MECH.BLUEPRINT`, `MECH.NUMBER_TALK` · `T.PERIM.AREA{ask:"whichOne|samePerimDiffArea|sameAreaDiffPerim"}`
+- **טעויות · מכניקות · תבנית:** `EM.PERIM_AREA` · `MECH.BLUEPRINT`, `MECH.NUMBER_TALK` · `T.PERIM.AREA{ask:"whichOne|samePerimDiffArea|sameAreaDiffPerim"}`
 - **דוגמאות:** (1) "לצבוע את הקיר: צריך שטח או היקף?". (2) "מצאו שני מלבנים שהיקף כל אחד 12". (3) "למי יותר מקום לשתול, ל-‎6 × 2 או ל-‎4 × 4?".
 
 #### `M.MEAS.TIME.HOUR_HALF` — שעון: שעה שלמה, חצי ורבע
 - **מטא:** S-R · `IL:G2.MEAS`(I) · C&S: — · CPA: C(שעון עם גלגלי שיניים)→P · קדם: `M.MEAS.TIME.SEQ`, `M.NUM.NUMERAL.ID20`
 - **תיאור:** קורא/ת ומכוון/ת שעון מחוגים ב-X:00, ‏X:30 ו-X:15/X:45 ("וחצי", "ורבע", "רבע ל-"), ומקשר/ת לשעון דיגיטלי.
-- **טעויות · מכניקות · תבנית:** `E.CLOCK_HANDS`, `E.CLOCK_HOUR_NEXT` · `MECH.CLOCK_CAMP` · `T.CLOCK{mode:"read|set",minutes:[0,15,30,45]}`
+- **טעויות · מכניקות · תבנית:** `EM.CLOCK_HANDS`, `EM.CLOCK_HOUR_NEXT` · `MECH.CLOCK_CAMP` · `T.CLOCK{mode:"read|set",minutes:[0,15,30,45]}`
 - **דוגמאות:** (1) "כוונו את השעון לשלוש וחצי". (2) "מה השעה?" (רבע לשמונה). (3) "הצללון מתעורר ב-7:00. הראו בשעון".
 
 #### `M.MEAS.TIME.CLOCK5` — שעון בדיוק של 5 דקות (וב-S של דקה אחת)
 - **מטא:** S · `IL:G3.MEAS`(I) · C&S: — · CPA: P · קדם: `M.MEAS.TIME.HOUR_HALF`, `M.NUM.COUNT.SKIP5`
 - **תיאור:** קורא/ת ומכוון/ת זמן בקפיצות של 5 דקות, ואחר כך בדקות בודדות. הניסוח: "השעה ארבע ועשרים דקות", "עשרים לחמש".
-- **טעויות · מכניקות · תבנית:** `E.CLOCK_5MIN`, `E.CLOCK_HOUR_NEXT`, `E.CLOCK_HANDS` · `MECH.CLOCK_CAMP` · `T.CLOCK{mode:"read|set|matchDigital",step:[5,1]}`
+- **טעויות · מכניקות · תבנית:** `EM.CLOCK_5MIN`, `EM.CLOCK_HOUR_NEXT`, `EM.CLOCK_HANDS` · `MECH.CLOCK_CAMP` · `T.CLOCK{mode:"read|set|matchDigital",step:[5,1]}`
 - **דוגמאות:** (1) "מה השעה?" (2:35). (2) "כוונו לעשר ועשרים". (3) "התאימו לשעון הדיגיטלי 6:50".
 
 #### `M.MEAS.TIME.ELAPSED` — משך זמן ושעת סיום
 - **מטא:** S · `IL:G3.MEAS`(I) · C&S: — · CPA: P(ישר זמן)→A · קדם: `M.MEAS.TIME.CLOCK5`, `M.OPS.ADD.2D1D`
 - **תיאור:** מחשב/ת כמה זמן עבר בין שתי שעות, או מתי משהו ייגמר, בקפיצות על ישר זמן (עד השעה העגולה, ואז הלאה).
-- **טעויות · מכניקות · תבנית:** `E.TIME_BASE10`, `E.CLOCK_HOUR_NEXT` · `MECH.CLOCK_CAMP` · `T.CLOCK{mode:"elapsed|endTime|startTime",duration:[5,180],crossHour:[0,1]}`
+- **טעויות · מכניקות · תבנית:** `EM.TIME_BASE10`, `EM.CLOCK_HOUR_NEXT` · `MECH.CLOCK_CAMP` · `T.CLOCK{mode:"elapsed|endTime|startTime",duration:[5,180],crossHour:[0,1]}`
 - **דוגמאות:** (1) "הסרט התחיל ב-4:40 ונמשך 50 דקות. מתי נגמר?". (2) "מ-8:15 עד 9:00, כמה דקות?". (3) "האימון 1 ¼ שעות וייגמר ב-6:00. מתי התחיל?".
 
 #### `M.MEAS.TIME.UNITS` — יחידות זמן ולוח שנה
 - **מטא:** S · `IL:G3.MEAS`(I) · C&S: — · CPA: P→A · קדם: `M.MEAS.TIME.WEEK`, `M.MEAS.TIME.CLOCK5`
 - **תיאור:** שעה = 60 דק', יום = 24 שעות, שבוע = 7 ימים, שנה = 12 חודשים. קורא/ת לוח שנה (כולל לוח עברי בסיסי: ראש השנה, חנוכה).
-- **טעויות · מכניקות · תבנית:** `E.TIME_BASE10` (שעה = 100 דק'), `E.UNIT_CONVERT` · `MECH.CLOCK_CAMP` · `T.TIME.CAL{mode:"convert|calendarRead",units:["min","hour","day","week","month"]}`
+- **טעויות · מכניקות · תבנית:** `EM.TIME_BASE10` (שעה = 100 דק'), `EM.UNIT_CONVERT` · `MECH.CLOCK_CAMP` · `T.TIME.CAL{mode:"convert|calendarRead",units:["min","hour","day","week","month"]}`
 - **דוגמאות:** (1) "כמה דקות בשעתיים?". (2) "חנוכה בעוד 3 שבועות. כמה ימים זה?". (3) "באיזה יום בשבוע יחול ה-15 בחודש?" (לפי לוח מוצג).
 
 #### `M.MEAS.MONEY.SUM100` — סכומי כסף עד 100 ₪
 - **מטא:** S-R · `IL:G2.MEAS`(I) · C&S: — · CPA: C(מטבעות וירטואליים)→P→A · קדם: `M.MEAS.MONEY.ID`, `M.OPS.ADD.2D1D`
 - **תיאור:** סופר/ת ערך של אוסף מטבעות ושטרות (מתחילים מהגדול), ומשלם/ת סכום מדויק בכמה דרכים.
-- **טעויות · מכניקות · תבנית:** `E.MONEY_COUNT_COINS`, `E.NO_CARRY` · `MECH.MAKOLET` · `T.MONEY{mode:"total|payExact|payWays",max:100,agorot:false}`
+- **טעויות · מכניקות · תבנית:** `EM.MONEY_COUNT_COINS`, `EM.NO_CARRY` · `MECH.MAKOLET` · `T.MONEY{mode:"total|payExact|payWays",max:100,agorot:false}`
 - **דוגמאות:** (1) "כמה כסף יש כאן? 20 + 10 + 5 + 2 + 2". (2) "שלמו 37 ₪ בדיוק". (3) "שתי דרכים לשלם 15 ₪".
 
 #### `M.MEAS.MONEY.CHANGE` — עודף, שקלים ואגורות
 - **מטא:** S · `IL:G3.MEAS`(I) · C&S: — · CPA: C→P→A · קדם: `M.MEAS.MONEY.SUM100`, `M.OPS.SUB.2D2D`
 - **תיאור:** מחשב/ת עודף בהשלמה ("מ-37 עד 50"). מבין/ה ש-1 ₪ = 100 אגורות, ו-‎₪4.50 הם 4 שקלים ו-50 אגורות.
-- **טעויות · מכניקות · תבנית:** `E.AGOROT`, `E.SUB_SMALL_FROM_LARGE`, `E.OP_SWAP` · `MECH.MAKOLET` · `T.MONEY{mode:"change|convertAgorot|budget",max:200,agorot:[0,1]}`
+- **טעויות · מכניקות · תבנית:** `EM.AGOROT`, `EM.SUB_SMALL_FROM_LARGE`, `EM.OP_SWAP` · `MECH.MAKOLET` · `T.MONEY{mode:"change|convertAgorot|budget",max:200,agorot:[0,1]}`
 - **דוגמאות:** (1) "קנינו ב-‎₪23 ושילמנו ב-‎₪50. כמה עודף?". (2) "כמה אגורות ב-‎₪3.50?". (3) "יש ‎₪20. אפשר לקנות פיתה ב-‎₪6 ושתי גבינות ב-‎₪7?".
 
 #### `M.MEAS.MASSCAP.UNITS` — ק"ג, גרם, ליטר ומ"ל
 - **מטא:** S · `IL:G3.MEAS`(I) · C&S: — · CPA: C(משקל מטבח, כוס מדידה)→P→A · קדם: `M.MEAS.WEIGHT.BALANCE`, `M.MEAS.CAP.COMPARE`, `~M.FRAC.UNIT`
 - **תיאור:** 1 ק"ג = 1,000 גרם, 1 ליטר = 1,000 מ"ל, חצי ליטר, רבע קילו. קורא/ת שעון של משקל וכוס מדידה עם שנתות.
-- **טעויות · מכניקות · תבנית:** `E.UNIT_CONVERT`, `E.LINE_TICKS` (בקריאת סקלה) · `MECH.BALANCE`, `MECH.HOME` (בישול) · `T.MEAS.UNITS{mode:"convert|readScale",units:["g","kg","ml","l"]}`
+- **טעויות · מכניקות · תבנית:** `EM.UNIT_CONVERT`, `EM.LINE_TICKS` (בקריאת סקלה) · `MECH.BALANCE`, `MECH.HOME` (בישול) · `T.MEAS.UNITS{mode:"convert|readScale",units:["g","kg","ml","l"]}`
 - **דוגמאות:** (1) "כמה גרם בחצי ק"ג?". (2) "הכוס מראה 250 מ"ל. כמה כוסות לליטר?". (3) "מה מראה המשקל?" (750 ג').
 
 ### 6.9 ציר `PAT`: דפוסים ואלגברה מוקדמת
@@ -1703,49 +1716,49 @@ function buildChoices(item, skill, profile): Choice[] {
 #### `M.PAT.AB.COPY` — מעתיקים דפוס AB
 - **מטא:** T+ · `IL:GAN.GEO`/`IL:GAN.QTY`(V) · C&S: Pattern Duplicator AB · CPA: C · קדם: `~M.GEO.SHAPE.MATCH`
 - **תיאור:** משחזר/ת שרשרת אדום-כחול-אדום-כחול ליד הדוגמה.
-- **טעויות · מכניקות · תבנית:** `E.PATTERN_COPY_LAST` · `MECH.BEADS` · `T.PAT{type:"AB",mode:"copy",len:[4,6],attr:"color"}`
+- **טעויות · מכניקות · תבנית:** `EM.PATTERN_COPY_LAST` · `MECH.BEADS` · `T.PAT{type:"AB",mode:"copy",len:[4,6],attr:"color"}`
 - **דוגמאות:** (1) שרשרת חרוזים: צהוב, ירוק, צהוב, ירוק. (2) תוף ומחיאה: "בום-כף-בום-כף". (3) ברווז, חתול, ברווז, חתול.
 
 #### `M.PAT.AB.EXTEND` — ממשיכים דפוס AB
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: Pattern Extender AB · CPA: C→P · קדם: `M.PAT.AB.COPY`
 - **תיאור:** מוסיף/ה 2–3 איברים הבאים לדפוס AB.
-- **טעויות · מכניקות · תבנית:** `E.PATTERN_COPY_LAST` · `MECH.BEADS` · `T.PAT{type:"AB",mode:"extend",next:[1,3],attr:["color","shape","size"]}`
+- **טעויות · מכניקות · תבנית:** `EM.PATTERN_COPY_LAST` · `MECH.BEADS` · `T.PAT{type:"AB",mode:"extend",next:[1,3],attr:["color","shape","size"]}`
 - **דוגמאות:** (1) "מה הבא? כוכב, ירח, כוכב, ירח, …". (2) שני איברים הבאים בגדר. (3) "קפיצה, ישיבה, קפיצה, …".
 
 #### `M.PAT.CORE` — מוצאים את יחידת החזרה (AAB, ABC, ABB)
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: Pattern Extender → Pattern Unit Recognizer · CPA: P · קדם: `M.PAT.AB.EXTEND`
 - **תיאור:** ממשיך/ה דפוסים מורכבים יותר, מתקן/ת "טעות" בדפוס (Pattern Fixer), ומסמן/ת את יחידת החזרה.
-- **טעויות · מכניקות · תבנית:** `E.PATTERN_UNIT`, `E.PATTERN_COPY_LAST` · `MECH.BEADS` · `T.PAT{type:["AAB","ABB","ABC","AABB"],mode:"extend|fix|findCore"}`
+- **טעויות · מכניקות · תבנית:** `EM.PATTERN_UNIT`, `EM.PATTERN_COPY_LAST` · `MECH.BEADS` · `T.PAT{type:["AAB","ABB","ABC","AABB"],mode:"extend|fix|findCore"}`
 - **דוגמאות:** (1) "אדום, אדום, כחול, אדום, אדום, …". (2) "מצאו את החרוז ששובר את הדפוס". (3) "הקיפו את החלק שחוזר".
 
 #### `M.PAT.TRANSLATE` — אותו דפוס בשפה אחרת
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: Pattern Unit Recognizer · CPA: C→P · קדם: `M.PAT.CORE`
 - **תיאור:** מתרגם/ת דפוס מצבעים לצלילים או לתנועות ולהפך (ABB = מחיאה-רקיעה-רקיעה).
-- **טעויות · מכניקות · תבנית:** `E.PATTERN_UNIT` · `MECH.BEADS`, `MECH.SONG` · `T.PAT{mode:"translate",from:["color","sound","move"],to:["color","sound","move","letter"]}`
+- **טעויות · מכניקות · תבנית:** `EM.PATTERN_UNIT` · `MECH.BEADS`, `MECH.SONG` · `T.PAT{mode:"translate",from:["color","sound","move"],to:["color","sound","move","letter"]}`
 - **דוגמאות:** (1) "בנו בצורות את הדפוס של השיר". (2) "איזה דפוס חרוזים מתאים ל'בום-כף-כף'?". (3) "כתבו את הדפוס באותיות: A B B".
 
 #### `M.PAT.GROW.G` — דפוס גדל (מגדלים 1, 2, 3…)
 - **מטא:** G+ · `IL:GAN.QTY`(V) · C&S: — · CPA: C→P · קדם: `M.PAT.CORE`, `M.NUM.COUNT.OBJ10`
 - **תיאור:** ממשיך/ה מדרגות שגדלות באחד, ומתאר/ת "כל פעם עוד אחד".
-- **טעויות · מכניקות · תבנית:** `E.PATTERN_COPY_LAST` (חוזר על המגדל האחרון) · `MECH.ARRAY_BUILD`, `MECH.BEADS` · `T.PAT{type:"grow",step:[1,2],terms:[3,5]}`
+- **טעויות · מכניקות · תבנית:** `EM.PATTERN_COPY_LAST` (חוזר על המגדל האחרון) · `MECH.ARRAY_BUILD`, `MECH.BEADS` · `T.PAT{type:"grow",step:[1,2],terms:[3,5]}`
 - **דוגמאות:** (1) "בנו את המדרגה הבאה". (2) "1, 2, 3 גחליליות… כמה בפעם הבאה?". (3) "כל לילה עוד נר" (חנוכה).
 
 #### `M.PAT.NUMSEQ` — סדרות מספרים, חוק ומכונת קלט-פלט
 - **מטא:** S-R/S · `IL:G2.AS100`/`IL:G3.N10K`(I) · C&S: — · CPA: P→A · קדם: `M.NUM.COUNT.SKIP5`, `M.OPS.ADD.2D1D`
 - **תיאור:** מוצא/ת חוק (‎+3, ‏‎−5, ‏‎×2) בסדרה, משלים/ה איבר חסר, ומפעיל/ה "מכונה" (קלט → ‎×4 → פלט) בשני הכיוונים.
-- **טעויות · מכניקות · תבנית:** `E.PATTERN_UNIT`, `E.SKIP_SLIP`, `E.OP_SWAP` (בכיוון ההפוך) · `MECH.FORGE`, `MECH.NUMBER_TALK` · `T.PAT.NUM{rule:["+k","-k","×2"],k:[2,100],terms:[4,6],missingPos:"any",machine:[0,1]}`
+- **טעויות · מכניקות · תבנית:** `EM.PATTERN_UNIT`, `EM.SKIP_SLIP`, `EM.OP_SWAP` (בכיוון ההפוך) · `MECH.FORGE`, `MECH.NUMBER_TALK` · `T.PAT.NUM{rule:["+k","-k","×2"],k:[2,100],terms:[4,6],missingPos:"any",machine:[0,1]}`
 - **דוגמאות:** (1) "‎7, 11, 15, ☐, 23". (2) "מכונה: ‎5 → 20, ‏‎3 → 12, ‏‎8 → ?". (3) "‎1,000, 900, 800, ☐ — מה החוק?".
 
 #### `M.PAT.GROW.TABLE` — דפוס גדל לטבלה ולאיבר במקום ה-n
 - **מטא:** S · `IL:G3.N10K`(I) · C&S: — · CPA: P→A · קדם: `M.PAT.NUMSEQ`, `M.MUL.GROUPS`
 - **תיאור:** מגדלים מגפרורים: מתעד/ת בטבלה (שלב → מספר גפרורים) ומנבא/ת את שלב 10 בלי לשרטט.
-- **טעויות · מכניקות · תבנית:** `E.PATTERN_COPY_LAST`, `E.MUL_ADD` · `MECH.ARRAY_BUILD` · `T.PAT{type:"growTable",rule:"a*n+b",a:[1,5],b:[0,3]}`
+- **טעויות · מכניקות · תבנית:** `EM.PATTERN_COPY_LAST`, `EM.MUL_ADD` · `MECH.ARRAY_BUILD` · `T.PAT{type:"growTable",rule:"a*n+b",a:[1,5],b:[0,3]}`
 - **דוגמאות:** (1) "כמה גפרורים בשלב 5 של שורת הריבועים?". (2) מלאו טבלה לשלבים 1–4. (3) "באיזה שלב יהיו 25?".
 
 #### `M.PAT.BALANCE.EQ` — חידות מאזניים וסמלים נעלמים
 - **מטא:** S · `IL:G3.MT`(I) · C&S: — · CPA: P→A · MP: +`O.REP` · קדם: `M.OPS.EQ.MISSING`, `~M.FACT.MUL.X2`
 - **תיאור:** "משולש + משולש = 12, משולש + עיגול = 10". פותר/ת מערכות קטנות של סמלים על מאזניים.
-- **טעויות · מכניקות · תבנית:** `E.EQ_OPERATIONAL`, `E.EQ_ALL_ADD` · `MECH.BALANCE` · `T.EQ{mode:"symbols",symbols:[1,3],range:[0,50]}`
+- **טעויות · מכניקות · תבנית:** `EM.EQ_OPERATIONAL`, `EM.EQ_ALL_ADD` · `MECH.BALANCE` · `T.EQ{mode:"symbols",symbols:[1,3],range:[0,50]}`
 - **דוגמאות:** (1) "🔺 + 🔺 + 🔺 = 15". (2) "על המאזניים: 2 תפוחים = 6 קוביות. תפוח = ?". (3) "⭐ + 4 = 🌙, ‏🌙 = 11. ‏⭐ = ?".
 
 ### 6.10 ציר `DATA`: מיון, טבלאות וגרפים
@@ -1753,31 +1766,31 @@ function buildChoices(item, skill, profile): Choice[] {
 #### `M.DATA.SORT.ONE` — מיון לפי תכונה אחת
 - **מטא:** T · `IL:GAN.QTY`(V) · C&S: — · CPA: C · קדם: —
 - **תיאור:** ממיין/ת לפי צבע, צורה או סוג ("כל החיות לחווה").
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_LOOKS` · `MECH.SORT_BINS` · `T.DATA{mode:"sort",attrs:1,items:[4,8]}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_LOOKS` · `MECH.SORT_BINS` · `T.DATA{mode:"sort",attrs:1,items:[4,8]}`
 - **דוגמאות:** (1) "כל האדומים לסל האדום". (2) "פירות כאן, צעצועים שם". (3) "גרביים לזוגות לפי צבע".
 
 #### `M.DATA.SORT.TWO` — מיון לפי שתי תכונות ושינוי כלל
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: — · CPA: C→P · קדם: `M.DATA.SORT.ONE`
 - **תיאור:** ממיין/ת לפי שתי תכונות (טבלת 2×2), ואחר כך ממיין/ת מחדש לפי כלל אחר.
-- **טעויות · מכניקות · תבנית:** `E.SHAPE_LOOKS`, `E.PATTERN_UNIT` (נשאר/ת עם הכלל הקודם) · `MECH.SORT_BINS` · `T.DATA{mode:"sort2|resort",attrs:2,items:[6,12]}`
+- **טעויות · מכניקות · תבנית:** `EM.SHAPE_LOOKS`, `EM.PATTERN_UNIT` (נשאר/ת עם הכלל הקודם) · `MECH.SORT_BINS` · `T.DATA{mode:"sort2|resort",attrs:2,items:[6,12]}`
 - **דוגמאות:** (1) "כחולים וגדולים כאן". (2) "עכשיו מיינו לפי צורה". (3) "מה הכלל של המיון הזה?".
 
 #### `M.DATA.PICTO.G` — גרף תמונות פשוט
 - **מטא:** G · `IL:GAN.QTY`(V) · C&S: — · CPA: P · קדם: `M.DATA.SORT.TWO`, `M.NUM.COMP.COUNT10`
 - **תיאור:** בונה/ה "עמודות" של תמונות (פריט לתמונה) ועונה/ה: "מה הכי הרבה?", "כמה X?".
-- **טעויות · מכניקות · תבנית:** `E.SIZE_CONFOUND` (תמונות גדולות), `E.NEAR` · `MECH.SCOUT_CHART` · `T.DATA{mode:"pictograph",scale:1,categories:[2,4],max:10}`
+- **טעויות · מכניקות · תבנית:** `EM.SIZE_CONFOUND` (תמונות גדולות), `EM.NEAR` · `MECH.SCOUT_CHART` · `T.DATA{mode:"pictograph",scale:1,categories:[2,4],max:10}`
 - **דוגמאות:** (1) "סדרו את הצללונים לפי צבע וספרו". (2) "איזה פרי אוהבים הכי הרבה במשפחה?" (סקר). (3) "מה הכי מעט?".
 
 #### `M.DATA.TABLE` — טבלאות וסימני ספירה
 - **מטא:** S-R/S · `IL:G2.MEAS`(I) · C&S: — · CPA: P→A · קדם: `M.DATA.PICTO.G`, `M.NUM.COUNT.OBJ20`
 - **תיאור:** אוסף/ת נתונים עם סימני ספירה (קבוצות של 5), ממלא/ה טבלה וקורא/ת ממנה.
-- **טעויות · מכניקות · תבנית:** `E.SKIP_SLIP` (סימני ספירה בקבוצות של 5), `E.GRAPH_READ_HEIGHT` · `MECH.SCOUT_CHART` · `T.DATA{mode:"tally|tableRead|tableFill",categories:[3,5],max:50}`
+- **טעויות · מכניקות · תבנית:** `EM.SKIP_SLIP` (סימני ספירה בקבוצות של 5), `EM.GRAPH_READ_HEIGHT` · `MECH.SCOUT_CHART` · `T.DATA{mode:"tally|tableRead|tableFill",categories:[3,5],max:50}`
 - **דוגמאות:** (1) "ספרו את הסימנים: ‏卌 卌 ‏|||". (2) "בטבלה: כמה ציפורים נראו ביום שלישי?". (3) "מלאו את הטבלה לפי התמונה".
 
 #### `M.DATA.BAR` — גרף עמודות עם קנה מידה, ושאלות השוואה
 - **מטא:** S · `IL:G3.WP`(I) · C&S: — · CPA: P · קדם: `M.DATA.TABLE`, `M.NUM.COUNT.SKIP5`
 - **תיאור:** קורא/ת ובונה/ה גרף עמודות בקנה מידה של 1, 2, 5 או 10, ועונה על שאלות כמו "בכמה יותר", "כמה בסך הכול" ו"בערך".
-- **טעויות · מכניקות · תבנית:** `E.GRAPH_READ_HEIGHT`, `E.OP_SWAP` · `MECH.SCOUT_CHART` · `T.DATA{mode:"barRead|barBuild|barCompare",scale:[1,2,5,10],categories:[3,6]}`
+- **טעויות · מכניקות · תבנית:** `EM.GRAPH_READ_HEIGHT`, `EM.OP_SWAP` · `MECH.SCOUT_CHART` · `T.DATA{mode:"barRead|barBuild|barCompare",scale:[1,2,5,10],categories:[3,6]}`
 - **דוגמאות:** (1) "כל משבצת = 5. כמה ספרים קראה כיתה ג'?". (2) "בכמה יותר צללונים כחולים מירוקים?". (3) "בנו גרף מהטבלה".
 
 ### 6.11 ציר `WP`: בעיות מילוליות, שיח וחשיבה (פירוט ב-§10)
@@ -1785,103 +1798,103 @@ function buildChoices(item, skill, profile): Choice[] {
 #### `M.WP.ORAL.JOIN` — סיפור צירוף/הפרדה בעל-פה (עד 10)
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Find Result · CPA: C (מדמים בחפצים) · קדם: `M.OPS.JOIN.C10`
 - **תיאור:** שומע/ת סיפור קצר (מוקרא) ופותר/ת עם חפצים: "היו… באו/הלכו…". הנעלם הוא תמיד התוצאה.
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP`, `E.NEAR` · `MECH.FEED`, `MECH.HIDE_HUT` · `T.WP{types:["JRU","SRU"],range:10,stage:0}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP`, `EM.NEAR` · `MECH.FEED`, `MECH.HIDE_HUT` · `T.WP{types:["JRU","SRU"],range:10,stage:0}`
 - **דוגמאות:** (1) "לגיבור היו 4 חיצים, ומצא עוד 3. כמה יש לו?". (2) "בקן 6 ביצים. 2 בקעו ויצאו". (3) "{{name}} אסף/ה 5 אבנים ונתן/ה 1 לאחות".
 
 #### `M.WP.ORAL.PPW` — שלם וחלקים בעל-פה
 - **מטא:** G · `IL:GAN.NUM`(V) · C&S: Part-Whole (early) · CPA: C→P · קדם: `M.OPS.BOND.MISSING`, `M.WP.ORAL.JOIN`
 - **תיאור:** "יש 8 חיות, 5 כלבים והשאר חתולים. כמה חתולים?". השלם ידוע וחלק חסר.
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP` (13) · `MECH.HIDE_HUT` · `T.WP{types:["PPW-part"],range:10,stage:1}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP` (13) · `MECH.HIDE_HUT` · `T.WP{types:["PPW-part"],range:10,stage:1}`
 - **דוגמאות:** (1) "בסל 7 פירות, 3 תפוחים. כמה בננות?". (2) "10 ילדים בגן, 6 בחוץ. כמה בפנים?". (3) "9 גחליליות, 4 צהובות והשאר ירוקות".
 
 #### `M.WP.ORAL.COMPARE` — "בכמה יותר?" בעל-פה
 - **מטא:** G+ · `IL:GAN.QTY`(V) · C&S: Find Change (compare) · CPA: C→P · קדם: `M.NUM.COMP.DIFF10`
 - **תיאור:** סיפור השוואה עם תמונה של שתי שורות מיושרות.
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP`, `E.KEYWORD` · `MECH.DUEL` · `T.WP{types:["CDU"],range:10,stage:1}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP`, `EM.KEYWORD` · `MECH.DUEL` · `T.WP{types:["CDU"],range:10,stage:1}`
 - **דוגמאות:** (1) "ליואב 5 מדבקות ולנעמה 8. בכמה יותר לנעמה?". (2) "4 כוסות ו-7 צלחות. כמה כוסות חסרות?". (3) "הענק קפץ 9 קפיצות והגמד 6".
 
 #### `M.WP.BAR.PPW` — שלם וחלקים במודל פסים (עד 100, ב-S עד 1,000)
 - **מטא:** S-R · `IL:G2.AS100`(V) · C&S: Part-Whole +/− · CPA: P(פסים)→A · MP: +`O.REP` (פס + תרגיל) · קדם: `M.WP.ORAL.PPW`, `M.OPS.ADD.2D2D`
 - **תיאור:** משרטט/ת פס שלם ושני חלקים, מסמן/ת "?" במקום הנעלם, ורק אחר כך כותב/ת תרגיל. מודל הפסים חובה בסוג חדש (§10.1).
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP`, `E.KEYWORD`, `E.EXTRA_INFO` · `MECH.BAR_BUILDER` · `T.WP{types:["PPW-whole","PPW-part"],range:[100,1000],stage:[2,3]}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP`, `EM.KEYWORD`, `EM.EXTRA_INFO` · `MECH.BAR_BUILDER` · `T.WP{types:["PPW-whole","PPW-part"],range:[100,1000],stage:[2,3]}`
 - **דוגמאות:** (1) "בספרייה 63 ספרים, 28 באנגלית. כמה בעברית?". (2) "דנה קראה 45 עמודים ביום ראשון ו-38 ביום שני. כמה בסך הכול?". (3) "במחנה 120 אוהלים, 75 כבר מוארים".
 
 #### `M.WP.BAR.CHANGE` — שינוי עם נעלם בהתחלה או בשינוי
 - **מטא:** S-R · `IL:G2.AS100`(I) · C&S: Part-Whole / Numbers-in-Numbers · CPA: P→A · קדם: `M.WP.BAR.PPW`, `M.OPS.EQ.MISSING`
 - **תיאור:** סוגי CGI: ‏JCU, ‏JSU, ‏SCU, ‏SSU. "היו כמה? הגיעו 15 ועכשיו 42." מודל הפסים מראה את הנעלם במקום הנכון.
-- **טעויות · מכניקות · תבנית:** `E.KEYWORD` ("הגיעו" → חיבור), `E.OP_SWAP` · `MECH.BAR_BUILDER` · `T.WP{types:["JCU","JSU","SCU","SSU"],range:100,stage:[2,3]}`
+- **טעויות · מכניקות · תבנית:** `EM.KEYWORD` ("הגיעו" → חיבור), `EM.OP_SWAP` · `MECH.BAR_BUILDER` · `T.WP{types:["JCU","JSU","SCU","SSU"],range:100,stage:[2,3]}`
 - **דוגמאות:** (1) "על העץ היו ציפורים. 14 עפו ונשארו 9. כמה היו?". (2) "לנועה 26 ₪. אחרי שסבתא נתנה לה עוד, יש לה 40. כמה נתנה סבתא?". (3) "{{name}} אכל/ה כמה עוגיות ונשארו 7 מתוך 12".
 
 #### `M.WP.BAR.COMPARE` — בעיות השוואה (כולל ניסוח "הפוך")
 - **מטא:** S-R/S · `IL:G2.AS100`/`IL:G3.WP`(C) · C&S: Problem Solver · CPA: P(שני פסים)→A · MP: +`O.REP` · קדם: `M.WP.BAR.PPW`, `M.OPS.SUB.2D2D`
 - **תיאור:** סוגים CDU (ההפרש), ‏CQU (הגדול), ‏CRU (הקטן). כולל ניסוח לא עקבי: "לדני 34, זה 12 יותר מליה. כמה לליה?" (התשובה בחיסור).
-- **טעויות · מכניקות · תבנית:** `E.KEYWORD`, `E.OP_SWAP` · `MECH.BAR_BUILDER` · `T.WP{types:["CDU","CQU","CRU"],languageConsistent:[true,false],range:[100,1000]}`
+- **טעויות · מכניקות · תבנית:** `EM.KEYWORD`, `EM.OP_SWAP` · `MECH.BAR_BUILDER` · `T.WP{types:["CDU","CQU","CRU"],languageConsistent:[true,false],range:[100,1000]}`
 - **דוגמאות:** (1) "בכמה גבוה מגדל 85 מ' ממגדל 47 מ'?". (2) "לאיתי 56 קלפים, 18 פחות מלתמר. כמה לתמר?". (3) "החתול שוקל 4 ק"ג, הכלב 9 ק"ג יותר. כמה הכלב?".
 
 #### `M.WP.BAR.GROUPS` — קבוצות שוות: מכפלה, גודל קבוצה, מספר קבוצות
 - **מטא:** S · `IL:G3.MT`/`IL:G3.WP`(C) · C&S: Multiplicative (BK) · CPA: P(פס יחידות)→A · MP: +`O.REP` · קדם: `M.MUL.DIV.MEANING`, `M.WP.BAR.PPW`
 - **תיאור:** סוגים EG-P, ‏EG-S, ‏EG-N, ומערך/שטח. פס מחולק ליחידות שוות. בוחר/ת בין כפל לחילוק לפי מה שחסר.
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP` (חילוק ↔ כפל), `E.MUL_ADD`, `E.DIV_REVERSE` · `MECH.BAR_BUILDER`, `MECH.SHARE_LOOT` · `T.WP{types:["EG-P","EG-S","EG-N","ARR"],factRange:"table",stage:[2,3]}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP` (חילוק ↔ כפל), `EM.MUL_ADD`, `EM.DIV_REVERSE` · `MECH.BAR_BUILDER`, `MECH.SHARE_LOOT` · `T.WP{types:["EG-P","EG-S","EG-N","ARR"],factRange:"table",stage:[2,3]}`
 - **דוגמאות:** (1) "6 אוהלים, בכל אחד 4 פנסים. כמה פנסים?". (2) "32 גבישים חולקו שווה בשווה ל-8 שומרים". (3) "בכל סל 5 תפוחים. כמה סלים ל-45 תפוחים?".
 
 #### `M.WP.BAR.TIMES` — השוואה כפלית ("פי")
 - **מטא:** S · `IL:G3.WP`(I) · C&S: — · CPA: P(פס יחידות כפול)→A · קדם: `M.WP.BAR.GROUPS`, `M.WP.BAR.COMPARE`
 - **תיאור:** "לנועה פי 3 מדבקות מאשר ליונתן". ההבדל בין "פי 3" לבין "3 יותר", ונעלם בכל אחד משלושת המקומות.
-- **טעויות · מכניקות · תבנית:** `E.TIMES_VS_MORE`, `E.OP_SWAP`, `E.DIV_REVERSE` · `MECH.BAR_BUILDER` · `T.WP{types:["MC-P","MC-S","MC-F"],factRange:"table"}`
+- **טעויות · מכניקות · תבנית:** `EM.TIMES_VS_MORE`, `EM.OP_SWAP`, `EM.DIV_REVERSE` · `MECH.BAR_BUILDER` · `T.WP{types:["MC-P","MC-S","MC-F"],factRange:"table"}`
 - **דוגמאות:** (1) "המגדל של {{name}} גבוה פי 4 מהמגדל של 6 לבנים. כמה לבנים?". (2) "לדרקון 24 קשקשים, פי 3 מלתנין. כמה לתנין?". (3) "פי כמה 35 גדול מ-7?".
 
 #### `M.WP.REM.INTERPRET` — מה עושים עם השארית?
 - **מטא:** S · `IL:G3.MD`(C) · C&S: — · CPA: P→A · קדם: `M.MUL.DIV.REM`, `M.WP.BAR.GROUPS`
 - **תיאור:** מחליט/ה לפי ההקשר אם לעגל למעלה (כמה סירות), להתעלם (כמה שקיות מלאות) או לענות בשארית עצמה (כמה נשארו).
-- **טעויות · מכניקות · תבנית:** `E.REM_IGNORE`, `E.REM_TOO_BIG` · `MECH.SHARE_LOOT` · `T.WP{types:["REM-up","REM-down","REM-is"],divisor:[2,9]}`
+- **טעויות · מכניקות · תבנית:** `EM.REM_IGNORE`, `EM.REM_TOO_BIG` · `MECH.SHARE_LOOT` · `T.WP{types:["REM-up","REM-down","REM-is"],divisor:[2,9]}`
 - **דוגמאות:** (1) "27 ילדים, 4 בכל סירה. כמה סירות צריך?" (7). (2) "‎₪30, מחברת עולה ‎₪8. כמה מחברות אפשר לקנות?" (3). (3) "23 עוגיות ל-5 ילדים שווה בשווה. כמה יישארו?" (3).
 
 #### `M.WP.TWOSTEP` — בעיות דו-שלביות
 - **מטא:** S · `IL:G3.WP`(C) · C&S: Problem Solver · CPA: P(פסים מורכבים)→A · קדם: `M.WP.BAR.CHANGE`, `M.WP.BAR.GROUPS`
 - **תיאור:** שני צעדים מאותו סוג או מסוגים שונים (‎+ ו-×). כותב/ת תרגיל אחד עם סוגריים או שני תרגילים.
-- **טעויות · מכניקות · תבנית:** `E.ONE_STEP`, `E.ORDER_LTR`, `E.OP_SWAP` · `MECH.BAR_BUILDER` · `T.WP{types:"twoStep",combos:["+×","−×","+−",":+"],range:1000}`
+- **טעויות · מכניקות · תבנית:** `EM.ONE_STEP`, `EM.ORDER_LTR`, `EM.OP_SWAP` · `MECH.BAR_BUILDER` · `T.WP{types:"twoStep",combos:["+×","−×","+−",":+"],range:1000}`
 - **דוגמאות:** (1) "3 חבילות של 8 קלפים, ועוד 5 קלפים בודדים". (2) "ב-‎₪50 קנו 4 גלידות ב-‎₪9. כמה עודף?". (3) "בכיתה 28 ילדים, 4 חסרו, והשאר התחלקו ל-6 קבוצות".
 
 #### `M.WP.EXTRA` — מידע מיותר ומידע חסר
 - **מטא:** S · `IL:G3.WP`(I) · C&S: — · CPA: P→A · קדם: `M.WP.BAR.PPW`
 - **תיאור:** מזהה מספר שלא נחוץ, ומזהה בעיה שאי אפשר לפתור ("מה חסר?").
-- **טעויות · מכניקות · תבנית:** `E.EXTRA_INFO` · `MECH.BAR_BUILDER` · `T.WP{extraInfo:[0,1],missingInfo:[0,1]}`
+- **טעויות · מכניקות · תבנית:** `EM.EXTRA_INFO` · `MECH.BAR_BUILDER` · `T.WP{extraInfo:[0,1],missingInfo:[0,1]}`
 - **דוגמאות:** (1) "בן 9 קנה 3 מחברות ב-‎₪4 כל אחת. כמה שילם?" (הגיל מיותר). (2) "האוטובוס יצא ב-8:00. מתי הגיע?" (חסר מידע). (3) "איזה מספר לא צריך?".
 
 #### `M.WP.MEAS` — בעיות מדידה, זמן וכסף
 - **מטא:** S · `IL:G3.WP`/`IL:G3.MEAS`(I) · C&S: — · CPA: P→A · קדם: `M.MEAS.MONEY.CHANGE`, `M.MEAS.TIME.ELAPSED`, `M.WP.BAR.PPW`
 - **תיאור:** בעיות רב-מספריות ביחידות. התשובה כוללת יחידה, ויחידות מומרות לפי הצורך.
-- **טעויות · מכניקות · תבנית:** `E.UNIT_CONVERT`, `E.TIME_BASE10`, `E.AGOROT` · `MECH.MAKOLET`, `MECH.CLOCK_CAMP`, `MECH.BLUEPRINT` · `T.WP{domain:["money","time","length","mass"],types:"any"}`
+- **טעויות · מכניקות · תבנית:** `EM.UNIT_CONVERT`, `EM.TIME_BASE10`, `EM.AGOROT` · `MECH.MAKOLET`, `MECH.CLOCK_CAMP`, `MECH.BLUEPRINT` · `T.WP{domain:["money","time","length","mass"],types:"any"}`
 - **דוגמאות:** (1) "חבל 3 מ'. חתכנו 85 ס"מ. כמה נשאר?". (2) "הסדנה 45 דקות, מתחילה ב-16:30. מתי נגמרת?". (3) "שלוש פיתות ב-‎₪4.50 כל אחת".
 
 #### `M.WP.FRAC` — סיפורי שבר של כמות
 - **מטא:** S · `IL:G3.FR`(C) · C&S: — · CPA: P→A · קדם: `M.FRAC.SET`, `M.WP.BAR.GROUPS`
 - **תיאור:** "רבע מ-20 התותים לסבתא". פס מחולק ל-n, ושאלות "כמה קיבל/ה?" ו"כמה נשאר?".
-- **טעויות · מכניקות · תבנית:** `E.FRAC_SET_WHOLE`, `E.ONE_STEP` · `MECH.SHARE_LOOT`, `MECH.BAR_BUILDER` · `T.WP{types:["FR-part","FR-rest"],den:[2,10]}`
+- **טעויות · מכניקות · תבנית:** `EM.FRAC_SET_WHOLE`, `EM.ONE_STEP` · `MECH.SHARE_LOOT`, `MECH.BAR_BUILDER` · `T.WP{types:["FR-part","FR-rest"],den:[2,10]}`
 - **דוגמאות:** (1) "שליש מ-18 הילדים בחוג. כמה?". (2) "קראתי ‎1/4 מ-80 עמודים. כמה נשארו?". (3) "חצי מהכסף (‎₪36) הלך לחסכון".
 
 #### `M.WP.POSE` — ממציאים סיפור לתרגיל
 - **מטא:** S · `IL:G3.WP`(I) · C&S: — · CPA: A→P · MP: `MP.X` (לא נבדק אוטומטית; ההורה רואה את הסיפור) · קדם: `M.WP.BAR.GROUPS`
 - **תיאור:** בוחר/ת דמויות, חפצים ופעולה מתוך שבבים ובונה/ה סיפור לתרגיל, למשל ‎24 : 6. הבדיקה בקוד מוודאת רק שהמבנה מתאים (חלוקה, 24, 6). הורה או K1 מקריאים.
-- **טעויות · מכניקות · תבנית:** `E.OP_SWAP` (סיפור כפל לתרגיל חילוק) · `MECH.NUMBER_TALK` · `T.WP{mode:"pose",chips:true,expr:"a:b|a×b|a−b"}`
+- **טעויות · מכניקות · תבנית:** `EM.OP_SWAP` (סיפור כפל לתרגיל חילוק) · `MECH.NUMBER_TALK` · `T.WP{mode:"pose",chips:true,expr:"a:b|a×b|a−b"}`
 - **דוגמאות:** (1) "בנו סיפור ל-‎7 × 3". (2) "סיפור שבו הפתרון הוא ‎50 − 18". (3) "איזה סיפור מתאים ל-‎24 : 6? בחרו ותקנו".
 
 #### `M.WP.TALK.MULTI` — שיחת מספרים: שתי דרכים לפחות
 - **מטא:** S (וגם G בגרסה קולית של "איך ראית?") · `IL:G3.EST`(V) "שיח מתמטי" · C&S: Deriver · CPA: P→A · MP: `MP.S` על "דרך שנייה נכונה" · קדם: `M.OPS.ADD.2D2D`, `M.FACT.MUL.X5`
 - **תיאור:** פותר/ת תרגיל אחד (‎18 × 5, ‏‎99 + 47, תמונת נקודות) בשתי דרכים מתוך תפריט אסטרטגיות. אחר כך רואה דרך של "ילד אחר" ובוחר/ת איזו נוחה יותר ולמה (שבבי נימוק).
-- **טעויות · מכניקות · תבנית:** `E.UNKNOWN` (דרך לא תקפה מסומנת לבירור) · `MECH.NUMBER_TALK` · `T.TALK{task:["dotImage","mental+","mental×"],ways:2}`
+- **טעויות · מכניקות · תבנית:** `EM.UNKNOWN` (דרך לא תקפה מסומנת לבירור) · `MECH.NUMBER_TALK` · `T.TALK{task:["dotImage","mental+","mental×"],ways:2}`
 - **דוגמאות:** (1) "‎18 × 5: דרך אחת ‎10 × 5 + 8 × 5. מה עוד?" (‎18 × 10 : 2). (2) "כמה נקודות? איך ראית?". (3) "‎99 + 47: מי חישב חכם יותר, נועה (100 + 46) או עומר (90 + 40 + 9 + 7)?" (שבח לדרך, לא לילד).
 
 #### `M.WP.EXPLAIN` — מי צודק? ניתוח טעות
 - **מטא:** S · `IL:G3.EST`(V) · C&S: — · CPA: A · קדם: `M.WP.TALK.MULTI`
 - **תיאור:** מוצג פתרון שגוי, והטעות בנויה מקוד E אמיתי. הילד/ה מוצא/ת איפה הטעות ובוחר/ת הסבר. זה גם תפקיד ה"מדריכה" של K1 מול K2.
 - **טעויות · מכניקות · תבנית:** — (המיומנות היא זיהוי טעות) · `MECH.NUMBER_TALK`, `MECH.COOP_FIRE` · `T.TALK{mode:"errorAnalysis",errorCodes:"fromSkill"}`
-- **דוגמאות:** (1) "רובוט חישב ‎52 − 17 = 45. מה הוא עשה?" (`E.SUB_SMALL_FROM_LARGE`). (2) "‎⅛ גדול מ-‎¼ כי 8 גדול מ-4. נכון?". (3) "איך תעזרי לאח שאומר ש-‎5 + 3 = 7?".
+- **דוגמאות:** (1) "רובוט חישב ‎52 − 17 = 45. מה הוא עשה?" (`EM.SUB_SMALL_FROM_LARGE`). (2) "‎⅛ גדול מ-‎¼ כי 8 גדול מ-4. נכון?". (3) "איך תעזרי לאח שאומר ש-‎5 + 3 = 7?".
 
 #### `M.WP.LOGIC` — חידות היגיון מספרי
 - **מטא:** S (וגם S+) · `IL:G3.EST`(I) · C&S: — · CPA: P · MP: `MP.X` · קדם: `M.FACT.AS20.MIXED`
 - **תיאור:** ריבוע קסם 3×3, חידות "מספר סודי" (רמזים: זוגי, בין 20 ל-30, סכום ספרות 8), קנקן מיני (KenKen 3×3).
-- **טעויות · מכניקות · תבנית:** `E.NEAR` · `MECH.NUMBER_TALK` · `T.LOGIC{puzzle:["magic3","secretNumber","kenken3"],difficulty:[1,3]}`
+- **טעויות · מכניקות · תבנית:** `EM.NEAR` · `MECH.NUMBER_TALK` · `T.LOGIC{puzzle:["magic3","secretNumber","kenken3"],difficulty:[1,3]}`
 - **דוגמאות:** (1) "המספר הסודי: זוגי, בין 20 ל-30, סכום הספרות 8" (26). (2) השלימו ריבוע קסם שסכומו 15. (3) קנקן 3×3 עם רמזי ‎+.
 
 ---
@@ -1891,7 +1904,7 @@ function buildChoices(item, skill, profile): Choice[] {
 ### 7.1 עקרונות
 - **התוכנית היא שלד שמזיז עדיפויות, לא מסלול נעול.** מה שבאמת נלמד נקבע לפי השוליים בגרף (§3.3), לפי שליטה ולפי הקלט של ההורה (§7.5).
 - **התזמון החודשי של כיתה ג'** הוא הסקה (I). הוא מבוסס על הרצף המקובל בסדרות הלימוד: **מספרים עד רבבה** (פותח את השנה: כך גם בתוכנית הישנה `kita3.pdf` וגם בפריסת תשפ"ז של "השבחה" לתוכנית החדשה, שלפי תקציר החיפוש מתחילה ב"ייצוגי מספרים עד 10,000 וחיבור וחיסור בתחום 10,000", ומקצה שעה שבועית אחת מתוך ≥5 לגאומטריה לאורך כל השנה; `docs/research-log/fable-F3.md` R1, דרגה C) → לוח הכפל → מאונך → כפל מעבר ללוח → שברים → גאומטריה ומדידה. מסמך ציוני הדרך יעדכן את הטבלה הזו (`MATH-AC-14`). ⟂VERIFY: לפתוח את ה-PDF של "השבחה" (hashbacha.org חסום בסשן) או צילום תוכן העניינים (§16).
-- **חופשות** נלקחות מ-`calendar.schoolBreaks` (`IsraeliSchoolCalendar` של 08 §1.12, נערך בידי ההורה ב-10). **מצב "שמירה"** נכנס אוטומטית בכל חופשה של ≥5 ימי לימוד (חנוכה, פסח, קיץ): ההרכב (08 §6.2) משתנה ל-warmup 15% / new 25% / review 50% / fun 10% (K1; ב-K2 new 30%, review 40%, fun 20%), `monthAlign` של יחידת החודש הבא מוקפא (אין "הצצה" לחומר שהכיתה עוד לא התחילה), פרץ העובדות נשאר יומי, והמתכנן מציע `HOME.*` אחד לשבוע. ההורה יכול לבטל ("גם בחופש לומדים חדש") במתג `plan.breakMode ∈ {"maintain","normal"}`.
+- **חופשות** נלקחות מ-`calendar.schoolBreaks` (`IsraeliSchoolCalendar` של 08 §1.12, נערך בידי ההורה ב-10). **מצב "שמירה"** נכנס אוטומטית בכל חופשה של ≥5 ימי לימוד (חנוכה, פסח, קיץ): ההרכב (08 §6.2א, הטבלה שם גוברת) משתנה ל-warmup / new / review / stretch / fun = **K1 15/25/50/0/10**, **K2 20/30/30/0/20** (סבב 2: הנוסח הקודם של K2 לא הסתכם ל-100), `monthAlign` של יחידת החודש הבא מוקפא (אין "הצצה" לחומר שהכיתה עוד לא התחילה), פרץ העובדות נשאר יומי, והמתכנן מציע `HOME.*` אחד לשבוע. ההורה יכול לבטל ("גם בחופש לומדים חדש") במתג `Plan.breakMode ∈ {'auto','on','off'}` (08 §1.10; ברירת מחדל `auto` = נגזר מ-`calendar.vacations`; 10 §6.13 מציג "מצב חופשה" וכיבוי = `off`).
 - **הפסקה ארוכה בלי משחק** (≥14 יום בחופשה או ≥21 יום בכלל): הפרק הראשון הוא `reentry` של 08 §10.4 (חימום 5 פריטים לציר, ≤2 צירים, `u += gap/60`, חזרות ≤30%), ובמתמטיקה החימום של `math.facts` הוא פרץ של 8 עובדות מהכרטיסים הישנים ביותר (§14.2). **אין הורדת רמה** על סמך הפרק הזה בלבד. כרטיסי חזרה שפגו בחופשה לא "נערמים": בחזרה מהפסקה נבחרות לכל היותר 6 חזרות לפרק לפי `(1−R)` (08 §5.3), והשאר נדחות יום-יום.
 - **שבת וחג:** המנוע לא חוסם (B7), ימי מנוחה לא נספרים ב-`elapsedActiveDays`, `dueDay` זז ליום הפעיל הבא (08 §5.4), ואין בוס חודשי ביום מנוחה (08 §10.2). בימי זיכרון אין "אירוע עונתי" (§7.2, שורת מאי).
 - **שבוע חג (לא חופשה):** למשל שבוע חנוכה בגן/בכיתה: `monthAlign` נשאר, רק הסקין העונתי והדוגמאות מתחלפים (§7.2 עמודת "הקשר עונתי"). אין הורדת קצב.
@@ -2009,7 +2022,7 @@ function buildChoices(item, skill, profile): Choice[] {
   "response": { "type": "numpad|choice|numberStrip|drag|numberline|clock|draw|build|sort",
                 "choices": "auto" },  // auto → buildChoices() §4.1
   "answerFn": "answerFact",          // name of TS function; tests compare with an independent oracle
-  "errors": "fromSkill",             // the skill's E.* list ordered by weight
+  "errors": "fromSkill",             // the skill's EM.* list ordered by weight
   "hints": { "H1": "hint.fact.{strategy}", "H2": "stageDown", "H3": "workedExample" },
   "feedbackAnim": "anim.fact.{op}",  // shows the consequence (P9)
   "text": { "promptKey": "math.prompt.fact.{op}", "speech": true, "nikud": "byProfile" },
@@ -2026,7 +2039,7 @@ interface ItemInstance {
   stage: 'C'|'P'|'A';
   render: RenderSpec;         // objects, layout, number-line, array, bar-model... consumed by MECH.*
   prompt: { display: GenderedText; speech: GenderedText }; // display: digits; speech: words from NUM_WORDS
-  errorMap: Record<string, string>;  // canonical response → E.* (used by classifyError)
+  errorMap: Record<string, string>;  // canonical response → EM.* (used by classifyError)
   hintScript: HintStep[];
   seed: number;
 }
@@ -2776,14 +2789,14 @@ selectFactsForBurst(n):
 | המורה משתמשת בסימון אחר (·, ÷, סימון פריטה) | `notation.*`, אישור הורה, קול לא משתנה, שני סימנים מתקבלים בקלט | §1.5 |
 | יד שמאל | `profile.handedness`: מקלדת וכפתור "סיימתי" בצד שמאל | §1.5 |
 | סימני דיסגרפיה/דיסקלקוליה | רק דגלי §14.3 ו-08 §9.2 (ספירה במקום שליפה, תחושת מספר); היפוך ספרות בכתיבה לא נספר לפני כיתה א' | §14.3 |
-| אח/ות משחק/ת בפרופיל של אח/ות אחר/ת | גלאי `possible_profile_swap` | §14.4 |
+| אח/ות משחק/ת בפרופיל של אח/ות אחר/ת | גלאי `identity_suspect` של 08 §10.5.3 (= `possible_profile_swap`): השהיה `excluded:'identity_pending'` מהפריט ה-10, כרטיס הורה AL-15 | §14.4, 08 §10.5.3 |
 | שבוע חג / חופשה / הפסקה ארוכה | סקין עונתי בלבד / מצב שמירה / `reentry` | §7.1 |
 | שבת (משפחה שלא משחקת) | מונים עוצרים, `dueDay` זז; אין בוס | §7.1, B7 |
 | הערכה על נייר | `PRN.*.probe`, רשת ✓/✗, `paperGap` | §13.6 |
 | אופליין | כל המחוללים רצים במכשיר (seed דטרמיניסטי); רק סקיני LLM וקול חדשים דורשים חבילה. בלי חבילה: הפריט מוצג "בלי עטיפה" (12 §2.7) עם קול מהטבלה בלבד | §8.1 |
 | המכשיר מתחלף באמצע פרק | הפרק נשמר כ-`abandoned` בפריט הנוכחי (08 §4.1: מוחרג); הפרק הבא מתחיל מחדש עם אותו `plan` אחרי סנכרון (E6). אין כפל קרדיט: `Attempt.id` ייחודי | 08, 11 |
-| הורה עונה במקום הילד (`assisted`) | ‏w ×0.3 (08 §4.1). ב-`MECH.COOP_FIRE` כל ילד מסומן בנפרד | §5.3 |
-| K3 מקישה על המסך של K2 (מצב ברכיים מעורב) | פריטי K2 במשחק משותף מקבלים `assisted:'sibling'` רק כשההורה סימן; אחרת הקשה של K3 על פריט K2 אינה תשובה (אזור המגע של K3 מופרד, 09 §4.2) | 01 §5.3 |
+| הורה עונה במקום הילד (`assisted:'parent'`) | w ×0.3 (08 §4.1, `Attempt.context.assisted`); הכלכלה משלמת `itemRecovered` (02). ב-`MECH.COOP_FIRE` כל ילד מסומן בנפרד. הכלל המחייב: 01 §12.2 | 01 §12.2, §5.3 |
+| K3 מקישה על המסך של K2 (מצב ברכיים מעורב) | אזורי מגע נפרדים (CO-1 חצי מסוכב; CO-2 ≥1/3 רוחב + רצועה מתה 12 מ"מ; K3 הקרוב/ה למדורה): הקשה מחוץ לאזור אינה תשובה של אף אחד (01 AC-CO-7, 09 `CoopZoneLayout`); `assisted:'sibling'` רק כשההורה סימן; הקשות כאלה לא מפעילות את `identity_suspect` (08 §10.5.3) | 01 §12.2 |
 
 ## 14. מיקום, כיול ודגלי צפייה (מתמטיקה)
 
@@ -2806,23 +2819,23 @@ selectFactsForBurst(n):
 | כלל ב-08 | סמנים מתמטיים שמזינים אותו (מהגרף כאן) |
 |---|---|
 | `MATH_K2_NUMBER_SENSE` | `M.NUM.SUBIT.P4` (1–4), ‏`M.NUM.COMP.SYM10` (1–9) |
-| `MATH_K1_RETRIEVAL` | `M.FACT.MUL.X2`/`X5`/`X10` (חציון זמן מעל 6 ש' בדיוק של 90% ומעלה), ‏`E.COUNT_ALL` ב-`M.OPS.COUNTON.ADD`, וכלל השיפוע של §9.7 |
+| `MATH_K1_RETRIEVAL` | `M.FACT.MUL.X2`/`X5`/`X10` (חציון זמן מעל 6 ש' בדיוק של 90% ומעלה), ‏`EM.COUNT_ALL` ב-`M.OPS.COUNTON.ADD`, וכלל השיפוע של §9.7 |
 
-**שני כללים מוצעים כתוספת ל-08 §9.2** (עד שיאושרו, הם `watch` בלבד, ההורה לא מקבל הודעה, והמנוע רק מתאים את התרגול):
-- **`MATH_K1_FACT_PACE`:** אחרי 10 שבועות, פחות מ-30% מעובדות הכפל "צבועות", בזמן שהדיוק במושגים (`M.MUL.*`) הוא 85% ומעלה. בדרך כלל זה קצב ולא דגל, ולכן רק `parent_note` עם הצעה לשוחח עם המורה.
-- **`MATH_K1_READ_VS_LISTEN`:** בבעיות מילוליות, דיוק נמוך ב-15 נקודות אחוז או יותר כשהילדה קוראת לבד, לעומת הקראה (`audioPrompt` מופעל), על 20 פריטים לפחות בכל מצב. הכלל מזין את `HEB_K1_LISTEN_READ_GAP` של 08.
+**שני כללים שנרשמו ב-08 §9.2 (התקבלו; `maxStatus:'watch'` עד שההורה מאשר את הנוסח ב-10 PA-FLAG, 08 §9.2 `maxStatus`):**
+- **`MATH_K1_FACT_PACE`:** אחרי ≥10 שבועות של תרגול עובדות (≥12 מפגשים), פחות מ-30% מעובדות הכפל (`M.FACT.MUL.*`) ב-`proficient`+, בזמן שהדיוק במושגי הכפל (`M.MUL.*`) ≥85% ב-≥30 פריטים. זה קצב ולא קושי: לכל היותר `parent_note` עם הצעה לשוחח עם המורה על יעד לוח הכפל (§16, OPD-21); לעולם לא `referral_suggested`.
+- **`MATH_K1_READ_VS_LISTEN`:** בבעיות מילוליות, דיוק נמוך ב-≥15 נקודות כש-`audioPrompt` כבוי (קוראת לבד) לעומת מופעל, ≥20 פריטים בכל מצב, ב-28 יום. **אין הודעה משלו:** הסמן מזין את `HEB_K1_LISTEN_READ_GAP` כראיה נוספת (שבוע נספר כ"מתקיים" גם כשפער ה-θ הוא 0.7–1.0 לוגיט, אם ההפרש קרא/שמע ≥15 נק'); במצב `watch` המנוע מגיש בעיות מילוליות עם הקראה כברירת מחדל. הפניה, אם בכלל, רק דרך `HEB_K1_LISTEN_READ_GAP`.
 
 **מה אינו דגל (כדי שלא יהיו התרעות שווא):**
-- **היפוך ספרות בכתיבה** (3/ε, 7, 5) ב-K2 ובתחילת כיתה א': שכיח עד גיל 7 ואינו נספר. ב-K1 הוא נרשם רק מצילום בהקלדת ההורה (`PRN`), ונספר ל-`E.NUMERAL_CONFUSE` כמו כל טעות, בלי כלל דגל.
+- **היפוך ספרות בכתיבה** (3/ε, 7, 5) ב-K2 ובתחילת כיתה א': שכיח עד גיל 7 ואינו נספר. ב-K1 הוא נרשם רק מצילום בהקלדת ההורה (`PRN`), ונספר ל-`EM.NUMERAL_CONFUSE` כמו כל טעות, בלי כלל דגל.
 - **איטיות בלי טעויות** אצל K2: אין RT בגן (D11), ולכן אין כלל.
 - **קושי במאונך לבד**, כשהחישוב בעל-פה תקין: זה פרוצדורה, ו-`O.STEP` כבר מאתר את השלב; לא דגל.
 - **פער בין נייר לאפליקציה** (§13.6): התאמת תרגול, לא דגל.
 
-### 14.4 גלאי "אולי זה לא אותו ילד" (`possible_profile_swap`)
-K2 יכול לפתוח את הפרופיל של K1 (ל-K2 אין picture-PIN כברירת מחדל, H3), ולהפך. תצפיות כאלה מזהמות את θ ואת הכרטיסים. הכלל (משותף ל-04 §13.6):
-- **סמנים בתוך מפגש:** (א) דיוק ניסיון-ראשון ב-10 הפריטים הראשונים נמוך מ-0.35 או גבוה מ-0.98 כש-`P̂` החזוי הוא 0.75–0.90; **וגם** (ב) חציון RT קטן מ-0.4× או גדול מ-2.5× מהחציון של הפרופיל בתבנית (≥10 תצפיות); **או** (ג) הפרופיל הפעיל הוא K1 ב-10 דקות הראשונות אחרי ש-K2 סיים פרק באותו מכשיר (או להפך) והסמן (א) מתקיים לבדו.
-- **פעולה:** המפגש ממשיך (אין האשמה), אבל ניקוד הבלוק מושהה (`disengaged_block`, 08 §4.4) מהפריט ה-11 ואילך, ובסוף הפרק מוצג להורה (לא לילד): "נראה ש{שם} שיחק/ה בפרופיל של {שם}? ✓ כן / ✗ לא". ✓ → התצפיות של המפגש מסומנות `w = 0` (מוחרגות) ולא נמחקות (יומן append-only, E6); ✗ → הניקוד משוחזר. בלי תשובה תוך 48 שעות: מוחרג.
-- **מניעה:** אחרי שני אירועים מאושרים ב-30 יום, ההורה מקבל הצעה להפעיל picture-PIN גם ל-K2.
+### 14.4 גלאי "אולי זה לא אותו ילד" (`identity_suspect`, 08 §10.5.3)
+K2 יכול לפתוח את הפרופיל של K1 (ל-K2 אין picture-PIN כברירת מחדל, H3), ולהפך. תצפיות כאלה מזהמות את θ ואת הכרטיסים. **סבב 2:** הגלאי מומש ב-08 §10.5.3 כגלאי **אחד** לכל המקצועות (`packages/engine/compose/identity.ts`), בשם הקנוני `identity_suspect`; `possible_profile_swap` (השם כאן וב-04 §13.4) הוא שם נרדף. 08 גובר; כאן רק התמצית והסמנים:
+- **זיהוי (ציון, מהפריט ה-10 במפגש ושוב בסיום):** +2 דיוק ניסיון-ראשון ≤0.35 או ≥0.98 כש-P̂ הממוצע בתוך 0.70–0.92 (≥10 פריטים); +2 `mean(x − P)` ≥ +0.35 או ≤ −0.35; +1 חציון RT < 0.4× או > 2.5× מחציון הילד (אחרי סינון 08 §4.4); +1 המפגש החל תוך 10 דקות מ-`session.ended` של אח אחר באותו מכשיר; +1 כל בחירות הנושא מחוץ ל-5 המובילים. ציון ≥4 → `identity_suspect` (≥5 לילד עם picture-PIN פעילה; המפגש הראשון אחרי מיקום לא נספר).
+- **פעולה:** המפגש ממשיך (אין האשמה, כלום לא גלוי לילד, C5). מרגע הזיהוי הפריטים מנוקדים ל-UI אבל מוחרגים מהמודל (`excluded:'identity_pending'`, **לא** `disengaged_block`, כדי שלא תוצע הפסקה), `pTarget` קפוא. בסיום: `Session.anomaly`, `attributedTo='pending'`, כרטיס להורה (10 AL-15): "נראה ש{שם} שיחק/ה בפרופיל של {שם}? ✓ / ✗". ✓ → `ParentInput.session_reattribute{to}` וכל תצפיות המפגש מוחרגות (`excluded:'reattributed'`, w = 0; היומן append-only, E6) עם חישוב מחדש מנקודת הביקורת; ✗ → כל הפריטים, כולל המוחרגים, נכנסים לקיפול. בלי תשובה 48 שעות → כמו ✓ עם `to:'unknown'`; הפיך 30 יום. רמות שירדו בעקבות זה פולטות `skill.level_reverted`; מטבעות ותגים לא נלקחים (C5, 02).
+- **מניעה:** אחרי שני ✓ ב-30 יום לילד בלי picture-PIN, ההורה מקבל הצעה להפעיל אותה גם ל-K2 (לא אוטומטי, H3). במשחק משותף על אותו אייפד הקשות מאזור של אח מתויגות `assisted:'sibling'` (01 §12.2) ואינן מפעילות את הגלאי.
 - **K3** לעולם לא מקבל/ת פרופיל אחר: מצב ברכיים בלבד (H3).
 
 ---
@@ -2830,19 +2843,19 @@ K2 יכול לפתוח את הפרופיל של K1 (ל-K2 אין picture-PIN כ�
 ## 15. קריטריוני קבלה
 | ID | קריטריון | בדיקה |
 |---|---|---|
-| `MATH-AC-19` | **התאמה ל-08:** כל מיומנות נגזרת ל-`Skill` של 08 לפי §6.0א, כולל anchor, ‏strand, ‏kind, ‏reviewMode ו-fluency. כל מזהי השאלון הזמניים של 08 ממופים. שמות עמוד השדרה הם מזהים קיימים. | Jest |
+| `MATH-AC-19` | **התאמה ל-08:** כל מיומנות נגזרת ל-`Skill` של 08 לפי §6.0א, כולל anchor, ‏strand, ‏kind, ‏reviewMode ו-fluency. כל מזהי השאלון (`questionId`) של 08 §3.3א ממופים ב-`questionnaire-map.json` ונפרסים דרך `ContentIndex.aliases`. שמות עמוד השדרה הם מזהים קיימים. | Jest |
 | `MATH-AC-01` | **שלמות הגרף:** כל מזהה בקדם-דרישות קיים. אין מעגלים. יש לפחות 150 מיומנויות (בפועל 233). | `tools/parse-skill-md.ts` + Jest |
 | `MATH-AC-02` | **שלמות הרשומות:** לכל מיומנות יש שם, רצועה, `IL`, ‏C&S או "—", ‏CPA, קדם-דרישות, תיאור, קוד טעות אחד לפחות (או "—" במיומנויות זיהוי טעות), מכניקה אחת לפחות, תבנית ו-3 דוגמאות לפחות. | Jest על ה-JSON |
-| `MATH-AC-03` | **הפניות תקפות:** כל `E.*`, `MECH.*` ו-`T.*` שמופיעים במיומנויות מוגדרים בקטלוגים. כל `R.*` מוגדר ב-`remediation.json`. | Jest |
+| `MATH-AC-03` | **הפניות תקפות:** כל `EM.*`, `MECH.*` ו-`T.*` שמופיעים במיומנויות מוגדרים בקטלוגים. כל `R.*` מוגדר ב-`remediation.json`. כל `MECH.*` ממופה ב-`packages/content/mechanics.aliases.json` ל-`MX-*[:variant]` שקיים בקטלוג 01 §7.1/§7.3 (§5.4). | Jest |
 | `MATH-AC-04` | **נכונות המחוללים:** לכל תבנית, 10,000 מופעים seeded עוברים את `oracle` ב-100% ואת כל הוולידטורים ב-§8.3. אותו seed מחזיר אותו מופע. | Property tests (fast-check) |
-| `MATH-AC-05` | **מסיחים:** בכל פריט רב-ברירה מספר האפשרויות מתאים לרצועה (2/3/4), אין כפילויות, ולכל מסיח שאינו `E.NEAR` יש `errorCode` שמשוחזר מ-`ERROR_FN`. `classifyError` מסווג נכון 100% מהמסיחים שנוצרו. | Jest |
+| `MATH-AC-05` | **מסיחים:** בכל פריט רב-ברירה מספר האפשרויות מתאים לרצועה (2/3/4), אין כפילויות, ולכל מסיח שאינו `EM.NEAR` יש `errorCode` שמשוחזר מ-`ERROR_FN`. `classifyError` מסווג נכון 100% מהמסיחים שנוצרו. | Jest |
 | `MATH-AC-06` | **אין שעון:** אין רכיב UI של טיימר, פס זמן או ספירה לאחור במסכי מתמטיקה של K2/K3 ובמסכי K1, חוץ מתוצאת "נצח/י את השיא" שמוצגת בסוף הסבב. | Lint rule + Playwright snapshot |
 | `MATH-AC-07` | **זמן תגובה:** אף פעם לא משפיע על θ אצל K2 ו-K3. אצל K1 הוא משפיע רק בסבב מהירות של `M.FACT.*` ב-`proficient` ומעלה (08 §4.5). בתרגול רגיל הוא מזין רק את תג השטף ואת ⚡. | Jest (מנוע + `math`) |
 | `MATH-AC-08` | **מגדר ומספרים:** לכל שם עצם ב-`nouns.json` ולכל n ב-{1–20, 21–29, 100–109, 200, 1,000–1,010, 2,005, 10,000}, הפונקציה `numPhrase` מפיקה צורה שזהה לטבלת זהב שנבדקה ידנית (200 מקרים), עם ניקוד. כל בעיה מילולית שנוצרה עוברת `genderAgreement`. | Jest + golden file |
 | `MATH-AC-09` | **קול:** אין בשום מקום מספר שמועבר כספרות ל-TTS. כל מספר מוקרא מגיע מ-`NUM_WORDS` או מקליפ מוכן. | Lint על pipeline |
 | `MATH-AC-10` | **תוכנית שנתית:** כל מיומנות `S`/`S-R` מופיעה ביחידה ב-§7.2 או בשרשור. כל מיומנות `G` מופיעה ביחידה ב-§7.3 או מסומנת "נפתחת מהשוליים". | סקריפט |
 | `MATH-AC-11` | **קלט כיתה:** בסימולציה, נושא `teaching` מקדים את מיומנויות הנושא (או את הקדם-דרישות החסרות שלהן, עד עומק 3) לפני כל מיומנות אחרת עם עדיפות שווה, בתוך 3 פרקים. מיומנות שלא מוכנה לא מוצגת ישירות; אחרי 3 פרקי סגירת פער היא מוצגת במצב מודרך (§7.5). אחרי `taught` אין חומר חדש בנושא, ועדיפות החזרה ×1.5 (08 §6.9). ילד/ה ב-L3 בנושא מקבל/ת פריטי עומק ולא חומר חדש. `order:'school'` מחליף את `monthAlign` של השלד. | Simulation test (3 ילדים וירטואליים) |
-| `MATH-AC-12` | **שליטה:** הבדיקות של 08 §12 עוברות עם הגרף המתמטי. בנוסף, `O.REP` חוסם `proficient` בלי 2 תשובות נקיות ב-P ו-2 ב-A, ו-`O.STEP` מניב `x = correctSteps/steps`. | Jest (מנוע + `math.extraGates`) |
+| `MATH-AC-12` | **שליטה:** הבדיקות של 08 §12 עוברות עם הגרף המתמטי. בנוסף, `O.REP` חוסם `proficient` בלי 2 תשובות נקיות ב-P ו-2 ב-A, ו-`O.STEP` מניב `x = correctSteps/steps` (תיקון עצמי: ×0.5). **ולידציית ייצוגים:** לכל מיומנות עם `O.REP` יש ≥2 תבניות `reviewed` עם `representation:'pictorial'` ו-≥2 עם `'abstract'` (08 §1.2), ואין `+O.REP` על מיומנות שמסלול ה-CPA שלה חסר A (§3.2). | Jest (מנוע + `extraGates` + חבילת תוכן) |
 | `MATH-AC-13` | **מינון המרוץ:** בשבועיים הראשונים של כל טווח חדש ב-K2 מתוזמנים 4 מרוצים לפחות, ובכל צעד יש נגיעה והקראה של המספר (לא תנועה אוטומטית). | Simulation + UI test |
 | `MATH-AC-14` | **עדכון התוכנית:** כשמסמך ציוני הדרך יהיה זמין (או צילום של תוכן הספר), טבלה §7.2 מתעדכנת ודרגות הביטחון `IL:*` עוברות ל-V. רישום ב-`docs/research-log/math.md`. | ביקורת ידנית |
 | `MATH-AC-15` | **ייצוג בעברית:** כל תרגיל מוצג LTR בתוך isolate. אין "קפיצות" bidi במסכי RTL, כולל `:` לחילוק ושברים. | Playwright RTL snapshots (iPhone + iPad, ‏m/f) |
@@ -2851,10 +2864,11 @@ K2 יכול לפתוח את הפרופיל של K1 (ל-K2 אין picture-PIN כ�
 | `MATH-AC-18` | **הדפסה:** כל `PRN.*` נוצר מהמחוללים, ותשובון מצורף לעמוד ההורה. אין פריט כתוב ביד. | Snapshot PDF |
 | `MATH-AC-20` | **מקרי קצה (§13.7):** לכל שורה בטבלה יש בדיקה: (א) K2 עם תאריך לידה שעובר 6 במהלך הסימולציה: `rtPolicy`, `targetP`, הרצועה והסולם לא משתנים; (ב) נושא `teaching` עם קדם-דרישה ב-L1: עד 3 פרקים של סגירת פער ואז הנושא במצב מודרך; (ג) `notation.mulSign='·'`: אין "×" בשום מסך של הילד, וקובץ הקול לא משתנה; (ד) `handedness='left'`: המקלדת משמאל ב-`columnPad`; (ה) חופשה ≥5 ימים: ההרכב משתנה למצב שמירה; (ו) הפסקה ≥21 יום: `reentry`, ≤6 חזרות בפרק, אין הורדת רמה. | Jest (מנוע) + Playwright |
 | `MATH-AC-21` | **בדיקת נייר (§13.6):** המחולל מפיק probe עם 10/6 פריטים מהמיומנויות הנכונות; הזנת רשת ✓/✗ לא משנה θ; `paperGap ≥ 0.15` פעמיים → `stagePreference='A'` ו-`needsReview`; ב-≥3 מיומנויות → המלצה להורה. | Jest |
-| `MATH-AC-22` | **מיפוי קודי טעויות (§4.2א):** כל קוד `MATH_*` של 12 ממופה ל-`E.*` קיים, ו-`classifyError` מחזיר את אותו קוד לשני השמות. אין קוד `E.*` שמוזכר במיומנות ולא בקטלוג (כולל `E.HALF_DOUBLE`). | Jest |
-| `MATH-AC-23` | **החלפת פרופיל (§14.4):** בסימולציה שבה "K2" עונה בפרופיל K1 (דיוק 0.3, RT ×0.4), הגלאי מופעל עד הפריט ה-11, הניקוד מושהה, ואחרי אישור ההורה כל תצפיות המפגש `w = 0` ועדיין קיימות ביומן. בסימולציה רגילה (דיוק 0.8) הגלאי **לא** מופעל ב-99% מהמפגשים. | Simulation test |
+| `MATH-AC-22` | **מיפוי קודי טעויות (§4.2א):** כל קוד `MATH_*` של 12 ממופה ל-`EM.*` קיים, ו-`classifyError` מחזיר את אותו קוד לשני השמות. אין קוד `EM.*` שמוזכר במיומנות ולא בקטלוג (כולל `EM.HALF_DOUBLE`). | Jest |
+| `MATH-AC-23` | **החלפת פרופיל (§14.4):** בסימולציה שבה "K2" עונה בפרופיל K1 (דיוק 0.3, RT ×0.4), `identity_suspect` (08 §10.5.3) מופעל עד הפריט ה-12 (ציון ≥4 מהפריט ה-10), הפריטים שאחריו `excluded:'identity_pending'` (לא מוצעת הפסקה), ואחרי `session_reattribute` כל תצפיות המפגש `excluded:'reattributed'` ועדיין קיימות ביומן; ✗ מחזיר את כולן לקיפול. בסימולציה רגילה (דיוק 0.8) הגלאי **לא** מופעל ב-99% מהמפגשים. | Simulation test |
 | `MATH-AC-24` | **רצועות 07:** לכל מיומנות `band ∈ {T,G,S}` ו-`subBand` לפי §1.2; `gradeTag` לפי §6.0א; אין מיומנות `G+` עם `gradeTag:'gan_chova'`. | Jest על ה-JSON |
 | `MATH-AC-25` | **טבלת מספרים אחת:** `numPhrase` של 03 ו-`numeral` של 12 מחזירים מחרוזת זהה לכל (n, מין, צורה) ב-`numerals.json`; הבדיקה רצה על כל 0–100, המאות והאלפים. | Jest משותף (`packages/content/hebrew`) |
+| `MATH-AC-26` | **מרחבי שמות ומזהים מוקפאים (§1.1):** כל קוד טעות בחבילת המתמטיקה תואם `^EM\.`; אין מחרוזת שמתחילה ב-`E.` בשדות `errorCodes`/`errorTags`/`distractors[].errorTag`; `classifyError` מחזיר `EM.*` גם לכינויי `MATH_*`. שבעת המזהים ש-06 מצטט (`M.NUM.COUNT.ROTE10`, `M.MEAS.MONEY.CHANGE`, `M.OPS.ADD.2D2D`, `M.MEAS.LEN.CM`, `M.MEAS.LEN.NONSTD`, `M.DATA.PICTO.G`, `M.DATA.BAR`) וכל מזהה ב-`questionnaire-map.json` קיימים ב-`skills.json` (או ב-`aliases`). | Jest + lint |
 
 ---
 
@@ -2887,17 +2901,21 @@ K2 יכול לפתוח את הפרופיל של K1 (ל-K2 אין picture-PIN כ�
    - **הסיבה:** B4 מכסה רק קול, וגם צנרת ה-LLM לבעיות מילוליות צריכה את הכלל.
 
 ### 17.2 בקשות התאמה ל-08 (לא ל-00; מרוכזות כאן לתיאום)
-1. **`Skill.extraGates?: ('O.REP')[]`:** תנאי נוסף לכניסה ל-`proficient`, לפי §3.2. **ראיות:** ‏EEF 2020 (קישור בין ייצוג למושג); ‏`learning_science` §7-9 (concreteness fading).
-2. **ניקוד שלבים (`O.STEP`):** ‏`x = correctSteps/steps` (‏w = 1) בפריטי פרוצדורה של K1. **הסיבה:** בחיסור במאונך עם 3 פריטות, תשובה שגויה אחת לא מעידה על אפס ידע. **סיכון:** אין. 08 כבר מקבל x חלקי.
-3. **צירים חדשים:** ‏`math.facts`, ‏`math.fractions`, ‏`math.geometry`, ‏`math.measurement`, ‏`math.patterns_data` (§6.0א). הם נכנסים למסע המיקום E3 של K1 כ"צירי המשך", וב-K2 ה-prior שלהם נגזר מ-`pos`.
-4. **שני כללי דגל:** ‏`MATH_K1_FACT_PACE` ו-`MATH_K1_READ_VS_LISTEN` (§14.3).
-5. **מזהים:** המזהים הזמניים של 08 בשאלון ההורה (`math.*_*`) מוחלפים במזהי `M.*` לפי טבלת המיפוי ב-§6.0א.
-6. **`possible_profile_swap`** (§14.4): גלאי בתוך `score()`/המרכיב, עם סטטוס `disengaged_block` קיים ואישור הורה. משותף לכל המקצועות.
-7. **`ChildProfile.handedness`** (§1.5) ו-`Plan.breakMode` (§7.1): שני שדות חדשים.
-8. **`Skill.band`/`subBand`** (§6.0א): שדות של 07 שחסרים ב-`Skill` של 08.
+> **סטטוס אחרי סבב F5 / סבב 2 (2026-11-02): כל שמונה הבקשות התקבלו ומומשו ב-08.** המסמך הזה מפנה ל-08 ולא מגדיר מחדש; במקרה של פער, 08 גובר (00 J1).
+
+| # | בקשה | היכן ב-08 | הערה |
+|---|---|---|---|
+| 1 | `Skill.extraGates` עם `O.REP` (שער ייצוגים ל-`proficient`) | §1.1 `ExtraGateId`, §1.2 (ולידציית ≥2 pictorial + ≥2 abstract), §5.1, §6.5 (בורר פריטים מעדיף את הייצוג החסר) | כאן §3.2: `O.REP` רק במסלול CPA עם P ו-A |
+| 2 | ניקוד שלבים `O.STEP`: `x = correctSteps/steps`, w = 1 | §4.1 (כולל תיקון עצמי ×0.5, BKT צל), §1.4 `Attempt.steps` | `steps.firstErrorTag` → `chosenErrorTag` (`EM.*`) |
+| 3 | חמישה צירים חדשים | §1.1 (רשימה קנונית), §3.2 (`math.facts` ב-E1, `math.fractions` ב-E3), §3.7 (`continuation` + מיקום עצל) | כאן §6.0א |
+| 4 | `MATH_K1_FACT_PACE`, `MATH_K1_READ_VS_LISTEN` | §9.2 (`maxStatus:'watch'` עד אישור ההורה; READ_VS_LISTEN מזין את `HEB_K1_LISTEN_READ_GAP` בלבד) | כאן §14.3 |
+| 5 | מזהי השאלון → `M.*` | §3.3א (`questionnaire-map.json`, פריסה דרך `ContentIndex.aliases`, 0.7 × weight) | כאן §6.0א; המונח "מזהים זמניים" בוטל: אלה `questionId` קבועים |
+| 6 | `possible_profile_swap` | §10.5.3 (`identity_suspect`, `excluded:'identity_pending'` מהפריט ה-10, `session_reattribute`, AL-15) | כאן §14.4 מיושר לנוסח 08 |
+| 7 | `ChildProfile.handedness`, `Plan.breakMode` | §1.7 (`handedness`, UI בלבד, מחוץ ל-`EngineChildView`), §1.10 + §6.2א (`breakMode: 'auto'\|'on'\|'off'`, הרכב K1 15/25/50/0/10, K2 20/30/30/0/20) | כאן §1.5, §7.1 |
+| 8 | `Skill.band`/`subBand` | §1.1 `Band`, `bandOf` ב-`packages/shared/bands.ts`, §1.2 `band` חובה + `subBand?` | כאן §1.2, §6.0א |
 
 ### 17.3 בקשות ל-12 (צינורות)
-1. להחליף את קודי `MATH_*` ב-`E.*` של §4.2, או להחזיק את טבלת הכינויים של §4.2א ב-`errors.json`.
+1. **(בוצע ב-12 §12.2, F7):** 12 מחזיק את טבלת הכינויים של §4.2א ב-`packages/content/errors/aliases.json`, ו-`classifyError` מחזיר תמיד את הקוד הקנוני. **סבב 2:** היעד הוא `EM.*` (לא `E.*`); 12 מעדכן את עמודת היעד בטבלת §12.2 שלו.
 2. `numerals.json` הוא מקור האמת המשותף; `numPhrase` עוטף את `numeral()` (§10.4). לאמת את צורות הנסמך (`verified:true`) מול טבלת הזהב של `MATH-AC-08` ולהוסיף את העשרות/מאות/אלפים ואת כלל ו' החיבור (§10.4 כלל 7).
 3. שינוי `notation.*` מצילום דורש אישור הורה במסך הסקירה (§1.5).
 
@@ -2909,7 +2927,7 @@ K2 יכול לפתוח את הפרופיל של K1 (ל-K2 אין picture-PIN כ�
 - **§1.2 רצועות גיל:** הובהר שהמזהים כאן הם תת-רצועות של `T`/`G`/`S` של 07 (עמודת "רצועת 07", שדות `band`/`subBand` ב-§6.0א). נוספו כללים מחייבים: הרצועה נקבעת מ-`profile.grade` ולא מיום הולדת (K2 שנהיה בן 6: שום דבר לא משתנה, 08 §4.4); ילד הרחק לפני הכיתה (אין תקרת כיתה, תקרת יחידה אחת בלי opt-in); ילד הרחק מאחורי הכיתה (תקרת 60/40 לפערים, שורה להורה אחרי 3 שבועות).
 - **§1.5 סימון:** `notation.*` הורחב (אישור הורה לשינוי מצילום, קול קבוע, שני סימנים מתקבלים בקלט, `carryRow`/`borrowMark`, שינוי באמצע שנה ללא חישוב מחדש). נוסף `profile.handedness` (מקלדת משמאל לשמאליים). נוסף כלל "אותו מסך, שני אחים".
 - **§3.4 סולם רמזים:** הושלם מול 08 §6.7: שורת `consecAny = 3` מתחת לגיל 6, עמודת stretch ל-K1, "קשה לי" עם w = 0.5 ו"אח", ציון התסכול.
-- **§4.2/§4.2א:** נוסף `E.HALF_DOUBLE` וטבלת מיפוי מלאה בין `E.*` לקודי `MATH_*` של 12 (12 משתמש בקטלוג אחר; בקשה ב-§17.3).
+- **§4.2/§4.2א:** נוסף `EM.HALF_DOUBLE` וטבלת מיפוי מלאה בין `EM.*` לקודי `MATH_*` של 12 (12 משתמש בקטלוג אחר; בקשה ב-§17.3).
 - **§6.0א:** `gradeTag` תוקן (`T+` ← `gan_trom`, `G+` ← `g1`), נוספו `band`/`subBand`; כלל פירוש לשאלון; מיפוי צירי מסעות המיקום של 08 §3.2 ונגזרת ה-prior לצירים החדשים.
 - **§7.1:** חופשות, הפסקות ארוכות, שבת וחג, ושבוע חג הוגדרו במספרים (מצב שמירה 15/25/50/10, `plan.breakMode`, `reentry` של 08 §10.4, ≤6 חזרות בפרק אחרי הפסקה).
 - **§7.2 שלד:** "מספרים עד רבבה" הוזז לאוקטובר–נובמבר (פותח את השנה גם בתוכנית הישנה וגם בפריסת תשפ"ז של "השבחה" לפי תקציר חיפוש; ⟂VERIFY). פברואר הפך ל"מאונך עד רבבה ובעיות". השרשורים והעיגון לא השתנו.
@@ -2923,3 +2941,19 @@ K2 יכול לפתוח את הפרופיל של K1 (ל-K2 אין picture-PIN כ�
 - **§17.2/§17.3:** בקשות חדשות ל-08 (`possible_profile_swap`, `handedness`, `breakMode`, `band`) ול-12 (קודי טעויות, `numerals.json`, אישור `notation`).
 - **סבב F1 של 00 (A6/C11/C12/C13/C15/OPD):** §12.3 קיבל טבלת תגי בטיחות C13 (כולל כלל "ילד מתחת ל-3 בבית" ל-`HOME.10`: דופלו בלבד, בלי מגנטים); §16 קיבל מזהי `OPD-nn`; §17.1 סומן "התקבל" (C11/C12/B4).
 - **לא שונה:** 233 המיומנויות, התבניות והמחוללים (§6, §8), תוכנית השטף (§9) והתגמול (§13.4). נבדקו הניקוד והתאמת המין בכל הדוגמאות של §6, §10 ו-§11: לא נמצאו שגיאות מלבד ו' החיבור (לעיל).
+
+### Round 2 changelog
+*מבקר R3 · 2026-11-02 · טבלת הטיפול בכל הסוגיות: `docs/review/round2-R3.md`.*
+
+- **מרחב השמות של קודי הטעות (החלטה, §1.1, §4.2א, §17.3 #1):** כל `E.*` → **`EM.*`** בכל המסמך (566 מופעים, כולל יומן השינויים של סבב 1), כי `E.*` הוא מרחב מזהי המיומנויות של 05, ו-`Skill.errorTags`/`Attempt.chosenErrorTag` של 08 חולקים מרחב מחרוזות עם `SkillId` (F5 → 04 #2 / 05 #3). עברית = `EH.*` (04 §2.1), אנגלית מומלץ `EE.*` (05 משתמש היום ב-`ERR.*`). 12 מחזיק כינויים ב-`packages/content/errors/aliases.json`. לינט חדש `MATH-AC-26`.
+- **§3.2, §6.0א, `MATH-AC-12`:** `O.REP` רק במסלול CPA עם P ו-A (ולידציית 08 §1.2). הוסר מ-`M.NUM.SUBIT.C5`, `M.NUM.SUBIT.C10`, `M.OPS.BOND.5`, `M.GEO.SHAPE.ID2D` (P בלבד / C→P); `M.MEAS.PERIM_AREA` קיבל שלב A (`T.PERIM.AREA{grid:false}`) ושומר על השער (F5 → 03 #2).
+- **§5.4:** כל ההצעות ל-01 התקבלו: `MX-M13…M20` ו-variants `MX-M03:lasso`, `MX-M04:cart/hut`, `MX-M07:table-map`, `MX-M12:board-game`; קובץ `packages/content/mechanics.aliases.json`; שלב בנייה לכל מכניקה לפי 01 §7.1 (F2 #1). **§5.1:** שקלי המכולת מחוץ לכלכלה (02 §2.7, AC-ECO-5, 01 AC-MX-7; F2 #2).
+- **§5.3, §13.7:** אזורי מגע ו-`assisted` מצוטטים מ-01 §12.2 (מחייב) במקום להגדיר מחדש; `Attempt.context.assisted` (08 §1.4), `itemRecovered` (02) (F2 #9c).
+- **§6.0א:** "מזהים זמניים" → `questionId` של 08 §3.3א עם מספרי השאלות, `questionnaire-map.json` ו-`ContentIndex.aliases` (0.7 × weight); שורת `extraGates`; מעמד הצירים החדשים לפי 08 §3.2/§3.7 (facts ב-E1, fractions ב-E3, השאר `continuation` + מיקום עצל, `StrandMeta.priorFrom` במקום "ממוצע מקצוע") (F5 → 03 #1, #3).
+- **§7.1:** הרכב מצב חופשה = 08 §6.2א: K1 15/25/50/0/10, **K2 20/30/30/0/20** (הנוסח הקודם לא הסתכם ל-100); `Plan.breakMode ∈ {'auto','on','off'}` (F5 → F3 #7).
+- **§14.3:** שני הכללים נרשמו ב-08 §9.2 (`maxStatus:'watch'`); `MATH_K1_READ_VS_LISTEN` הוא סמן שמזין את `HEB_K1_LISTEN_READ_GAP` בלבד (F5 → 03 #4).
+- **§14.4, §13.7, `MATH-AC-23`:** יושר לגלאי `identity_suspect` של 08 §10.5.3 (ציון מהפריט ה-10, `excluded:'identity_pending'` ולא `disengaged_block`, `session_reattribute`, 48 שעות → `unknown`, הפיך 30 יום) (F5 → F3 #5).
+- **§1.1, `MATH-AC-26`:** שבעת המזהים ש-06 מצטט ב-`crossPrereqs` הוקפאו (F4 #40).
+- **§17.2:** טבלת סטטוס: כל 8 הבקשות התקבלו, עם הפניה לסעיף ב-08.
+- **כבר פתור (ללא שינוי):** `OPD-nn` ב-§16 (F1 #21), תגי בטיחות C13 ב-§12.3 (F1 #30), `band`/`subBand` ב-§6.0א (F5 → 03 #3).
+- **לא שונה:** הגרף (233 מיומנויות; רק 5 שורות מטא), התבניות (§8), תוכנית השטף (§9), התגמול (§13.4), המספרים בעברית (§10.4).

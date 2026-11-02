@@ -71,10 +71,13 @@
 ```ts
 type LearnEvent =
   | { t: 'item_answered'; itemId; skillId; firstTry: boolean; correct: boolean; hintUsed: boolean;
-      workedExample: boolean; isReview: boolean; skillState: SkillState; rtMs: number; stretch: boolean;
-      embodied: boolean /* G6: movement item */ }
+      workedExample: boolean; isReview: boolean; level: LevelId /* 08, via packages/shared/levels.ts */; rtMs: number | null;
+      stretch: boolean; embodied: boolean /* G6: movement item */;
+      provenance?: 'placement' | 'benchmark' | 'paper'; levelMode?: 'normal'|'placement'|'benchmark'|'review'|'boss'|'event' /* 01 §6.6 */;
+      assisted?: 'parent' | 'sibling' | 'none' }
   | { t: 'episode_completed'; episodeId; coop: boolean; participants: ChildId[] }
-  | { t: 'skill_state_changed'; skillId; from: SkillState; to: SkillState }
+  | { t: 'skill_level_changed'; skillId; from: LevelId; to: LevelId; reason: string }   // היה `skill_state_changed`; נושא את רמות 08 (C15), לא מצבי 02
+  | { t: 'skill_level_reverted'; skillId; from: LevelId; to: LevelId; sessionId }       // 08 §10.5.3 אחרי `session_reattribute`: לא לוקחים כלום בחזרה (C5)
   | { t: 'delayed_check_passed'; skillId; gapDays: number }
   | { t: 'friend_rescued'; friendId; levelId; regionId }
   | { t: 'puzzle_piece_found'; pieceId; levelId; regionId }
@@ -106,6 +109,19 @@ applyEvent(state: EconomyState, ev: LearnEvent, cfg: EconomyConfig, cal: Calenda
 **מצב הכלכלה הוא fold על יומן האירועים.** שום מכשיר לא שומר "יתרה" כאמת. כך סנכרון בין מכשירים (E6) לא מכפיל
 תשלום: אירוע עם `id` שכבר עובד לא משלם שוב.
 
+- **שמות על החוט (11 §5.8):** השמות כאן הם שמות המנוע (snake_case). על החוט השמות מנוקדים (`item.answered`, `world.rescue`,
+  `skill.level_changed`, `skill.level_reverted`…); המיפוי היחיד הוא `toEngineEvent()` ב-`packages/shared/events.ts`. 02 לא
+  מגדיר שמות חוט.
+- **מה נשמר ומה נגזר (11 §5.8, F6):** 11 שומר **רק פעולות משתמש ואנומליות** (`econ.spend`, `chest.opened`, `inventory.equip`,
+  `wishlist.set`, `econ.overdraft`). **מענקים, תכולת תיבות ו-`chest_earned` אינם אירועים נשמרים**: הם פלט נגזר של ה-fold מעל
+  אירועי הלמידה. `chestId = hash(sourceEventId)` (D2): אותו אירוע-מקור נותן אותה תיבה בכל מכשיר, ולכן `applyEvent` אידמפוטנטי
+  לפי `ev.id` של אירוע-המקור, לא לפי תיבה. `chest_opened{chestId}` הוא אירוע התיבה היחיד שנכתב (§6.3 כלל 7).
+- **מצב השלב (`levelMode`, 01 §6.6; F9 GAP-13):** פריט שמגיע משלב `placement`/`benchmark` (או עם `provenance`) מקבל
+  `grants = []` (§2.7 `placementProbe`/`paperProbe`); `friend_rescued` מתוך שלב כזה **כן** נספר לאוסף (00 G2), ולא מפעיל שום
+  תיבה.
+- **`skill_level_reverted`:** ה-fold **מתעלם ממנו לצורכי ארנק**: אף מטבע, יהלום, תג או XP לא נלקחים (`badgeNeverDowngrades`, C5).
+  הוא משפיע רק על `paysOncePerSkill` — טריגר ששולם נשאר "שולם" (§4.1).
+
 ### 2.2 K1: ערכי צבירה לכל אירוע
 
 כל ערכי ה-item נצברים במהלך הפרק ומשולמים **פעם אחת** בקבלה של סוף הפרק.
@@ -118,7 +134,7 @@ applyEvent(state: EconomyState, ev: LearnEvent, cfg: EconomyConfig, cal: Calenda
 | חזרה מרווחת שהגיע זמנה ונענתה נכון (`reviewCorrect`) | 3 | 12 | שליפה מרווחת היא הפעולה הכי שווה |
 | חזרה מרווחת שנוסתה ולא הצליחה (`reviewAttempted`) | 1 | 4 | כדי שלא יהיה תמריץ להימנע מחזרות |
 | פריט במיומנות שכבר נשלטה ולא הגיע זמן החזרה שלה (`masteredRepeat`) | 1 | 2 | רק 5 הראשונים לכל מיומנות ביום; אחר כך 0 |
-| ניסיון באזור האתגר (Stretch, opt-in) (`stretchAttempt`) | 3 | 12 | **משולם גם אם התשובה שגויה.** מתגמל בחירה באתגר (Brummelman). עד 10 ביום |
+| ניסיון באזור האתגר (Stretch, opt-in) (`stretchAttempt`) | 3 | 12 | **משולם גם אם התשובה שגויה.** מתגמל בחירה באתגר (Brummelman). עד 10 ביום. **K1 / רצועה S בלבד** (`enabledFor: ["K1"]`, F4 #9): ב-07 `SD.STRETCH.1` רצועה G מקבלת תג בלבד |
 | סיום פרק כולל טקס הסיום (`episodeComplete`) | 5 | 50 | |
 | עלייה בשלב מיומנות (`rungUp`) | — | 60 | ל-proficient: תיבת עץ (§6) |
 | מיומנות נשלטה (D9) (`skillMastered`) | — | 200 | תיבת כסף + יהלום |
@@ -127,7 +143,9 @@ applyEvent(state: EconomyState, ev: LearnEvent, cfg: EconomyConfig, cal: Calenda
 | חבר חולץ (`rescue`) | **0** | 5 | החבר עצמו הוא התגמול (§5); ה-XP של פעולת הלמידה נספר בנפרד |
 | חלק פסיפס (`puzzlePiece`) | **0** | 5 | |
 | שלב סודי, סיום ראשון | — | 80 | תיבת עץ עם פריט ייחודי |
-| משימה בעולם האמיתי (הורה מאשר) | — | 60 | תיבת עץ |
+| משימה בעולם האמיתי (הורה מאשר) (`offlineMission`) | — | 60 | תיבת עץ. **רק** למשימה עם `mission.economy === 'offlineMission'` (F4 #10); משימות חסד/אומץ של 07 מגיעות כ-`kindness_confirmed` ומשלמות 0 (D1a). **תיבה אחת ביום לכל היותר** (`offlineMissionChestsPerDayMax: 1`, F9 GAP-37); XP עד 3 משימות ביום, אחר כך 0 (המשימה עדיין מסומנת "בוצע") |
+| פרויקט מייקר הושלם (`makerProjectComplete`, 07 `SD.PASS.2` / `SD.MAKER`, הורה מאשר) | — | 60 | כמו `offlineMission` (אותה תיבת עץ, אותה תקרה יומית) + **פריט "מסגרת תערוכה"** ייחודי לפרויקט בחדר האוצרות. לא מוכרז מראש |
+| סולם אומץ הושלם (`braveryLadderComplete`, 07 `SE.BRAVE`, הורה מאשר) | — | 0 | **יהלום אחד**, בתיבת כסף בלי מטבעות ובלי פריט, **שלא מוכרז מראש לעולם** (00 D1a). ל-K2: תג + הגן המשפחתי בלבד, בלי תיבה. השלבים בדרך משלמים 0 (§2.7) |
 | בוס שבועי (שיתופי) | — | 100 | תיבת כסף + יהלום |
 | יעד משפחתי שבועי | — | 150 | תיבת זהב + 2 יהלומים |
 | מפגש חונכת (K1 עוזרת ל-K2), אחד ביום | 15 | 60 | משלם על **ההתקדמות שלה** (gap_audit #12) |
@@ -158,7 +176,8 @@ coinsK2(episode) = episodeComplete(2) + min(chunksPerEpisodeMax(2), floor(correc
   - מדבקה "חופשית" אחת לבחירה מתוך 3, להדבקה בסצנת המדבקות (אוטונומיה).
 - **הפתעות (לא מוכרזות מראש):** מדבקה ראשונה בכל סוג פעילות שנוסה לראשונה, ו"מעטפת הפתעה" ביעד המשפחתי
   ובאירועי חג.
-- **כפתור הורה "תן מדבקה"**, בלי הגבלה. כך ההורה מתגמל משחק משותף באופן חברתי.
+- **כפתור הורה "תן מדבקה"**, בלי הגבלה, **ל-K3 בלבד** (00 D5; F9 GAP-28). כך ההורה מתגמל משחק משותף באופן חברתי. ל-K2 ול-K1 אין
+  כפתור כזה: ההורה משתמש ב"מכתב הערכה" (10 W-RWD-04), שאינו מטבע ואינו מדבקה.
 - מדבקה שנפתחה ניתנת להדבקה **מספר בלתי מוגבל של פעמים**. אין מלאי ואין מחסור.
 - **אלבום בהשקה:** 12 עמודים של 6 מדבקות (01 §5). הנושאים: חיות, משפחה, צבעים, אוכל, כלי תחבורה, צורות, חגים ועוד.
   - **בנוסף:** עמוד עונתי בכל עונה, ו-2 עמודים חדשים בכל חודש (`contentDropPagesPerMonth`). בלי זה האלבום נגמר
@@ -217,7 +236,14 @@ coinsK2(episode) = episodeComplete(2) + min(chunksPerEpisodeMax(2), floor(correc
 - **הפקדת "אסימון מוח"** (07, 01 MX-T06), **מצבי כרטיסי כלים** (07 `TOOLBELT`), **הקשת מזג האוויר** (06), **חשיפה ל"בקבוקים
   מהים"** (05/01, פרט ל-Wordling שנרכש כפריט למידה): כולם 0 מטבעות ו-0 XP. האסימון הוא שער לרמז, הכלי הוא תג,
   מזג האוויר הוא תצפית משפחתית.
-- **"+10 דקות" מההורה** (01 DD-09): מאריך זמן, לא מוסיף פרק, לא מוסיף תגמול.
+- **"+10 דקות" מההורה** (01 DD-09, אירוע `cap_bonus_granted`): מאריך זמן, לא מוסיף פרק, לא מוסיף תגמול.
+- **אירועי 07 לפי 00-D1a (F4 #7):** `checkin_done` (צ'ק-אין רגשי), `kindness_confirmed` (מעשה חסד/צוות שההורה אישר; הולך לגן
+  המשפחתי בלבד), `bravery_step_done` (שלב בסולם אומץ; רק סוף הסולם נותן יהלום, §2.2), `journal_entry` (רפלקציה), `wonder_asked`
+  ("אני תוהה…", 07 ביטל "מטבע לשאלה"). כולם 0 מטבעות, 0 יהלומים, 0 XP; תגי שם-מיומנות מותרים.
+- **שלבי מיפוי ובנצ'מרק לפי `levelMode`** (01 §6.6, F9 GAP-13): כל פריט ו-XP מתוך שלב `placement`/`benchmark` = 0; החילוצים בו
+  נספרים לאוסף בלבד.
+- **"לב סבלנות"** (01 §12.5 `turn_yielded`): חפץ בעולם, לא מענק.
+- **מצב "המחנה ישן" של K1** (01 §15.1 `camp_asleep`) ו**מצב רכב** (01, P2): אין אירועי למידה או כלכלה בכלל.
 
 ### 2.8 קבלת סוף הפרק
 
@@ -354,7 +380,12 @@ locked → ready → introduced → practicing → proficient → mastered → r
 | `mastered` | `master` | 08 §5.1 + בדיקה מושהית (D9) |
 | `retained` | `master` + דגל `retained` | `master` **וגם** שלב 30 הימים בסולם החזרות (C11: 1/3/7/14/30/60) עבר. 08 פולט `review_rung_passed{skillId, rungDays:30}`; הכלכלה מסמנת `retained` ומשלמת פעם אחת |
 
-- `skill_state_changed` (§2.1) נגזר ממעברי הרמה של 08 דרך המיפוי הזה. **אין שני סולמות בשום מסך** (C15).
+- `skill_level_changed{from, to}` (§2.1) נושא את **רמות 08** (`LevelId`); הכלכלה **לא מחשבת מצבים בעצמה** אלא מייבאת
+  `toEconomyState(level, { firstSeenAt, rung30Passed })` מ-`packages/shared/levels.ts` (08 §1.1א) וגוזרת ממנו את הטריגר
+  (`rungUp` / `skillMastered` / `skillRetained`). **אין שני סולמות בשום מסך** (C15).
+- `skill_level_reverted` (08 §10.5.3, אחרי "זה לא היה {name}"): הרמה יורדת במודל של 08, **והכלכלה לא לוקחת דבר בחזרה** —
+  לא מטבעות, לא יהלומים, לא תג, לא XP (C5, `badgeNeverDowngrades`). הטריגר נשאר "שולם" (`paysOncePerSkill`), ולכן עלייה
+  חוזרת אחר כך לא משלמת פעם שנייה. נבדק ב-§14.1.
 - ירידת רמה ב-08 (למשל `master → proficient` אחרי כישלון בבדיקה מושהית) **לא** מורידה תג, לא לוקחת יהלום ולא מחזירה
   XP (`badgeNeverDowngrades`). היא רק מאפשרת ל-`rungUp`/`skillMastered` להשתלם שוב? **לא.** כל טריגר כלכלי משתלם **פעם
   אחת לכל מיומנות לכל חיים** (`paysOncePerSkill`), ולכן עלייה חוזרת אחרי ירידה לא משלמת שוב (בדיקה ב-§14.1).
@@ -379,14 +410,17 @@ locked → ready → introduced → practicing → proficient → mastered → r
   - עולם ומדע
   - חשיבה
   - לב וחברים (SEL)
-- **כל מיומנות היא עלה או פרי, לפי המצב:**
-  - locked: "באתר בנייה" עם דמות ידידותית (לא מנעול).
-  - ready: ניצן סגור.
-  - introduced: נבט.
-  - practicing: שתיל.
-  - proficient: פרח עם מסגרת ארד.
-  - mastered: פרי כסוף.
-  - retained: פרי זהב.
+- **כל מיומנות היא צמח לפי רמת 08 (00-C15, תצוגת ילד אחת בלבד: זרע / נבט / שתיל / עץ / עץ פורח), והתג הוא שכבה מעל
+  (F5 #1):** האייקונים מיובאים מ-`packages/shared/levels.ts` (`LEVEL_CHILD_HE`, 08 §1.1א); 02 לא מגדיר סולם צמחים משלו.
+  - `locked` (קדם-מצב): שלט "באתר בנייה" עם דמות ידידותית (לא מנעול), בלי צמח.
+  - `ready` (קדם-מצב): ערוגה ריקה שזוהרת קלות ("אפשר לשתול"), בלי צמח.
+  - `introduced` = רמה `new`: **זרע**.
+  - `practicing` = `beginner`: **נבט**; = `advancing`: **שתיל** (לפי הרמה שמגיעה מ-08, לא לפי 02).
+  - `proficient` = `proficient`: **עץ** + תג **ארד** כשכבה.
+  - `mastered` = `master`: **עץ פורח** + תג **כסף** כשכבה.
+  - `retained` = `master` + דגל `retained`: **עץ פורח** + תג **זהב** כשכבה (הצמח לא משתנה; רק התג).
+  - ירידת רמה ב-08 מורידה את הצמח (למשל עץ פורח → עץ), **אבל התג נשאר** (`badgeNeverDowngrades`): עץ עם תג כסף הוא מצב
+    תקין ומוצג כ"מוכן לפרוח שוב".
 - **חזרה שהגיע זמנה:** הצמח זוהר ("מוכן לפרוח"). **אין קמילה, אין נבילה ואין ירידה בצבע.**
 - **הקשה על צמח:** פותחת את התג. אם היא בשלב ready או חזרה, היא מציעה "לשחק עכשיו" כבחירה חופשית ולא כלחץ.
 - **גרף המיומנויות עצמו** (צמתים, דרישות קדם) מוגדר במפרט המנוע. המסמך הזה מגדיר רק את המיפוי החזותי ואת
@@ -548,6 +582,13 @@ locked → ready → introduced → practicing → proficient → mastered → r
 | מסלול עונה: דרגות 5, 10, 20 / 15, 25 | כסף / זהב | 20 / 40 | — | פריט עונתי / בחירה 1 מתוך 3 |
 | דרגה 30 במסלול העונה · אירוע חג הושלם | אגדי | 150 | 3 | פריט אגדי עונתי או של החג |
 | רמה 25, רמה 50 | אגדי | 150 | — | פריט אגדי |
+| סולם אומץ הושלם (`braveryLadderComplete`, 07; לא מוכרז) | כסף | **0** | **1** | — (התיבה מכילה רק את היהלום; 00 D1a) |
+| פרויקט מייקר הושלם (`makerProjectComplete`, 07 `SD.PASS.2`) | עץ | 15 | — | מסגרת תערוכה של הפרויקט (ייחודי) |
+
+**תיבות משימה (`offlineMission`, `makerProjectComplete`), F9 GAP-37:** לכל היותר **תיבה אחת ביום לכל ילד** משתי הטריגרים
+יחד (`offlineMissionChestsPerDayMax: 1`); אישור שני באותו יום נותן XP בלבד (עד 3 ביום, §2.2). **חשיפה לילד:** האישור הוא
+אירוע-הורה שקורה מחוץ לפרק, ולכן התיבה מוצגת **בפרק הבא**: מכתב בתיבת הדואר ("אבא אישר: ספרתם את המדרגות!") בשלב
+Arrival + התיבה על מדף האוצרות בשלב המחנה. לא מופיעה שום הודעה בזמן אמת לילד.
 
 **K2:**
 
@@ -556,12 +597,16 @@ locked → ready → introduced → practicing → proficient → mastered → r
 | proficient · משימה · בוס · 50% אזור · פסיפס · סט מין · שלב סודי · רמה ×5 · דרגות עונה 5/15 | עץ | 3 מטבעות + פריט או כרטיס אלבום הבא |
 | נשלט · אזור 100% · בוס אזור · יעד משפחתי · רמה ×10 · דרגה 10 בעונה | זהב | 8 מטבעות + בחירה 1 מתוך 2 + פינוק לחיה (בשליטה) |
 | דרגה 20 בעונה · אירוע חג | זהב | 10 מטבעות + פריט אגדי עונתי או של החג |
+| פרויקט מייקר הושלם (`makerProjectComplete`) | עץ | 3 מטבעות + מסגרת תערוכה (ייחודי); באותה תקרה יומית של תיבות משימה |
+| סולם אומץ הושלם (`braveryLadderComplete`) | — | **אין תיבה** ל-K2: תג שם-מיומנות + פריט בגן המשפחתי (00 D1a) |
 
 **K3:** "מעטפת הפתעה" עם 2–3 מדבקות כשהמשפחה עומדת ביעד ובאירועי חג.
 
 ### 6.3 כללי תכולה קבועה (D2)
 
-1. **התכולה נקבעת בזמן הזכייה** ונשמרת באירוע `chest_earned` (פריטים, מטבעות, יהלומים).
+1. **התכולה נקבעת בזמן הזכייה** כפלט נגזר של ה-fold: `chest_earned{chestId, trigger, contents}` עם `chestId = hash(sourceEventId)`
+   (11 §5.8, F6). זה **לא** אירוע שנשמר ביומן: כל מכשיר שמקפל את אותו אירוע-מקור מקבל את אותה תיבה עם אותה תכולה (פריטים,
+   מטבעות, יהלומים), כי המסלולים (`track:*`) דטרמיניסטיים והמצב הוא fold.
 2. **"מסלולי תיבה"** (`track:wood`, `track:silver`, …) הם רשימות פריטים מסודרות ומאוצרות. כל תיבה נותנת את
    הפריט הבא ברשימה שהילד עוד לא מחזיק. **המסלול גלוי** בחדר האוצרות: "התיבה הבאה מכילה…". בתיבת זהב הילד בוחר 1
    מתוך 3 פריטים שמוצגים מראש (אוטונומיה).
@@ -572,9 +617,10 @@ locked → ready → introduced → practicing → proficient → mastered → r
    אבא). התג על המדף מראה מספר שקט, בלי נקודה אדומה מהבהבת.
 6. **התנגשות סנכרון** (שני מכשירים אופליין זכו באותו פריט במסלול): בזמן המיזוג התיבה המאוחרת נשארת עם הפריט.
    בחשיפה מוצג "כבר יש לך את זה, קיבלת במקומו X מטבעות" (מחיר band A). **פריט שנכנס לאוסף לא נלקח לעולם.**
-7. **חשיפה אידמפוטנטית** (01 §16.2, §21 UC-14): `chest_earned{id, contents}` נכתב ברגע הזכייה; `chest_opened{chestId}`
-   נכתב **בתחילת פעימה 6** (חשיפה). ה-fold מעניק את התכולה **רק** על `chest_opened`. אפליקציה שנהרגה לפני פעימה 6 →
-   התיבה נשארת על המדף סגורה; אחרי → בהפעלה הבאה מנוגנת רק פעימה 8 (איסוף, ≤0.7 שנ'). אין נתיב שמעניק פעמיים.
+7. **חשיפה אידמפוטנטית** (01 §16.2, §21 UC-14): התיבה קיימת ברגע שאירוע-המקור ביומן (כלל 1, נגזר); `chest_opened{chestId}`
+   הוא **אירוע התיבה היחיד שנכתב**, **בתחילת פעימה 6** (חשיפה). ה-fold מעניק את התכולה **רק** על `chest_opened`. אפליקציה
+   שנהרגה לפני פעימה 6 → התיבה נשארת על המדף סגורה; אחרי → בהפעלה הבאה מנוגנת רק פעימה 8 (איסוף, ≤0.7 שנ'). אין נתיב
+   שמעניק פעמיים, גם כששני מכשירים מקפלים את אותו אירוע-מקור (אותו `chestId`).
 8. **פתיחה אוטומטית** (נגישות, 01 DD-39): בהגדרת "פתיחה אוטומטית" או ב-Reduce Motion, פעימות 3–5 מתכווצות לזוהר
    אחד של 300ms ו-`chest_opened` נכתב אוטומטית אחרי 4 שניות על המדף הפעיל. הדרגה והתכולה לא משתנות.
 
@@ -660,6 +706,13 @@ locked → ready → introduced → practicing → proficient → mastered → r
 - **פריטי חג** מוצגים בחלון הראווה בזמן החג, ונשארים בקטלוג אחריו.
 - **רמות פותחות פריטים.** צלליות של פריטים שעוד לא נפתחו מוצגות עם "נפתח ברמה 12". זו מפה, לא לחץ.
 - **ביטול קנייה:** אפשר לבטל תוך 10 דקות בלחיצה אחת (`refundWithinMinutes`). ההורה יכול לבטל מתי שהוא רוצה.
+  - **מה קורה כשההורה מבטל פריט שכבר לבוש או מוצב** (F9 GAP-38): הפריט **מוסר בשקט**: בגד/כובע → חוזרים לתלבושת הקודמת (או
+    לברירת המחדל), קישוט/שרטוט → מוסר מרשת השכונה (`neighborhood_layout` מתעדכן), אביזר חיה → מוסר. המטבעות חוזרים
+    **לצנצנת שממנה שולמו** ("להוציא"), הפריט חוזר לקטלוג כזמין. הילד רואה **פתק ניטרלי בתיבת הדואר** בפרק הבא ("הפריט X
+    חזר לחנות והמטבעות חזרו לצנצנת"), **בלי אנימציית "נלקח"**, בלי צליל שלילי ובלי הודעה בזמן אמת. ביומן: `econ_spend{refunded:true, by:'parent'}`.
+  - **"החנות סגורה"** (10 W-ECO-06; F9 GAP-42): הכוונה **רק** לחלונות "האפליקציה ישנה" ולשעת השינה של הילד (01 §15.1, 10 SET-02),
+    לעולם לא לשעות השקט של התראות ההורה. בפועל החנות פשוט לא נגישה כשהאפליקציה ישנה; השלט "החנות ישנה" מופיע רק במצב
+    `camp_asleep` של K1 (01 §15.1).
 
 ### 7.4 רשימת משאלות ויעד חיסכון
 
@@ -674,18 +727,24 @@ locked → ready → introduced → practicing → proficient → mastered → r
 |---|---|---|
 | צנצנות | להוציא · לחסוך · לתת | להוציא · לחסוך + כפתור "לתת מטבע למדורה" |
 | חלוקת הכנסה | הילד בוחר תבנית: 100/0/0 · **70/20/10 (ברירת מחדל)** · 50/30/20; מחליפים מתי שרוצים | 100/0 · **70/30** |
-| בונוס חיסכון | 5% מהיתרה **המינימלית** של השבוע, אם הוחזקה ≥7 ימים, עד 20 בשבוע, משולם ביום ראשון | +1 מטבע על כל 10 שלמים שנשמרו כל השבוע, עד 3 (מלמד עשרות) |
+| בונוס חיסכון | 5% מ-**`max(0, היתרה המינימלית של השבוע)`**, אם הוחזקה ≥7 ימים, עד 20 בשבוע, משולם ביום ראשון | +1 מטבע על כל 10 שלמים ב-`max(0, המינימום השבועי)` שנשמרו כל השבוע, עד 3 (מלמד עשרות) |
 | משיכה מהחיסכון | מותרת תמיד, בלי קנס (רק הבונוס של אותו שבוע לא ישולם על הסכום שנמשך) | אותו דבר |
 | "לתת" | הולך רק למדורה המשפחתית (§7.6) | כפתור, מטבע אחד בכל לחיצה |
 
 - **אין העברות בין אחים.** כך נמנעים לחץ, "חובות" וויכוחי הוגנות (C6). הנתינה היא תמיד למשותף.
+- **משיכת-יתר ממיזוג (11 §6.5 `econ.overdraft`; F9 GAP-10):** אם היתרה המינימלית של השבוע **שלילית** בפרויקציה (שתי קניות
+  אופליין בשני מכשירים), הבסיס לבונוס הוא `max(0, minBalance)` = 0, כלומר **שבוע עם משיכת-יתר לא משלם בונוס** ואף פעם לא
+  "בונוס שלילי". הבונוס חוזר בשבוע הבא כרגיל. ב-config: `saveBonus.basis: "minBalanceDuringWeekClamped0"`.
 - **הטענה הלימודית צנועה** [V/N]: זה גשר משחקי לצנצנות האמיתיות בבית. בחבילת ההדפסה יש דף "3 צנצנות".
 
 ### 7.6 המדורה המשפחתית: בור תרומות משותף (D4, 01 §10.4)
 
 - **שני דברים נפרדים, שלא מתבלבלים:**
-  - **רמת המדורה (1–10)** שייכת ל-01 §10.4. היא עולה באירועים (יעד משפחתי, בוס שבועי, אירוע עונתי), ופותחת אזורים.
-    **היא לא נקנית בכסף.**
+  - **רמת המדורה (בלי תקרה, ראו [D] למטה)** שייכת ל-01 §10.4. היא עולה **רק** בארבעה אירועים (יעד משפחתי, בוס שבועי, אירוע
+    עונתי שהושלם, ל"ג בעומר +2), ופותחת אזורים מוקדם. **היא לא נקנית בכסף.** **מקור העלייה במשחק מרובה-מכשירים (F9 GAP-21):**
+    ב-CO-3 `boss_defeated` נפלט פעם אחת על ידי ה-`CoopRoom` (00 E5) והוא מקור העלייה היחיד; תרומות אור שנעשו בזמן ניתוק
+    (`coop_light_share`) ממוזגות כאור למד הערב **הבא**, ולעולם לא כרמה רטרואקטיבית. `fireLevel` ב-fold = מספר אירועי העלייה
+    הייחודיים לפי `id`.
   - **בור התרומות** (המסמך הזה): "עצים למדורה" שקונים איתם **קישוטי מדורה** ו**פרויקטים משפחתיים**.
 - **יחידה משותפת: "עצים למדורה"** (מנרמלת בין הגילים):
   - K1: 10 מטבעות מצנצנת "לתת" = עץ אחד; יהלום אחד = 5 עצים.
@@ -707,6 +766,9 @@ locked → ready → introduced → practicing → proficient → mastered → r
   ביכורים). זה הבור האינסופי.
 - **לילדים מוצג רק הסך** ("המדורה קיבלה עוד עצים!"). פירוט לפי ילד מוצג להורה בלבד
   (`showPerChildContribution: false`).
+- **הגן המשפחתי (07 §1 #8, 00 D1a; F4 #11) אינו חלק מבור העצים:** הוא שכבה קוסמטית ליד המדורה (01 §10.4 ממקם אותו) שניזונה
+  **רק** מ-`kindness_confirmed` של ההורה. אין בו עצים, מטבעות, מונה או מחיר; הוא לא מופיע ב-`familyProjects` ולא ב-`ornaments`.
+  גם `campfire_lantern_lit` (06) הוא אור בלבד, לא עצים.
 - **קצב:** בשימוש טיפוסי מגיעים ~46 עצים בשבוע. הפרויקטים (1,200 עצים) נגמרים בערך בשבוע 26, וכל הקישוטים (~960)
   בערך בשבוע 47.
 - **[D] התקבל (00-D4, 01 §10.4):** רמת המדורה **לא מתאפסת לעולם**, לא בין עונות ולא בכלל (`resetsPerSeason: false`).
@@ -725,6 +787,10 @@ locked → ready → introduced → practicing → proficient → mastered → r
   - בנוסף, הקישוטים הקטנים מקטגוריית `decorations` (§7.1).
   - דוגמאות ל-K1: ערוגה 150, נדנדה 250, גשרון 400, בריכה 700, מגדל תצפית 900, בית עץ 1,800.
 - **זמן בנייה: 0.** אנימציית בנייה של 2 שניות, בלי טיימר ובלי "האצה".
+- **פריסת השכונה בשני מכשירים אופליין (F9 GAP-09):** הפריסה היא מסמך `neighborhood_layout/<childId>` (11 §6.1) שממוזג
+  **LWW לפי HLC ברמת המשבצת**. אם שני מכשירים הציבו פריטים שונים על אותה משבצת, הפריט של ההצבה המאוחרת נשאר, והפריט
+  שנדחק **חוזר למלאי** (לא נמחק, לא נמכר) עם פתק ניטרלי בתיבת הדואר ("הנדנדה מחכה במלאי, אפשר להציב שוב"). הקנייה
+  עצמה לא מתבטלת; שום דבר לא הולך לאיבוד.
 - **משימות בנייה (Build Missions, 01):** בנייה שהיא עצמה פעולת הלמידה, כמו "גדר סביב גינה של 5×4".
   - **לא עולות מטבעות** (`costCoins: 0`).
   - יוצרות פריט "פרויקט" ייחודי.
@@ -857,9 +923,10 @@ locked → ready → introduced → practicing → proficient → mastered → r
 ### 10.1 נוסחה
 
 ```
-week = Sunday 00:00 → Saturday 23:59 (Asia/Jerusalem)
+DayKey(ev)    = date(ev.ts + ev.tzOffsetMin − dayRolloverHour(04:00))   // §2.1; יום "כלכלי" מתחיל ב-04:00, לא בחצות
+week          = DayKeys Sunday → Saturday (בפועל: ראשון 04:00 → ראשון 04:00 הבא)
 availableDays = 7 − |{Shabbat}| − |{yom tov in week}| − |{parent-declared rest days}|
-effTarget(c)  = availableDays == 0 ? 0 : min(target(c), ceil(availableDays × 0.6))
+effTarget(c)  = (availableDays == 0 || c.paused || c.excludedFromGoal) ? 0 : min(target(c), ceil(availableDays × 0.6))
 adventureDay(c, d) = c completed ≥1 episode on day d   (K3: ≥1 lap episode; co-op episode counts for every participant)
                      OR an episode closed as 'abandoned'/'profileSwitch' with levelsCompleted ≥ 1 (01 DD-27; §18 UC-05)
 progress = Σ_c min(days(c), effTarget(c) + overshootAllowance(1))
@@ -867,7 +934,13 @@ goal     = Σ_c effTarget(c)
 met      = goal > 0 && progress ≥ goal
 ```
 
-- **יעדים:** K1 3, K2 3, K3 2. אם ההורה מוציא את K3 מהיעד, היעד שלו 0.
+- **יעדים:** K1 3, K2 3, K3 2. אם ההורה מוציא את K3 מהיעד, היעד שלו 0. **ילד מושהה** (`profile.paused`, 08 §10.5.8, 10 FAM-03)
+  מקבל `effTarget = 0` בדיוק כמו ילד שהוצא מהיעד (F5 #3): הוא לא נספר ב-`goal`, ימי משחק שלו (אם ישנם) נספרים כבונוס, ואין
+  לו תיבת יעד; חזרה מהשהיה באמצע שבוע → היעד שלו מצטרף מהשבוע הבא.
+- **גבול היום 04:00 (F9 GAP-44):** `DayKey` (§2.1) מתגלגל ב-**04:00** באזור הזמן של האירוע (`tzOffsetMin`), כך שמשחק ב-23:30 וב-00:30
+  הוא יום אחד לתקרות, לתשואה הפוחתת, להפתעה היומית ול-`adventureDay`. השבוע נגזר מ-`DayKey` (ראשון→שבת), כלומר מוצאי שבת
+  אחרי חצות עדיין שייך לשבוע שמסתיים. במקרה הביתי (המכשיר בעיר המשפחה) זה זהה ל-`DayKey` Asia/Jerusalem של 00-C11; בנסיעה
+  (01 DD-31) היום הוא יום המכשיר. המימוש היחיד: `packages/shared/dayKey.ts` (11), שגם 08 (תקרות) משתמש בו.
 - **המשמעות של `overshootAllowance = 1`:** אח שמשחק יום נוסף יכול "לפצות" על יום אחד של אח חולה, אבל לא יותר. כך
   היעד נשאר משפחתי, ואף ילד לא סוחב לבד.
 - **ימים שמשחקים בהם בשבת או בחג** (אם המשפחה ביטלה את הנעילה, B7) נספרים כבונוס להתקדמות, ולא נדרשים.
@@ -891,6 +964,12 @@ met      = goal > 0 && progress ≥ goal
 ### 10.3 שבת, חגים וימי זיכרון
 
 - **ימי מנוחה** (`restDays`) מוצאים מ-`availableDays`: שבת, ימים טובים, ימי מחלה או טיול שההורה מכריז.
+- **שבת `soft` (00-B7; F5 #4):** בתוך החלון `[הדלקה−30, הבדלה+30]` מ-`packages/shared/calendar.ts` (`@hebcal/core`) `applyEvent`
+  מחזיר **אפס מענקי מטבעות, יהלומים ותיבות לכל אירוע, בלי תלות בטקסט המצב** (גם אם ה-UI "חושב" שזה יום רגיל): הבדיקה
+  נעשית ב-fold לפי `ts` של האירוע, לא לפי דגל של המסך. XP נספר (08 §6.10: ראיה היא ראיה). אבן דרך נדחית ל"אחרי החלון"
+  (§18 UC-09). **החלון חל לפי תחילת המפגש** (01 §15.4; F9 GAP-14d): מפגש ש-`session.started` שלו לפני תחילת החלון נספר
+  ומשולם במלואו בקבלה שלו, גם אם הקבלה נופלת בתוך החלון (`edgeRules.shabbat.appliesBySessionStart: true`); מפגש שהתחיל
+  בתוך החלון כפוף לו. ב-`full` אין אירועים כלל. בדיקה: §14.1 "שבת".
 - **ימי יום טוב:** ראש השנה (2), יום כיפור, סוכות ושמחת תורה, פסח ראשון ושביעי, שבועות.
 - **טבלת התאריכים:** טבלה מאומתת ידנית מצורפת לאפליקציה (נוצרת ב-build מ-Hebcal ונבדקת), באותו עיקרון כמו B4.
 - **ימים "רגועים"** (`calmDays`): יום השואה, יום הזיכרון, תשעה באב.
@@ -1023,6 +1102,12 @@ met      = goal > 0 && progress ≥ goal
     "בונוס חזרה" כספי; §18 UC-04).
 11. `fireLevel` מונוטוני על פני 3 עונות מדומות (אף פעם לא יורד; טבעת חדשה כל 10).
 12. כל טריגר כלכלי משתלם לכל היותר פעם אחת לכל `(childId, skillId)` גם כשרמת 08 יורדת ועולה שוב (`paysOncePerSkill`).
+13. בסימולציה של 10 שבועות עם חלונות שבת מ-hebcal (תל אביב וירושלים): אף grant של מטבע/יהלום/תיבה לאירוע שמפגשו התחיל בתוך
+    החלון; מפגש שהתחיל לפני החלון משולם במלואו.
+14. `skill_level_reverted` לעולם לא מייצר grant שלילי ולא משנה יתרה, תג או XP; `braveryLadderComplete` נותן בדיוק יהלום אחד
+    לכל `(childId, ladderId)`; אף אירוע מרשימת D1a לא מייצר grant.
+15. `offlineMission` + `makerProjectComplete`: ≤1 תיבה לכל `(childId, DayKey)`; `saveBonus` לעולם לא שלילי ו-0 בשבוע עם
+    `minBalance < 0`.
 
 ---
 
@@ -1069,6 +1154,15 @@ met      = goal > 0 && progress ≥ goal
 - [ ] אירוע עם `id` כפול (סנכרון) לא מייצר grant נוסף.
 - [ ] ב-`neverEarns`: כל סוג אירוע מהרשימה מחזיר `grants = []`.
 - [ ] fold על יומן עם פער של 30 יום בלי פעילות: אף מונה לא יורד, ואין שום grant שלילי.
+- [ ] פריט עם `provenance:'placement'` או `levelMode:'placement'|'benchmark'`: `grants = []`; `friend_rescued` מאותו שלב נספר באוסף.
+- [ ] `checkin_done`, `kindness_confirmed`, `bravery_step_done`, `journal_entry`, `wonder_asked`, `turn_yielded`, `cap_bonus_granted`: `grants = []`.
+- [ ] `braveryLadderComplete` ל-K1 → תיבת כסף עם `coins = 0, gems = 1`, פעם אחת לסולם; ל-K2 → אף תיבה.
+- [ ] `stretchAttempt` ל-K2 (או רצועה G): `grants = []` גם כשה-config של K1 פעיל.
+- [ ] `offlineMission` פעמיים באותו `DayKey`: תיבה אחת + XP פעמיים; פעם רביעית: 0.
+- [ ] `skill_level_reverted` אחרי `skillMastered` ששולם: יתרה, יהלומים, תגים ו-XP ללא שינוי; עלייה חוזרת ל-`master` → 0 (`paysOncePerSkill`).
+
+**שבת:**
+- [ ] מפגש שהתחיל ב-15:00 ביום שישי (הדלקה 16:20) והקבלה שלו ב-16:05: משולם במלואו. מפגש שהתחיל ב-16:00 (בתוך `הדלקה−30`): 0 מטבעות/יהלומים/תיבות, XP נספר, `skillMastered` נדחה לאירוע הראשון אחרי `הבדלה+30`.
 
 **רמות:**
 - [ ] `xpToNext(1) = 250`, `xpToNext(10) = 1370`, `cumXp(30) = 64,980`, `cumXp(50) = 198,160`.
@@ -1084,6 +1178,9 @@ met      = goal > 0 && progress ≥ goal
 **חנות וצנצנות:**
 - [ ] בונוס החיסכון של K1: מינימום 300 במשך השבוע → 15. מינימום 600 → 20 (תקרה). משיכה ביום שלישי ל-100 → 5.
 - [ ] בונוס K2: 27 מטבעות כל השבוע → 2.
+- [ ] שבוע שבו היתרה המינימלית בפרויקציה היא −30 (משיכת-יתר ממיזוג): `saveBonus = 0`, לא שלילי; בשבוע שאחריו משולם כרגיל.
+- [ ] ביטול הורה של פריט לבוש: התלבושת הקודמת חוזרת, המטבעות חוזרים ל"להוציא", `econ_spend{refunded:true}`, אין grant שלילי.
+- [ ] `neighborhood_layout`: שני מכשירים מציבים פריטים שונים על משבצת (3,3) אופליין → אחרי מיזוג המשבצת מכילה את המאוחר לפי HLC, הפריט השני במלאי, שניהם עדיין בבעלות הילד.
 - [ ] ביטול קנייה תוך 10 דקות מחזיר את המחיר המלא ומסיר את הפריט. אחרי 10 דקות רק ההורה יכול לבטל.
 - [ ] פריט שנכנס לקטלוג לא נעלם ממנו לעולם (בדיקה על היסטוריית ה-catalog).
 - [ ] אין מסך ילד עם מספרים של ילד אחר (snapshot לכל אחד משלושת הפרופילים × m/f).
@@ -1093,6 +1190,8 @@ met      = goal > 0 && progress ≥ goal
   אותו שבוע עם K2 ביומיים: 4 + 2 + 2 = 8, הושג.
 - [ ] שבוע פסח עם 2 ימים זמינים: כל `effTarget = min(t, ceil(1.2)) = 2`. שבוע בלי ימים זמינים: "שבוע מנוחה".
 - [ ] שבת לא נכללת ב-`availableDays`. יום שמשחקים בו בשבת (נעילה כבויה) נספר כבונוס.
+- [ ] ילד עם `profile.paused = true`: `effTarget = 0`, `goal` ללא תרומתו; פרק שהוא בכל זאת שיחק = בונוס.
+- [ ] פרקים ב-23:30 וב-00:40 באותו לילה → `DayKey` אחד (גלגול 04:00); פרק במוצאי שבת 00:30 → שייך לשבוע המסתיים.
 - [ ] יעד שלא הושג לא מייצר אף אירוע UI.
 
 **עונה ואוסף:**
@@ -1227,7 +1326,13 @@ met      = goal > 0 && progress ≥ goal
   - **בונוס החיסכון הוא המקור היחיד שתלוי בזמן** (00-D1): `jars.K1.saveBonus.capPerWeek` ו-`jars.K2.saveBonus.capPerWeek`
     חובה, סופיים (K1 ≤ 20, K2 ≤ 3); סריקת schema מוודאת שאין שום מקור אחר עם `basis`/`paidOn`/`perDay` תלויי זמן.
   - יהלומים (`gems > 0`) מותרים רק בטריגרים `skillMastered`, `bossDefeated`, `regionComplete`, `regionBossDefeated`,
-    `familyGoalMet`, `holidayEventComplete`, `seasonFinalTier` (00-D1). `level25or50.gems = 0`.
+    `familyGoalMet`, `holidayEventComplete`, `seasonFinalTier`, ו-`braveryLadderComplete` (K1 בלבד, 00-D1a: יהלום בסוף סולם
+    שלא הוכרז). `level25or50.gems = 0`.
+  - `antiGrind.neverEarns` מכיל את כל אירועי 00-D1a (`checkinDone`, `kindnessConfirmed`, `braveryStepDone`, `journalEntry`,
+    `wonderAsked`) ואת `placementProbe`/`benchmarkLevel`; בדיקה סטטית שאף טריגר ב-`earn`/`chests` לא נושא את השמות האלה.
+  - `earn.K1.stretchAttempt.enabledFor = ["K1"]`; אין `stretchAttempt` ב-`earn.K2`.
+  - `chests.offlineMissionChestsPerDayMax = 1`.
+  - `jars.*.saveBonus.basis = "minBalanceDuringWeekClamped0"` (אף פעם לא שלילי).
   - `capsuleMachine.nextCapsuleVisible = true`; אין מפתח `odds`/`weights` במקום כלשהו (00-D2).
   - אין מפתח בשם `discount`, `expires`, `availableUntil` או `streak` בשום מקום.
 
@@ -1306,7 +1411,8 @@ met      = goal > 0 && progress ≥ goal
       "levelUpCoins": {"base": 10, "perLevel": 2},
       "mentorSessionCoins": 15,
       "mentorSessionsPerDayMax": 1,
-      "stretchAttemptsPerDayMax": 10
+      "stretchAttemptsPerDayMax": 10,
+      "stretchAttemptEnabledFor": ["K1"]
     },
     "K2": {
       "coins": {
@@ -1376,13 +1482,29 @@ met      = goal > 0 && progress ≥ goal
       "shopBrowsing",
       "petTapping",
       "placementProbe",
+      "benchmarkLevel",
       "paperProbe",
       "playroomFreePlay",
       "creativeMode",
       "replayFoundCollectibles",
       "sameItemSameDay",
       "coopIdle",
-      "parentArea"
+      "parentArea",
+      "sparks",
+      "campShopShekels",
+      "brainTokenDeposited",
+      "toolStateChanged",
+      "weatherTap",
+      "englishBottleExposure",
+      "capBonusGranted",
+      "checkinDone",
+      "kindnessConfirmed",
+      "braveryStepDone",
+      "journalEntry",
+      "wonderAsked",
+      "turnYielded",
+      "campAsleepView",
+      "carMode"
     ],
     "fractionalCarry": true
   },
@@ -1440,7 +1562,9 @@ met      = goal > 0 && progress ≥ goal
     "triggers": {
       "K1": {
         "skillProficient": {"tier": "wood", "coins": 15, "items": "track:wood"},
-        "offlineMission": {"tier": "wood", "coins": 15, "items": "track:wood"},
+        "offlineMission": {"tier": "wood", "coins": 15, "items": "track:wood", "requiresMissionEconomy": "offlineMission"},
+        "makerProjectComplete": {"tier": "wood", "coins": 15, "items": "showcase:frame", "sharesDailyCapWith": "offlineMission"},
+        "braveryLadderComplete": {"tier": "silver", "coins": 0, "gems": 1, "items": "none", "announced": false},
         "secretLevelFirstClear": {"tier": "wood", "coins": 15, "items": "secret:regionItem"},
         "levelMultipleOf5": {"tier": "silver", "coins": 40, "items": "track:silver"},
         "skillMastered": {"tier": "silver", "coins": 40, "gems": 1, "items": "track:silver"},
@@ -1460,7 +1584,8 @@ met      = goal > 0 && progress ≥ goal
       },
       "K2": {
         "skillProficient": {"tier": "wood", "coins": 3, "items": "track:wood"},
-        "offlineMission": {"tier": "wood", "coins": 3, "items": "track:wood"},
+        "offlineMission": {"tier": "wood", "coins": 3, "items": "track:wood", "requiresMissionEconomy": "offlineMission"},
+        "makerProjectComplete": {"tier": "wood", "coins": 3, "items": "showcase:frame", "sharesDailyCapWith": "offlineMission"},
         "bossDefeated": {"tier": "wood", "coins": 3, "items": "track:wood"},
         "regionHalfRescued": {"tier": "wood", "coins": 3, "items": "track:wood"},
         "regionPuzzleComplete": {"tier": "wood", "coins": 3, "items": "puzzle:frame"},
@@ -1482,6 +1607,9 @@ met      = goal > 0 && progress ≥ goal
       }
     },
     "exhaustedTrackFallback": {"K1": {"coins": 25}, "K2": {"coins": 4}},
+    "offlineMissionChestsPerDayMax": 1,
+    "offlineMissionXpPerDayMax": 3,
+    "chestIdDerivation": "hash(sourceEventId)",
     "noDuplicates": true,
     "revealMs": {
       "wood": {
@@ -1616,13 +1744,13 @@ met      = goal > 0 && progress ≥ goal
     "K1": {
       "presets": [[100, 0, 0], [70, 20, 10], [50, 30, 20]],
       "default": [70, 20, 10],
-      "saveBonus": {"rate": 0.05, "minHoldDays": 7, "capPerWeek": 20, "paidOn": "sunday", "basis": "minBalanceDuringWeek"},
+      "saveBonus": {"rate": 0.05, "minHoldDays": 7, "capPerWeek": 20, "paidOn": "sunday", "basis": "minBalanceDuringWeekClamped0"},
       "withdrawPenalty": 0
     },
     "K2": {
       "presets": [[100, 0], [70, 30]],
       "default": [70, 30],
-      "saveBonus": {"perFullTen": 1, "capPerWeek": 3, "paidOn": "sunday", "basis": "minBalanceDuringWeek"},
+      "saveBonus": {"perFullTen": 1, "capPerWeek": 3, "paidOn": "sunday", "basis": "minBalanceDuringWeekClamped0"},
       "withdrawPenalty": 0
     }
   },
@@ -1648,6 +1776,8 @@ met      = goal > 0 && progress ≥ goal
       ["lightTower", 400]
     ],
     "ornaments": {"priceLogs": [20, 60], "countAtLaunch": 24, "holidayOrnamentsPerEvent": 1},
+    "levelUpSources": ["familyGoalMet", "bossDefeated", "holidayEventComplete", "lagBaomer+2"],
+    "familyGardenInLogsPot": false,
     "showPerChildContribution": false
   },
   "neighborhood": {
@@ -1809,6 +1939,9 @@ met      = goal > 0 && progress ≥ goal
     "unit": "adventureDay",
     "dayCountsIf": {"K1": "episodeCompleted", "K2": "episodeCompleted", "K3": "lapEpisodeCompleted"},
     "targets": {"K1": 3, "K2": 3, "K3": 2},
+    "pausedChildTarget": 0,
+    "dayRolloverHour": 4,
+    "weekFrom": "dayKey",
     "availabilityFactor": 0.6,
     "overshootAllowance": 1,
     "restDays": {"shabbat": true, "yomTov": true, "parentDeclared": true},
@@ -1874,15 +2007,15 @@ met      = goal > 0 && progress ≥ goal
 | UC-06 | **שני ילדים, אייפד אחד, משחק משותף** | כל ילד מקבל את הפריטים שלו בטווח שלו ואת הקבלה שלו; `episode_completed{coop:true, participants}` נספר ל-`adventureDay` של **כל** משתתף (§10.1); `coopIdle` לא משלם; בוס שבועי: `boss_defeated{participants}` אחד → תיבה אחת לכל משתתף; **אף מסך ילד לא מראה את מספרי האח** (§14.1) | `coop:true` עם 2 משתתפים → 2 קבלות נפרדות, 2 ימי הרפתקה, 0 grants על זמן |
 | UC-07 | **K3 בלי הורה** | חדר המשחקים = `playroomFreePlay` → 0 (§2.7); מדבקות רק בסיום **פרק ברכיים** שנפתח בשער הורה; אין שום דרך להרוויח מדבקה, עץ או XP נסתר בלי שער | פרק ללא `parentGateOpened` → `grants = []` |
 | UC-08 | **אופליין כמה ימים** | הכול מחושב מקומית מהיומן; תיבות נפתחות אופליין (התכולה כבר ב-`chest_earned`); `saveBonus` של יום ראשון מחושב מה-`DayKey` של האירועים (§2.1) ולכן זהה אופליין ואונליין; בסנכרון: אירועים ממוזגים לפי `id` (11 §6.5), התנגשות פריט במסלול → §6.3 כלל 6; יתרה שלילית אפשרית בפרויקציה אחרי הוצאה כפולה בשני מכשירים (11 §6.5 `econ.overdraft`): ה-UI מציג `max(0, coins)`, שום רכישה לא מבוטלת, ההכנסה הבאה ממלאת בשקט | fold על יומן A ∪ B בכל סדר הגעה = אותו מצב; `econ.overdraft` נרשם, אף `purchase` לא מתבטל |
-| UC-09 | **שבת / חג / יום רגוע** | **`soft` (ברירת מחדל, 00-B7):** אירועי למידה נרשמים ו-**XP נספר** (התקדמות, לא כסף), אבל `coins`, `gems`, `chest_earned` ו-`saveBonus` לא נוצרים בתוך החלון `[הדלקה−30, הבדלה+30]` מ-`@hebcal/core`; אבן דרך שהושגה בשבת (למשל `skillMastered`) **נדחית**: התיבה שלה נוצרת באירוע הראשון אחרי החלון ("התיבה חיכתה לך"), **לא אובדת**; ימי שבת לא ב-`availableDays` ומשחק בהם = בונוס (§10.1). **`full`:** אין אירועים כלל. **ימים רגועים** (`calmDays`): נספרים כרגילים, תיבות לא נפתחות אוטומטית (§6.5), חגיגה ≤`small`. **מוצאי שבת:** החלון נסגר לפי hebcal, לא לפי 00:00 | אירוע `skill_state_changed→mastered` ב-15:00 בשבת → 0 grants; האירוע הראשון אחרי הבדלה+30 → `chest_earned{trigger:'skillMastered', deferredFrom}` יחיד |
+| UC-09 | **שבת / חג / יום רגוע** | **`soft` (ברירת מחדל, 00-B7):** אירועי למידה נרשמים ו-**XP נספר** (התקדמות, לא כסף), אבל `coins`, `gems`, `chest_earned` ו-`saveBonus` לא נוצרים בתוך החלון `[הדלקה−30, הבדלה+30]` מ-`@hebcal/core`; אבן דרך שהושגה בשבת (למשל `skillMastered`) **נדחית**: התיבה שלה נוצרת באירוע הראשון אחרי החלון ("התיבה חיכתה לך"), **לא אובדת**; ימי שבת לא ב-`availableDays` ומשחק בהם = בונוס (§10.1). **`full`:** אין אירועים כלל. **ימים רגועים** (`calmDays`): נספרים כרגילים, תיבות לא נפתחות אוטומטית (§6.5), חגיגה ≤`small`. **מוצאי שבת:** החלון נסגר לפי hebcal, לא לפי 00:00 | אירוע `skill_level_changed{to:'master'}` ב-15:00 בשבת → 0 grants; האירוע הראשון אחרי הבדלה+30 → `chest_earned{trigger:'skillMastered', deferredFrom}` יחיד |
 | UC-10 | **ספאם הקשות / ניחוש מהיר** | K1: `rapidGuess` (§2.6) → 0 לפריט, בלי הודעה; K2/K3: אין תשלום לפריט ממילא (גושי מאמץ / מדבקות), ו-RT לא נמדד; `sameItemSameDay` משלם פעם אחת; 30 פריטים נכונים ב-K2 = עדיין 4 מטבעות (§14.1) | 50 תשובות ב-60 שנ' ב-K1 (שגויות, `rtMs<800`) → 0 מטבעות, 0 XP; ב-K2 → ≤4 |
 | UC-11 | **הורה משנה תקרה באמצע פרק** | הכלכלה לא מושפעת: הקבלה משלמת על מה שנעשה; `stop_ritual{capReason:'parentChange'}` לא מוריד כלום; פרק שנחתך לפני סיום שלב → `episode_closed{reason:'cap'}` ומשלם לפי UC-05 (ללא `episodeComplete`); אם ≥1 שלב הושלם → `adventureDay` נספר | שינוי תקרה ב-t=12 דק' → grants זהים ל-fold ללא השינוי עד t; `episodeComplete` רק אם טקס הסיום רץ |
 | UC-12 | **תקוע בשלב 3 פעמים** | `itemWorkedExample` משלם 1/4 (§2.2), `itemRecovered` משלם כמו ניסיון ראשון; ביקור 4 עם רמה-1 (01 DD-29) הוא פריט רגיל; `secondsToFind` גבוה מכוונן רמזים (§14.3 #5), לא תשלום; אין שום grant שלילי | בוט 0% דיוק משלים שלב K2: `coins ≥ 2` (episodeComplete) ו-`friends = 5`; אף `grant < 0` |
 | UC-13 | **מסרב ללמוד, רוצה תגמולים** | פרק עם 0 `item_answered` → 0 מטבעות, 0 XP (גם `episodeComplete` דורש ≥1 פעולת למידה, `episodeCompleteRequiresLearning: true`); החנות, החיה וחדר האוצרות זמינים לצפייה (`shopBrowsing`, `petTapping` = 0); `session_start_screen` ו-`shopTimeShareMax` (§14.3 #2) מזיזים את מסך הפתיחה למפה; אין נזיפה ואין "החנות נעולה" | פרק 0-פריטים → `grants = []`; `episodeComplete` לא משולם; `free_choice` נרשם |
 | UC-14 | **האפליקציה נהרגה בזמן חשיפת תיבה** | §6.3 כלל 7 | שלוש נקודות חיתוך (לפני `chest_earned`, בין earned ל-opened, אחרי opened) → תכולה מוענקת בדיוק פעם אחת או אפס, לעולם לא פעמיים |
 | UC-15 | **שינוי שעון במכשיר** | `DayKey` מונוטוני לכל מכשיר (§2.1): שעון אחורה לא מאפס תקרות ולא יוצר יום ראשון נוסף; שעון קדימה מסיים יום מוקדם (אין רווח); `saveBonus` של יום ראשון משולם **רק אם** `lastServerTime` (סנכרון אחרון) ≥ תחילת יום ראשון **או** המכשיר לא סונכרן ≥7 ימים (אופליין אמיתי): כך קפיצת שעון ליום ראשון כשהמכשיר מחובר לא מקדימה בונוס; השרת מצמיד `ts` עתידי ל-`serverNow+5min` (11 §6.4); סטייה >2 דק' = טלמטריה להורה | שעון −2 ימים → `perSkillPerDay` לא מתאפס; שעון +10 ימים עם סנכרון טרי → `saveBonus` לא משולם עד שה-`serverTime` מגיע |
-| UC-16 | **אזור זמן של המכשיר ≠ משפחה** | `DayKey` לפי `tzOffsetMin` של האירוע (אזור הזמן של המכשיר); חלון שבת לפי עיר המשפחה עד שההורה מגדיר "עיר נסיעה" (01 DD-31); שבוע היעד המשפחתי נחתך ביום ראשון 00:00 לפי אזור הזמן של המכשיר שבו נוצר האירוע | אירועים מ-`America/New_York` נספרים ליום המקומי שלהם; `familyGoal.week` יציב לסדר הגעה |
-| UC-17 | **ניתוק באמצע משחק מרובה-מכשירים (CO-3)** | `boss_defeated{participants}` נפלט **פעם אחת** על ידי ה-Durable Object (01 §20 #1) עם `id` יחיד ומסונכרן לכל המכשירים; הילד שהתנתק מקבל את התיבה שלו בכניסה הבאה (היא על המדף); אם לא השתתף כלל (`participants` בלי הילד) אין תיבה, ואין קנס | אותו `id` שמגיע משני מכשירים → תיבה אחת לכל משתתף |
+| UC-16 | **אזור זמן של המכשיר ≠ משפחה** | `DayKey` לפי `tzOffsetMin` של האירוע (אזור הזמן של המכשיר) עם גלגול 04:00 (§10.1); חלון שבת לפי עיר המשפחה עד שההורה מגדיר "עיר נסיעה" (01 DD-31 `travelCity`); שבוע היעד המשפחתי נגזר מ-`DayKey` (ראשון→שבת) של המכשיר שבו נוצר האירוע | אירועים מ-`America/New_York` נספרים ליום המקומי שלהם; `familyGoal.week` יציב לסדר הגעה |
+| UC-17 | **ניתוק באמצע משחק מרובה-מכשירים (CO-3)** | `boss_defeated{participants}` נפלט **פעם אחת** על ידי ה-`CoopRoom` (00 E5, התקבל) עם `id` יחיד ומסונכרן לכל המכשירים; הילד שהתנתק מקבל את התיבה שלו בכניסה הבאה (היא על המדף); אם לא השתתף כלל (`participants` בלי הילד) אין תיבה, ואין קנס; **רמת המדורה עולה רק מאירוע ה-DO** — אור שנתרם בזמן ניתוק ממוזג למד הערב הבא, לא לרמה (§7.6, F9 GAP-21) | אותו `id` שמגיע משני מכשירים → תיבה אחת לכל משתתף; `fireLevel` אחרי המיזוג = מספר אירועי העלייה הייחודיים |
 | UC-18 | **K1 במצב מדריכה יותר מדי** | `mentor_session_completed` לכל היותר **1 ביום** (`mentorSessionsPerDayMax`), ≥3 דק'; 15 מטבעות + 60 XP על **ההתקדמות שלה**; אף מטבע על תשובות של K2; `coopIdle` לא משלם; הפעלה דורשת הגדרת הורה (10 §6.13, ברירת מחדל כבוי) | שני מפגשי חונכות ביום → grant אחד; מפגש של 2 דק' → 0 |
 | UC-19 | **אגירה** | `hoardingAlarm` (§12.3): יתרת "להוציא" > 4 שבועות הכנסה במשך 3 שבועות → בעונה הבאה פריטים חדשים ב-C/D; **לא מורידים הכנסה ולא לוקחים כסף**; חיסכון גבוה בכוונה = הצלחה, לא אזעקה; תצוגה: מעל 9,999 מוצג "9,999+" (`maxDisplayedCoins`), היתרה האמיתית נשמרת | fold עם 12 שבועות הכנסה ו-0 הוצאה: יתרה = Σ הכנסה, `hoardingAlarm=true`, שום grant שלילי |
 | UC-20 | **מבזבז הכול** | מותר; יתרה 0 איננה מצב מיוחד (אין "אין לך כסף" מנזיף); פריט C/D מבקש אישור אחד ("לקנות?") ולא יותר; ביטול תוך 10 דק' (§7.3); משיכה מהחיסכון תמיד מותרת (רק הבונוס של אותו שבוע על הסכום שנמשך לא משולם); הורה יכול לבטל בכל זמן | רכישה + ביטול בתוך 10 דק' → יתרה זהה למצב לפני; אחרי 10 דק' רק `parentRefund` |
@@ -1901,7 +2034,13 @@ met      = goal > 0 && progress ≥ goal
   "adventureDayIfLevelsCompletedAtLeast": 1,
   "paysOncePerSkill": true,
   "dayKeyMonotonicPerDevice": true,
-  "shabbat": { "source": "@hebcal/core", "window": ["candle-30m", "havdalah+30m"], "xpCounts": true, "coinsGemsChests": "deferToAfterWindow" },
+  "shabbat": { "source": "@hebcal/core", "window": ["candle-30m", "havdalah+30m"], "xpCounts": true, "coinsGemsChests": "deferToAfterWindow", "appliesBySessionStart": true },
+  "dayRolloverHour": 4,
+  "levelModeNeverEarns": ["placement", "benchmark"],
+  "levelRevertedTakesBack": false,
+  "parentRefund": { "unequipToPrevious": true, "returnToJar": "spend", "mailboxNote": true, "takenAwayAnimation": false },
+  "neighborhoodLayoutMerge": { "doc": "neighborhood_layout/<childId>", "strategy": "lww-per-tile", "displacedItem": "inventory+mailboxNote" },
+  "stickerButtonFor": ["K3"],
   "saveBonusRequiresServerTimeOrOfflineDays": 7,
   "maxDisplayedCoins": 9999,
   "mentorSessionMinMinutes": 3,
@@ -1927,3 +2066,19 @@ met      = goal > 0 && progress ≥ goal
 - **§15:** מזהי OPD לכל פריט פתוח; ברירות המחדל של 00 גוברות.
 - **§18 חדש:** 24 מקרי שימוש/קצה של הכלכלה עם כללים ו-`ECO-UC-nn`, ו-§18.1 מפתחות config חדשים (`edgeRules`).
 - **`⟂VERIFY` שנותר:** UC-21 — שימור מאגר SQLite בהתקנה מחדש אחרי חתימה (בדיקה במכשיר אחד).
+
+### Round 2 changelog (סוקר R2, 2026-11-02)
+
+הטיפול בכל סוגיה שמופנית למסמך הזה מתועד ב-`docs/review/round2-R2.md`. השינויים:
+
+- **רמות (F5 #1–2, 00-C15):** §2.1 — `skill_state_changed` הוחלף ב-`skill_level_changed{from, to: LevelId}` ונוסף `skill_level_reverted`; `item_answered` נושא `level: LevelId`, `rtMs | null`, `provenance`, `levelMode`, `assisted`. §4.1 — 02 מייבא `toEconomyState` מ-`packages/shared/levels.ts` ולא מחשב מצבים; `level_reverted` לא לוקח דבר בחזרה. §4.2 — אייקוני הצמח הם חמשת שמות C15 (זרע/נבט/שתיל/עץ/עץ פורח) מ-`LEVEL_CHILD_HE`, והתגים ארד/כסף/זהב הם שכבה מעל.
+- **חוט ונגזרות (F6 #1–2):** שמות חוט לפי 11 §5.8 דרך `toEngineEvent`; `chest_earned` הוא פלט נגזר עם `chestId = hash(sourceEventId)`, רק `chest_opened` נשמר (§2.1, §6.3 כללים 1 ו-7).
+- **D1a ו-07 (F4 #7–#11):** `neverEarns` כולל `checkin_done`, `kindness_confirmed`, `bravery_step_done`, `journal_entry`, `wonder_asked` (+ invariant zod); טריגרים חדשים `braveryLadderComplete` (K1: תיבת כסף עם יהלום אחד בלבד, לא מוכרז; K2: תג + גן) ו-`makerProjectComplete`; `stretchAttempt` ל-K1/S בלבד; `offlineMission` רק ל-`mission.economy === 'offlineMission'`; הגן המשפחתי מחוץ לבור העצים (§7.6).
+- **מצב שלב (F9 GAP-13):** `levelMode`/`provenance` של `placement`/`benchmark` → 0 מענקים, חילוצים נספרים.
+- **יעד משפחתי (F5 #3, F9 GAP-44):** `profile.paused` → `effTarget = 0`; גבול יום 04:00 (`dayRolloverHour`), שבוע נגזר מ-`DayKey`.
+- **שבת (F5 #4, F9 GAP-14d):** §10.3 — `applyEvent` מאפס מענקים בחלון לפי `ts`, בלי תלות ב-UI; החלון חל לפי תחילת המפגש (`appliesBySessionStart`); בדיקות ב-§14.1 ואינווריאנט 13.
+- **תיבות משימה (F9 GAP-37):** ≤1 ביום, XP עד 3, חשיפה בפרק הבא (מכתב + מדף).
+- **חנות וצנצנות (F9 GAP-38/42/10/09):** ביטול הורה של פריט לבוש/מוצב (§7.3); "החנות סגורה" = חלונות הילד ושעת השינה בלבד; `saveBonus` על `max(0, minBalance)` ושבוע משיכת-יתר = 0; מיזוג `neighborhood_layout` LWW למשבצת עם החזרת הפריט למלאי (§7.7).
+- **מדורה (F9 GAP-21, F2 #28):** "(1–10)" הוסר (בלי תקרה); עלייה רק מארבעת האירועים / אירוע ה-DO; `levelUpSources` ב-config.
+- **מדבקות (F9 GAP-28):** "תן מדבקה" ל-K3 בלבד.
+- **config:** `neverEarns` מורחב, `enabledFor`, `offlineMissionChestsPerDayMax`, `braveryLadderComplete`, `makerProjectComplete`, `saveBonus.basis` clamped, `pausedChildTarget`, `dayRolloverHour`, `edgeRules` חדשים; אינווריאנטים 13–15; קריטריוני קבלה חדשים ב-§14.1.

@@ -1938,6 +1938,8 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 
 ### 14.2 The first 60 seconds per child
 
+**Runs once per child (F9 GAP-01):** the opening flow below runs only when `child_resume.ftueCompletedAt` is `null` (11 §4.16, LWW doc); it is set at the end of the flow (`ftue_completed{childId}` event, Appendix B). A second or restored device therefore never replays the opening; it lands on the Plan step. The parent can re-run it from FAM-03 ("להראות את הפתיחה שוב"), which clears the field. The three endowed friends (§14.3) are rescued only in the first run.
+
 **K2** (the reference flow; voice only, no text):
 
 | s | What happens |
@@ -1955,7 +1957,7 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 | 0–10 | Same opening, plus a short title in the HUD "מחנה הגחליליות". "Skip" appears after 3s (she doesn't like "babyish") |
 | 10–25 | The פנסון lab: Ranger chassis, 6 parts + **giving it a name** (a keyboard or 6 suggestions) |
 | 25–40 | Tap-to-move + the joystick shown as an option ("רוצה ג'ויסטיק?") |
-| 40–60 | A first lock: "החבר תקוע מאחורי שער. כדי לפתוח: 6 × 4 קורות." The array hammer (MX-M05) at an easy level (placement in the background) → the first friend + a short diary page |
+| 40–60 | A first lock: "החבר תקוע מאחורי שער. כדי לפתוח: 6 × 4 קורות." The array hammer (MX-M05) as a single-target worked action (scripted, not a placement datum) → the first friend + a short diary page |
 
 **K3** (lap mode, with a parent):
 
@@ -1966,21 +1968,23 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 | 30–50 | Two bushes are shaking. Every tap reveals an animal ("!פָּרָה! מוּ!") |
 | 50–60 | The animal hops into the playroom. A first sticker (T2 sensory). Parent prompt: "שאלו: מי זה?" |
 
-- **There is no explicit "placement test".** The first week includes **play-based placement**: the items are chosen with an adaptive staircase within regular levels (see the placement spec / `placement_assessment.md`).
+- **Placement = 08's "mapping expeditions", wrapped in story (F9 GAP-12; 08 §3 wins on structure).** There *are* explicit expeditions — K2 "הרפתקת היכרות" (3 × 3–5 min, optional 4th), K1 "מסע בחירת גיבור" (3–4 × 8–10 min), spread over 2–4 days (08 §3.1–3.2) — but the child never experiences a test: each expedition is a **story-wrapped level** with `mode:'placement'` (§6.6) whose items follow 08 §3.6's UI rules (neutral "map reveal" feedback, no right/wrong, no timer, a closing win item with P ≥ 0.90), and **no coins, XP or chests** (02 §2.7 `placementProbe`); rescues made inside count for the collection (00 G2). Until the first subject is mapped, the planner issues placement plans only (08 §10.5.12; K3 has no expedition). 10 ON-12 shows the parent "2–4 short days". Lazy placement for continuation strands later happens inside regular levels (08 §3.7).
 
 ### 14.3 First week (day by day)
 
 | Day | K3 | K2 | K1 | Family |
 |---|---|---|---|---|
-| Sun | The playroom (3 toys) + peekaboo | Onboarding + LV R-03 #1 (rune lens) + the first evening | Onboarding + LV R-05 #1 (array hammer) + diary | — |
-| Mon | + a 4th toy, "copy me" | R-05 #1 (number jet) + the collection room opens (3 friends from onboarding, endowed) | R-03 #1 + the collection room | — |
-| Tue | Peekaboo with colors | R-03 #2 + first movement moment (MV-02 clapping syllables) | R-04 taste (the fog) + the first Build Mission | — |
-| Wed | Rest / playroom | Lantern breath (MX-S02) in a level + first pet egg (known in advance) | First evening defense with towers + egg | — |
+| Sun | The playroom (3 toys) + peekaboo | Onboarding (§14.2) + **expedition E1 "מספרים"** (08 §3.2) as the level slot, in R-05 scenery + camp Show (3 endowed friends) | Onboarding + **expedition E1 "חשבון א'"** in R-05 scenery + diary | — |
+| Mon | + a 4th toy, "copy me" | **Expedition E2 "צלילים ואותיות"** in R-03 scenery + the collection room opens (3 friends from onboarding, endowed) | **Expedition E2 "עברית א'"** in R-03 scenery + the collection room | — |
+| Tue | Peekaboo with colors | **Expedition E3 "סיפור"** (+ optional E4 tracing) + first movement moment (MV-02 clapping syllables) | **Expedition E3 "חשבון ב' + אנגלית"** (English strands per 08/05 timing) + the first Build Mission | — |
+| Wed | Rest / playroom | First regular episode: LV R-03 #1 (rune lens) + lantern breath (MX-S02) + first pet egg (known in advance) + **first evening** | **Expedition E4 "עברית ב'"** + a short first regular level (R-05 #1 array hammer) + first evening defense with towers + egg | — |
 | Thu | Family: "lighter" role | **First family evening: the "ענן ההפתעות" boss** (CO-2, short, 5 min, guaranteed win) | Same + optional guide mode | Fire level 1→2, the first family treasure |
 | Fri | Optional (before Shabbat) | Short episode: daily surprise + Build | Same | Recorded "Shabbat shalom" from a parent (optional) |
 | Sat | Shabbat (§15.4) | Shabbat | Shabbat | Nothing counts |
 
-**Endowed progress must be real (02 §5.2 rule 8, `endowedProgress.mustBeActiveRescues`):** the 3 friends that the collection room opens with are rescued by the child in the **first episode** through real, easy learning actions: friend 1 in the first 60 seconds (§14.2), friends 2–3 in the Shō beat of the first level (single-target actions, no failure possible). The room never shows a friend the child did not rescue.
+**Endowed progress must be real (02 §5.2 rule 8, `endowedProgress.mustBeActiveRescues`):** the 3 friends that the collection room opens with are rescued by the child in the **first episode** through real, easy learning actions: friend 1 in the first 60 seconds (§14.2), friends 2–3 inside expedition E1's story wrapper (08 §3.6: the breather and the closing win item, P ≥ 0.90, single-target, no failure possible; they are rescues, not scored placement data). The room never shows a friend the child did not rescue.
+
+**Week-1 episode template:** days Sun–Tue (K2) / Sun–Wed (K1) use `episode.k2.placement` / `episode.k1.placement` = Arrival + Plan (no choice: "היום ניצי מראה לך את המפה") → expedition (the level slot, `mode:'placement'`) → Camp: Show (friends move in; **no receipt**, nothing to receive) → Goodnight + offline mission. The warm-up review, Block B and the evening defense start with the first regular episode (K2 Wed, K1 Wed after E4). 08 §10.5.12's first-week budget (×0.8 items, `closing` at 80%) applies to the first three regular episodes.
 
 **Goal of week 1:**
 - Each child has rescued ≥8 friends (K3: 6 toy friends).
@@ -1994,9 +1998,10 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 ### 15.1 Designed to end (00 C3, C5, `risks` §4)
 
 - **A visible progress strip** in the HUD: "היום במחנה": 4–5 icons (morning, level, camp, evening, goodnight) that fill in as you go.
-- **A soft warning:** when 2:00 remain of the cap or the episode, ניצי says "עוד הרפתקה אחת קטנה ואז הולכים לישון".
-- **Never cut in the middle of a beat:**
-  - If the cap ends in the middle of a level, the game finishes the current beat (≤1:30 overtime) and then **"lands"** in Ketsu: a shortcut to the gate and the last friend.
+- **A soft warning:** when 2:00 remain of the cap or the episode, ניצי says "עוד הרפתקה אחת קטנה ואז הולכים לישון". **Inside the English island (R-08 or any English frame) the Hebrew warning is deferred to the island exit** (00 B2, AC-MX-3; F9 GAP-30): if the cap or bedtime ends while the child is inside, Sunny says "Bye-bye, see you tomorrow!" + `sfx.english.exit` first, and only then does ניצי run the Hebrew wind-down; the island beat is finished within the same ≤1:30 rule below.
+- **Never cut in the middle of a beat (one rule shared with 08 §6.10, F9 GAP-02):**
+  - At **85%** of the episode budget the planner enters its `closing` block (08 §6.10; 80% in the first three episodes, 08 §10.5.12). That is the normal landing.
+  - If the **daily cap** ends in the middle of a beat, the game finishes the current beat (**≤1:30 overtime**) and then **"lands"** in Ketsu: a shortcut to the gate and the last friend. 08's **60 s grace applies only inside `closing`** (the cap arriving while the closing block is already running); the two never add up — total overtime past the cap is ≤90 s in every case (AC-STOP-2).
   - If more than 1:30 remains in the level, its state is saved and it continues tomorrow from the checkpoint.
 - **The goodnight ritual (fixed, 30–45s):**
   1. The friends gather around the fire.
@@ -2007,20 +2012,21 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
   6. The offline mission card.
   7. The screen goes dark into a "the camp is asleep" picture.
 - **After the goodnight:**
-  - The app shows only "the camp is asleep" (a slowly animated drawing) plus the parent-gate button.
-  - **No "play again" button** for the child. Re-entry for K2/K3 is through the parent gate. K1 can open the "חדר האוצרות" (view only, no rewards) and the music hut.
+  - The app shows only "the camp is asleep" (a slowly animated drawing) plus the parent-gate button, then returns to the profile picker (09 SCR-07).
+  - **No "play again" button** for the child. Re-entry for K2/K3 is through the parent gate.
+  - **K1's "camp asleep" view (F9 GAP-43; 09 SCR-07 gets this state):** after her wind-down, K1's picker tile opens `camp_asleep` instead of a session: the dim camp with exactly two doors lit — the **collection room** (view/poke only) and the **music hut** (listen only); the shop tile shows "החנות ישנה" (02 §7.3), gates and levels are dark and unresponsive. **No `session.started`, no learning or economy events, 0 cap minutes**; only `free_choice_unrewarded{activity}` telemetry (Appendix B). The view auto-closes to the picker after 10 minutes of no touch or at bedtime. K2/K3 tiles never open it (gate only).
 - **Caps (parent-set; defaults are owned by 10 §6.13 and mirrored here):**
   - K3: 2 episodes / **15** minutes per day (lap mode; the 5-minute solo playroom counts inside it).
   - K2: 2 / 25 minutes.
   - K1: 2 / 40 minutes.
   - Weekday and Friday/Shabbat caps are separate settings (10 §6.13). Co-op minutes count at 50% for each participant (§12.1).
-- **Bedtime lock:** from a parent-set hour (defaults per 10 §6.13: K3 19:30, K2 20:00, K1 20:30). No **new** episode starts in the 60 minutes before bedtime; one already running finishes with the normal wind-down. The app shows "the camp is asleep".
+- **Bedtime lock:** from a parent-set hour (defaults per 10 §6.13: K3 19:30, K2 20:00, K1 20:30). No **new** episode starts in the 60 minutes before bedtime (10 R5); one already running finishes with the normal wind-down (`session.ended{reason:'bedtime_lock'}` if the lock arrives first). The app shows "the camp is asleep". Where both a per-child bedtime (10 PA-CSET) and a per-device bedtime schedule (11 §5.5) exist, the **earlier one is the effective lock** for that child on that device (F9 GAP-04); the pre-bedtime picker tile says "הגיבור כבר מתכונן לשינה".
 - **"App sleeps" windows** (10 SET-02: school hours, meals, parent-declared): same screen as bedtime; the parent gate opens it as an exception (audit-logged).
 - **Cap or window changed by the parent mid-session (§21 UC-11):** the new value is applied at the **next segment boundary** (Appendix A `segments`), never mid-beat. If the new cap is already exceeded, the soft warning fires immediately and the episode "lands" within ≤1:30 (above). If the cap was raised, the current episode simply gets the extra room. The child never sees a message about the change; the receipt is unaffected.
-- **Parent "+10 min" bonus** (DD-09): a button behind the gate, max 1 per child per day, logged; it extends the cap, it does not add an episode.
+- **Parent "+10 min" bonus** (DD-09): a button behind the gate, max 1 per child per day, logged; it extends the cap, it does not add an episode. It is the event `cap_bonus_granted{childId, minutes: 10, grantedBy: guardianId | 'device-local', dayKey}` (cls `admin`, audit-logged, 11 §5.8; F9 GAP-02); the engine adds the minutes to today's cap at the next segment boundary; 02 ignores it (`neverEarns`).
 - **Media-free contexts:**
   - The parent marks meals or travel in a schedule; the app "sleeps".
-  - Car: an **audio only** mode (songs, riddles, no screen). This is an option for the parent, not a default.
+  - **Car: "מצב רכב", audio only — a P2 feature (F9 GAP-19), not in MVP/v1.** Spec for when it lands: a parent-gate toggle on the device (10 PA-CSET) that opens a **playlist** (music-hut songs, K2's daily English song from a bottle, riddles read by ניצי); the screen is dimmed to a single large "עצור" button (≥20 mm) and the current song's picture; **no learning items, no economy events, no `session.started`, 0 cap minutes**; it stops when the toggle is turned off or after 45 minutes. Until P2 the parent uses the music hut inside a normal session. 09 (SCR-21) and 11 own the screen and the launch path.
 - **Offline mission at the end** (every episode, by age and by the content learned):
   - "מצאו 3 דברים בבית שמתחילים ב-מ"
   - "ספרו כמה מדרגות יש בבניין"
@@ -2028,7 +2034,8 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
   - "תכנני את הפנסון שלך על דף" (printable)
   - Done/not done is marked by the parent or not marked at all; nothing is lost. A parent-confirmed mission is the economy event `offline_mission_confirmed` (02 §2.2: a wood chest, XP); an unconfirmed one costs nothing.
   - Every mission card carries `safety: SafetyTag[]` (00 C13) and the tags are printed on the card for the parent (e.g., "עם מבוגר", "בלי אש"). The content linter rejects a mission without tags (AC-STOP-4).
-- **Exit in the middle:** a "back to camp" button (in the pause menu) at any time, with no cost. A level that was left is saved by checkpoint.
+  - **Printing (F9 GAP-50; everything printable in this document — mission cards, the פנסון outline (§3.4), season certificates (§5.1), tangram/number-line sheets):** the app renders an **A4, RTL PDF** with `expo-print` (11 §2.3 module list) and hands it to the **iOS share sheet / AirPrint** from the parent area or from the mission card's "להדפיס" button (parent gate for K2/K3). Nothing prints silently; no printable contains a child's data beyond the name. Printables are static assets in the content pack (`print/<id>.pdf` or an HTML template rendered on device), never generated live.
+- **Exit in the middle:** a "back to camp" button (in the pause menu) at any time, with no cost. A level that was left is saved by checkpoint. "Back to camp" ends the session as `session.ended{reason:'child_exit'}` (08 §1.10's canonical enum; 10 AL-04's "childQuit") with `secondsSinceLastError` in the payload, so AL-04's 120-s rule can run (F9 GAP-25); the pause itself (דובדובה's "need a break") does not end the session.
 
 ### 15.2 Character exit lines (approved)
 
@@ -2046,6 +2053,7 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 ### 15.3 Toddler lap mode (K3, 00 C3, gap D16)
 
 - **Default:** K3 episodes require a parent to open (Face ID/PIN) and include **parent prompts** on screen (in a corner, small text, *for the parent*): "שאלו: איזה צבע?", "תנו לו/לה לגעת לבד", "ספרו יחד: אחת, שתיים…".
+- **Launch mode (`child_settings.launchMode`, F9 GAP-11b; field owned by 11 §4.16, default set by DD-18):** `lap` (today's K3: every launch through the gate, parent prompts on) · `coplayFirst` (from ~3.5 / gan: the gate is required **once per day**; after it, the child may start solo episodes from the picker, each capped at **5 minutes** = the playroom, with prompts off) · `solo` (band G and up: normal picker). K3's profile never launches from the sibling switcher without the gate in `lap` (§21 UC-05).
 - **The playroom (MX-P01) is safe to use alone for a short time:** no exits, no text, no fail. It still always opens through the parent gate and stops automatically after 5 minutes (a gentle lullaby).
 - **Interaction:** tap only, ≥20 mm, ignore multi-touch, edges of the screen have no actions (12 mm margin), no swipe-to-exit (Guided Access is recommended to the parent at setup).
 - **Sound and light:**
@@ -2061,6 +2069,7 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 
 - **Detection (00 B7, one library for the whole app):** candle-lighting and havdalah times come from **`@hebcal/core` zmanim** for the parent's city (OPD-04; default Tel Aviv; city-specific candle offsets as hebcal provides them, with a manual override in the parent area). The **pause window is `[candleLighting − 30 min, havdalah + 30 min]`**. There is no second (NOAA) implementation anywhere in the code; `packages/shared/calendar.ts` exposes `shabbatWindow(date, city)` and every consumer (counters, scenery, notifications, economy) calls it (AC-SHAB-3).
 - **Holidays** from the calendar file `packages/content/calendar/5787.json` (generated from hebcal, cross-checked, 00 B7; §13). Yom Tov days get the same treatment as Shabbat.
+- **The window applies by session start (F9 GAP-14d; 02 §10.3 `appliesBySessionStart`):** an episode whose `session.started` is **before** `candleLighting − 30 min` is a weekday episode to the end — it keeps its normal palette, its receipt is paid in full and its counters count, even if the receipt falls inside the window. The Shabbat scenery, frozen counters and "no coins" apply to sessions started **inside** the window. In `full` mode a running episode gets the normal 2-minute warning at the window start and lands (≤1:30), then the app sleeps.
 - **Modes (family choice; default `soft` per 00 B7 / OPD-04):**
 
 | Mode | Behavior |
@@ -2105,28 +2114,28 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 > **Binding precedence:** `02-economy-progression.md` §6 is canonical for chest tiers, triggers, contents, taps per tier and the 8-beat reveal timings (`chests.revealMs`). The earlier "effort steps" proposal of this section (taps = 1 + effort marks) is **withdrawn**: 02's rule that the tier is visible from the first frame and the tap count is fixed per tier is simpler, deterministic and lint-able. What survives of the idea is the **effort marks as receipt lines** (below).
 
 - **Tiers (02 §6.1), each a different shape as well as color (color-blind safe):** `wood` תיבת עץ (round, 1 tap, K1+K2) · `silver` תיבת כסף (shield, 2 taps, K1) · `gold` תיבת זהב (star, 3 taps, K1+K2) · `legendary` אוצר אגדי (crown, 3 taps + 600ms hold, K1) · K3 "מעטפת הפתעה" (envelope, 1 tap, stickers). The mapping from this document's older names: gold-frame (region boss) and family (weekly goal) → `gold`; prism (event, season final) → `legendary`; a level/episode gives **no chest** (friends and the receipt are the reward).
-- **The tier and the contents are known when earned** (`chest_earned` carries the full contents) and **previewed as a silhouette + label before opening** ("בפנים: כובע פיראט + 40 מטבעות"; read aloud for K2). The tier never changes during the reveal (no "upgrade" animation, 02 §6.5 כלל-על).
+- **The tier and the contents are known when earned** (`chest_earned{chestId, contents}` is a **derived** output of the economy fold over the source learn event, `chestId = hash(sourceEventId)`, 02 §6.3 / 11 §5.8 — it is not a persisted event, so two devices always derive the same chest) and **previewed as a silhouette + label before opening** ("בפנים: כובע פיראט + 40 מטבעות"; read aloud for K2). The tier never changes during the reveal (no "upgrade" animation, 02 §6.5 כלל-על).
 - **Effort marks** are computed per activity and shown as **process lines in the receipt** (02 §2.8), never as taps or value: `firstTry` (≥80% correct on first try), `hintFree` (no hints in the last beat), `braveChoice` (chose Stretch / 🌶🌶), `mentor` (K1 helped in guide mode), `movedBody` (completed a movement moment in `full` mode — informational only, the seated variant earns exactly the same, 02 §2.2). Lines use the §16.3 phrase sets.
 - **Choreography:** 02 §6.5 (enter → preview → anticipation taps → charge → burst → reveal → settle → collect). Celebration-tier mapping: wood = T2, silver/gold/legendary = T3 (§16.1). Memorial days: the chest goes to the shelf, no auto-reveal, no fanfare (02 §6.5).
-- **Idempotent reveal (data safety, §21 UC-14):** `chest_earned{id, contents}` is written when earned; `chest_opened{chestId}` is written at the **start** of beat 6 (reveal). The fold grants contents on `chest_opened` only. If the app dies before beat 6, the chest is still on the shelf unopened; if after, the next launch plays only beat 8 (collect, ≤0.7s) for that chest. No path double-grants.
+- **Idempotent reveal (data safety, §21 UC-14):** the chest exists as soon as its source event is in the log (derived, above); `chest_opened{chestId}` is the only persisted chest event and is written at the **start** of beat 6 (reveal). The fold grants contents on `chest_opened` only. If the app dies before beat 6, the chest is still on the shelf unopened; if after, the next launch plays only beat 8 (collect, ≤0.7s) for that chest. No path double-grants.
 - **Verification:** a frame-step study on the device after the vertical slice (AC-CEL-6). Tokens are tuned for "feel" within 02's `revealMs` and the T2/T3 budgets.
 - **There is no randomness of value.** "Rarity" = what earned it (00 D2). For K1 the label says "קיבלת זהב כי ניצחת את הבוס של המכרות".
 
 ### 16.3 Praise phrase sets (the game's voice)
 
-The UX spec is the canonical owner of the phrase list (00 C4). These are the game's voice lines and must be merged into it. Each category has ≥8 variants per age in the content pack; examples below.
+The UX spec is the canonical owner of the phrase list (00 C4). **The lines below are merged into 09 §9.2 as P19–P25** (P19 action, P20 strategy, P21 improvement, P22 checking, P23 co-op help, P24 after a miss, P25 brave choice) and the banned words into 09 §9.3 (F6). **A new line is added to 09 first**, then referenced here; the content pack imports 09's list, never this table. Each category has ≥8 variants per age in the content pack; examples below (the 09 id is given per row where one exists).
 
 | Category | Example K2 `{m|f|pl}` | Example K1 `{m|f|pl}` |
 |---|---|---|
-| **Describing the action** | `{מָצָאתָ|מָצָאת|מְצָאתֶם} אֶת הַ-מָ!` | `{בָּנִיתָ|בָּנִית|בְּנִיתֶם} קִיר שֶׁל 6 שׁוּרוֹת וְ-4 טוּרִים.` |
-| **Strategy** | `{סָפַרְתָּ|סָפַרְתְּ|סְפַרְתֶּם} הָלְאָה מֵחָמֵשׁ!` | `{פֵּרַקְתָּ|פֵּרַקְתְּ|פֵּרַקְתֶּם} אֶת 7×8 לִשְׁנֵי חֲלָקִים.` |
-| **Persistence** | `{נִסִּיתָ|נִסִּית|נִסִּיתֶם} שׁוּב, וְזֶה עָבַד!` | `{הִמְשַׁכְתָּ|הִמְשַׁכְתְּ|הִמְשַׁכְתֶּם} גַּם כְּשֶׁהָיָה קָשֶׁה.` |
-| **Improvement** | `הַיּוֹם זֶה הָלַךְ יוֹתֵר מַהֵר!` | `{זָכַרְתָּ|זָכַרְתְּ|זְכַרְתֶּם} אֶת זֶה גַּם אַחֲרֵי שָׁבוּעַ.` |
-| **Brave choice** | `{בָּחַרְתָּ|בָּחַרְתְּ|בְּחַרְתֶּם} בַּשְּׁבִיל הַמְּאַתְגֵּר, אַמִּיץ!`* | `{בָּחַרְתָּ|בָּחַרְתְּ|בְּחַרְתֶּם} לְהִתְמוֹדֵד עִם הָאֶתְגָּר.` |
-| **Checking/verifying** | `{בָּדַקְתָּ וְצָדַקְתָּ|בָּדַקְתְּ וְצָדַקְתְּ|בְּדַקְתֶּם וּצְדַקְתֶּם}` | `{שָׁאַלְתָּ|שָׁאַלְתְּ|שְׁאַלְתֶּם} אֶת גַּלְגַּלּוֹן וְאָז {בָּדַקְתָּ|בָּדַקְתְּ|בְּדַקְתֶּם} לְבַד.` |
-| **Helping (co-op)** | `{עָזַרְתָּ|עָזַרְתְּ|עֲזַרְתֶּם} לַמְּדוּרָה לִגְדֹּל.` | `{חִכִּיתָ|חִכִּית|חִכִּיתֶם} שֶׁהוּא יְנַסֶּה קֹדֶם. זֶה עוֹזֵר לוֹ לִלְמֹד.` |
-| **Neutral escalation in a chain** (no gender) | "!שָׁלוֹשׁ בְּרֶצֶף" · "!הַשְּׁבִיל נִבְנֶה" · "!עוֹד חָבֵר" | "!חֲמִשָּׁה בְּרֶצֶף" · "!הַמַּסְלוּל נִפְתַּח" |
-| **After a mistake** | `עוֹד לֹא. {בּוֹא|בּוֹאִי|בּוֹאוּ} נִסְתַּכֵּל שׁוּב.` | `עוֹד לֹא. {רוֹצֶה|רוֹצָה|רוֹצִים} רֶמֶז אוֹ עוֹד נִסָּיוֹן?` |
+| **Describing the action** (09 P19) | `{מָצָאתָ|מָצָאת|מְצָאתֶם} אֶת הַ-מָ!` | `{בָּנִיתָ|בָּנִית|בְּנִיתֶם} קִיר שֶׁל 6 שׁוּרוֹת וְ-4 טוּרִים.` |
+| **Strategy** (09 P20) | `{סָפַרְתָּ|סָפַרְתְּ|סְפַרְתֶּם} הָלְאָה מֵחָמֵשׁ!` | `{פֵּרַקְתָּ|פֵּרַקְתְּ|פֵּרַקְתֶּם} אֶת 7×8 לִשְׁנֵי חֲלָקִים.` |
+| **Persistence** (09 P-set "persistence"; add to 09 before use) | `{נִסִּיתָ|נִסִּית|נִסִּיתֶם} שׁוּב, וְזֶה עָבַד!` | `{הִמְשַׁכְתָּ|הִמְשַׁכְתְּ|הִמְשַׁכְתֶּם} גַּם כְּשֶׁהָיָה קָשֶׁה.` |
+| **Improvement** (09 P21) | `הַיּוֹם זֶה הָלַךְ יוֹתֵר מַהֵר!` | `{זָכַרְתָּ|זָכַרְתְּ|זְכַרְתֶּם} אֶת זֶה גַּם אַחֲרֵי שָׁבוּעַ.` |
+| **Brave choice** (09 P25) | `{בָּחַרְתָּ|בָּחַרְתְּ|בְּחַרְתֶּם} בַּשְּׁבִיל הַמְּאַתְגֵּר, אַמִּיץ!`* | `{בָּחַרְתָּ|בָּחַרְתְּ|בְּחַרְתֶּם} לְהִתְמוֹדֵד עִם הָאֶתְגָּר.` |
+| **Checking/verifying** (09 P22) | `{בָּדַקְתָּ וְצָדַקְתָּ|בָּדַקְתְּ וְצָדַקְתְּ|בְּדַקְתֶּם וּצְדַקְתֶּם}` | `{שָׁאַלְתָּ|שָׁאַלְתְּ|שְׁאַלְתֶּם} אֶת גַּלְגַּלּוֹן וְאָז {בָּדַקְתָּ|בָּדַקְתְּ|בְּדַקְתֶּם} לְבַד.` |
+| **Helping (co-op)** (09 P23) | `{עָזַרְתָּ|עָזַרְתְּ|עֲזַרְתֶּם} לַמְּדוּרָה לִגְדֹּל.` | `{חִכִּיתָ|חִכִּית|חִכִּיתֶם} שֶׁהוּא יְנַסֶּה קֹדֶם. זֶה עוֹזֵר לוֹ לִלְמֹד.` |
+| **Neutral escalation in a chain** (no gender; add to 09 before use) | "!שָׁלוֹשׁ בְּרֶצֶף" · "!הַשְּׁבִיל נִבְנֶה" · "!עוֹד חָבֵר" | "!חֲמִשָּׁה בְּרֶצֶף" · "!הַמַּסְלוּל נִפְתַּח" |
+| **After a mistake** (09 P24) | `עוֹד לֹא. {בּוֹא|בּוֹאִי|בּוֹאוּ} נִסְתַּכֵּל שׁוּב.` | `עוֹד לֹא. {רוֹצֶה|רוֹצָה|רוֹצִים} רֶמֶז אוֹ עוֹד נִסָּיוֹן?` |
 
 \* "אמיץ" describes the choice in context; the gendered form `{אַמִּיץ|אַמִּיצָה|אַמִּיצִים}` is allowed only right next to the act of choosing.
 
@@ -2148,7 +2157,7 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 
 ### World and hub
 
-- **AC-WORLD-1:** The hub is a walkable scene (R3F or the Skia fallback) with a campfire, 3 neighborhoods and ≥3 gates. Tap-to-move reaches any walkable point within ≤3s of walking.
+- **AC-WORLD-1:** The hub (route `/(child)/[id]/map` → 09 SCR-04 "hub"; zones at `world/[zoneId]`, levels at `level/[levelId]`, results at `results` = 09 SCR-07 — 11 §4.1 names, used in every AC below) is a walkable scene (R3F or the Skia fallback) with a campfire, 3 neighborhoods and ≥3 gates. Tap-to-move reaches any walkable point within ≤3s of walking.
 - **AC-WORLD-2:** No string in the 3D scene is rendered as text. Every Hebrew word is in the 2D HUD (lint: no `<Text>` from drei/troika in `world/`).
 - **AC-WORLD-3:** Evening frames have average relative luminance ≥0.28 (K3 ≥0.45). Measured on 20 screenshots per region in Playwright.
 - **AC-WORLD-4:** Every region has ≥3 landmarks visible from the spawn point of the region's field area.
@@ -2175,7 +2184,7 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 
 - **AC-MX-1:** Each MVP mechanic (11) has a pure-TS implementation in `packages/engine/mechanics/*` with tests for: correctness, knobs, the failure ladder, and distractors from the error catalog.
 - **AC-MX-2:** Counting voice-over comes from the numerals lookup table only (a test: no TTS call for a number).
-- **AC-MX-3:** English: every English line plays only inside the English frame (`englishContext=true`) with an entry/exit jingle. Phonics sounds come from the recordings list only.
+- **AC-MX-3:** English: every English line plays only inside the English frame (`englishContext=true`) with an entry/exit jingle. Phonics sounds come from the recordings list only. No Hebrew line (incl. ניצי's cap/bedtime warning, §15.1) plays while `englishContext=true`; a cap ending inside the island produces Sunny's exit line + jingle **before** the Hebrew wind-down (test with a cap set to expire mid-island).
 - **AC-MX-4:** RT is not included in the update for K2/K3 (a test on the engine adapter).
 - **AC-MX-5:** ASR (MX-H08) never displays "wrong" to the child (a snapshot test of every result state).
 
@@ -2192,6 +2201,7 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 - **AC-BTL-2:** Every defeated shadowling becomes a friend or a visible light-mote. No "death" animation (asset review).
 - **AC-BOSS-1:** The weekly boss formula (§9.3): a simulation of a week where every child completes 80% of plan → HP reaches 0 in the finale. With 50%, the boss "falls asleep" with the meter saved for next week.
 - **AC-BOSS-2:** The finale never ends in a loss (a test of all states).
+- **AC-BOSS-3:** `bossHP` excludes paused children and children with 0 episodes this week; a finale with any non-empty subset of children (incl. one child) reaches HP 0; a boss day falling on a quiet day / Yom Tov moves the window to the previous eligible weekday evening (calendar test with 2027-05-11 and Yom Kippur 5788).
 - **AC-EVE-1:** Evening: shadowlings don't approach the camera (path z ≥ fire.z − 2 tiles). In K3 only `sleepy` appears.
 - **AC-RUN-1:** The runner always ends at a destination within ≤90s (K2) / ≤120s (K1). There is no death state or revive (a test).
 
@@ -2203,6 +2213,7 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 - **AC-CO-4:** No screen in co-op shows separate data per child to the children (screenshot review).
 - **AC-CO-5:** Guide mode: K1 has no input on K2's items. There is a 5s delay before a hint token. There is a 10-minute cap and 1 per day (a test).
 - **AC-CO-6:** Co-op time is counted at 50% toward each child's cap (a test).
+- **AC-CO-8:** `turn_yielded` (§12.5) fires only for `parent_exit` before 80% of planned minutes followed by a different child's session on the same device within 120 s; ≤1 per child per day; it produces no grant (fold test) and the next episode's Arrival contains a `vip.*` friend. CO-4 letters contain no free-text field (schema test on `coop_letter`).
 
 ### Economy and celebrations
 
@@ -2236,8 +2247,11 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 ### Stopping, Shabbat, toddler
 
 - **AC-STOP-1:** Every episode ends with the goodnight ritual (30–45s) plus an offline mission card. After it there is no "play again" button for K2/K3 (screenshot).
-- **AC-STOP-2:** The cap never cuts off mid-beat. Overtime is ≤1:30 at most, or the state is saved for tomorrow (a test).
+- **AC-STOP-2:** The cap never cuts off mid-beat. Overtime is ≤1:30 at most (incl. 08's 60 s grace inside `closing`; the two never sum past 90 s), or the state is saved for tomorrow (a test with the cap expiring at every beat boundary and inside `closing`).
 - **AC-STOP-3:** No exit line from §15.2's banned list appears (lint).
+- **AC-STOP-5:** K1's `camp_asleep` view (§15.1) emits no `session.started`, no learn/econ event and adds 0 cap minutes; K2/K3 tiles after wind-down open only the gate (Playwright on SCR-07 → picker → tile). `cap_bonus_granted` is accepted at most once per child per `DayKey` and never creates a grant (fold test).
+- **AC-FTUE-1:** With `child_resume.ftueCompletedAt` set, launching the child on a second device goes straight to Arrival + Plan with no opening movie (Playwright); with it null, the full §14.2 flow runs and sets it.
+- **AC-PLC-1:** Expedition levels (`mode:'placement'`) produce rescues that appear in the collection and 0 coins/XP/chests (fold test over a week-1 log); in week 1 the planner emits only placement plans until the first subject's `placement.state='done'` (08), and the §14.3 day table holds for the simulated calendar (Sun–Tue K2, Sun–Wed K1).
 - **AC-SHAB-1:** In `shabbat.soft` no counter changes between lighting and havdalah. There are no coin/gem events and no event opening (a time-simulation test with Tel Aviv / Jerusalem times).
 - **AC-SHAB-2:** On QD days there is no event or boss, celebrations are capped at T1, and no SFX from the "siren-like" list is played (a spectral check of the SFX: no sweep 400–1500Hz >1s).
 - **AC-K3-1:** A K3 episode opens only through the parent gate. Multi-touch is ignored. No action exists within a 12 mm margin. There are no texts for the child. The playroom auto-stops after ≤5 minutes.
@@ -2260,10 +2274,10 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 | DD-03 | Hero gender | The פנסון has no voice, so no gender is needed. In speech about it, use "הפנסון" (m, grammatically) |
 | DD-04 | AI robot's grammatical gender | m ("גלגלון"). First person in the present tense: "אני מחשב" |
 | DD-05 | K3 gender until confirmed | `pl`/neutral forms where possible; otherwise `f` and `m` alternate per session (to avoid bias) until the parent sets it |
-| DD-06 | Weekly boss day | Thursday, 17:00–19:00 is the default "opening hour" for the finale (the finale is available from Thursday until Friday at noon) |
+| DD-06 | Weekly boss day | Thursday, 17:00–19:00 is the default "opening hour" for the finale (the finale is available from Thursday until Friday at noon). If that day is a Yom Tov or a quiet day (00 B7a) the window moves to the previous eligible weekday evening; if none is left in the week, the boss sleeps and carries over (§9.3). `bossHP` counts only non-paused children with ≥1 episode this week; the finale completes with any present subset |
 | DD-07 | Is Saturday night a new week? | Yes. The week runs Sunday → Saturday night |
 | DD-08 | Two children want the same device | The turn ring decides by last use. If both want to, a CO-2 suggestion is shown |
-| DD-09 | A child who wants to keep going after the cap | No. The goodnight ritual, then "the camp is asleep". The parent can grant +10 min through the gate (a "bonus" button, not shown to the child; max 1 per child per day; audit-logged; it extends minutes, never adds an episode or any reward) |
+| DD-09 | A child who wants to keep going after the cap | No. The goodnight ritual, then "the camp is asleep". The parent can grant +10 min through the gate (a "bonus" button, not shown to the child; max 1 per child per day; audit-logged as `cap_bonus_granted` (§15.1, 11 §5.8 cls `admin`); it extends minutes, never adds an episode or any reward; applied at the next segment boundary like any cap change) |
 | DD-10 | Number of choices in Plan | K2: 2, K1: 3 + a flame, K3: 3 doors |
 | DD-11 | Default letter order (K2) | The default in the Hebrew spec (sound-first, high utility, confusables separated); the parent's "letter of the week" overrides |
 | DD-12 | Which numbers K3 hears | 1–3 only (Give-N), in the lookup forms (feminine for rote counting; noun agreement as in the lexicon) |
@@ -2272,9 +2286,9 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 | DD-15 | Offline (no network) | Everything works. Co-op is limited to same-device. Sync later (00 E6) |
 | DD-16 | An event that came out before the content was ready | It is postponed by days in the config without changing its dates on the calendar (it appears in the box as a "late gift") |
 | DD-17 | A secret not found after 3 visits | On the 4th visit the pet points to it right away (goal-gradient) |
-| DD-18 | Moving up a grade (Sept 2027) | Profile: K2 → grade 1 (moves to the "Explorer+" setting, more text with nikud); K1 → grade 4; K3 → gan (3.5) moves from lap mode to "co-play-first" with short solo periods. A light placement test runs again |
+| DD-18 | Moving up a grade (Sept 2027) | Profile: K2 → grade 1 (moves to the "Explorer+" setting, more text with nikud); K1 → grade 4; K3 → gan (3.5): `child_settings.launchMode` changes `lap → coplayFirst` (§15.3: gate once per day, solo episodes ≤5 min = the playroom) **on parent confirmation only** (08 §10.5.7, 10 FAM-03), never automatically. A light placement test (a short expedition, 08 §10.5.7) runs again |
 | DD-19 | Volume and music | Music −8 dB under voice-over (ducking). Separate sliders for music/SFX/VO for the parent |
-| DD-20 | iPhone orientation | Game scenes in landscape. The hub on iPhone is landscape too (a 3D scene); menus/collection room portrait-agnostic |
+| DD-20 | iPhone orientation | **09 §8.1 owns orientation (00 A3, J1):** game scenes, mechanics, co-op and movement = landscape (locked on iPhone); **the hub, map, album, shop, avatar, base and pet on iPhone = portrait-first, landscape allowed** (the hub camera pulls back into a vertical frame, campfire in the top third, 09 SCR-04); profile picker, wind-down and parent area = portrait. The earlier "hub landscape too" default is withdrawn (F9 GAP-29) |
 | DD-21 | What the parent sees from co-op | Only "who took part" + positive behaviors (from guide mode) |
 | DD-22 | A child's drawing failed in processing | It becomes a "sticker" with an artistic filter. Never "unsuitable" |
 | DD-23 | Two siblings rescued the same friend in co-op | Each one gets "their" copy in their neighborhood (no splitting, no fights) |
@@ -2285,10 +2299,10 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 | DD-28 | Child input faster than the UI can respond (tap spam) | Input is debounced per target (300 ms K3, 200 ms K2/K1); during T2+ celebrations taps are swallowed except "skip"; a 3rd wrong answer in <800 ms each (K1) triggers the rapid-guess rule (02 §2.6) and the engine steps down one band for the next 3 items; never a message about speed |
 | DD-29 | Child stuck on the same level across 3 visits | Visit 4 starts with the pet pointing at the next friend immediately (DD-17), the engine serves the level's items one band lower, and ניצי "takes a lantern breath" first; the level is marked `assisted` for the parent report only. There is no "skip level" offered to the child; the parent can mark a skill `notRelevant` (10 API-12) which removes that content |
 | DD-30 | Child avoids every learning action (wanders, pokes friends, visits the shop) | Allowed; nothing hostile happens. Free play earns nothing (02 §2.7). After 2 consecutive episodes with 0 `item_answered` events the parent gets an informational card (not an alert); the next Plan step offers only 2 levels and no camp-first option |
-| DD-31 | Device time zone differs from the family's (travel) | Day boundaries (`DayKey`) use the **device** time zone; Shabbat/holiday windows use the **family city** until the parent switches "travel city" in the parent area. A banner for the parent appears when `deviceTz ≠ family.tz` for >24 h |
+| DD-31 | Device time zone differs from the family's (travel) | Day boundaries (`DayKey`) use the **device** time zone with 02 §10.1's 04:00 rollover; Shabbat/holiday windows use the **family city** until the parent sets a **"עיר נסיעה"** (`family_prefs.travelCity`, a hebcal city — the field 11 GAP-39 calls `travelMode`; a city is needed because hebcal needs one; clearing it returns to the family city). A banner for the parent appears when `deviceTz ≠ family.tz` for >24 h (telemetry `tz_mismatch`) |
 | DD-32 | Device clock jumps backward or forward | Grants use the device `ts`; the server clamps far-future time (11 §6.4). `DayKey` for caps and diminishing returns is **monotonic per device** (never earlier than the last DayKey seen), so moving the clock back cannot reset a day's caps; moving it forward only ends the day early (no gain). Skew >2 min is telemetry for the parent (11 §6.5) |
 | DD-33 | Two devices offline, same child, same chest track item | 02 §6.3 rule 6: the later chest keeps the item, the earlier one shows "כבר יש לך, קיבלת X מטבעות במקום"; nothing is removed |
-| DD-34 | CO-3 room: a device disconnects mid-finale | Its player is replaced by the scripted friend within ≤1 s (§12.1); rejoin within 15 min resumes the role; the Durable Object emits `boss_defeated{participants}` once to all devices, so each child's grant derives from the same event id |
+| DD-34 | CO-3 room: a device disconnects mid-finale | Its player is replaced by the scripted friend within ≤1 s (§12.1); rejoin within 15 min resumes the role (the `CoopRoom` closes after 15 min idle and has a **30-minute hard cap** per session, 11 §10 / 00 E5); the Durable Object emits `boss_defeated{participants}` once to all devices, so each child's grant derives from the same event id |
 | DD-35 | Parent lowers a cap below the minutes already played today | The soft warning fires at once and the episode lands within ≤1:30; tomorrow's cap is the new one; nothing earned today is removed |
 | DD-36 | App killed during the goodnight ritual or receipt | `episode_completed` is written **before** the ritual starts; relaunch shows "the camp is asleep" directly; the receipt is shown once on the next entry if it was never displayed (`receipt_shown` event) |
 | DD-37 | Free-signing install expired mid-week (00 E1a) | Kids see nothing (the app just won't launch); the parent area showed a banner from day 5 and the app syncs at every episode end and on background, so at most the current episode's unsynced events are at risk; on re-sign over cable the data container is preserved `⟂VERIFY` (install the re-signed build over the existing bundle id with `devicectl` on a test device and confirm SQLite survives; if not, the re-sign script must run "סנכרון עכשיו" first via the parent area) |
@@ -2317,9 +2331,8 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 
 > The decisions in 00 remain binding until updated. Each proposal includes the reason.
 
-1. **E5 (Backend) — real-time co-op:** add **Cloudflare Durable Objects** (WebSocket hibernation; part of the Workers Paid plan) as the transport for CO-3 sessions. Each "family room" is one DO: authoritative event ordering, low latency, and an automatic close after 15 minutes without activity.
-   - **Reason:** D1/HTTP sync (E6) is enough for async but not for evenings or the boss on 2–3 devices.
-   - **Fallback without approval:** CO-3 is disabled and co-op is same-device only (CO-1/CO-2).
+1. **E5 (Backend) — real-time co-op: ACCEPTED (00 rev 2, Appendix A).** E5 now lists Durable Objects (`CoopRoom`, WebSocket Hibernation, auto-close after 15 min idle; 11 adds a 30-min hard cap). Each "family room" is one DO: authoritative event ordering, low latency.
+   - **Fallback (still binding):** without Cloudflare approval CO-3 is disabled and co-op is same-device only (CO-1/CO-2); the vertical slice runs fully local (E5), so CO-3 is first testable at the MVP sprint that deploys staging.
 2. **B7 — explicit list of quiet days:** Yom HaShoah, Yom HaZikaron, Tisha B'Av, Yom Kippur = no events, no boss, celebrations up to T1. **Yom Yerushalayim** = a neutral day with no event (political sensitivity).
    - **Reason:** "memorial days" in 00 isn't specific enough for a calendar config.
 3. **B8 — add:** no fireworks (including Yom HaAtzmaut); no darkness >40% of the screen and a minimum luminance in evening scenes; for K3, dusk only.
@@ -2379,8 +2392,12 @@ export const celebration = {
 | `celebration_played` | tier, durationMs, skipped | AC-CEL-2 |
 | `coop_light_share` | sessionId, childId, lightUnits, activeMs | AC-CO-2 |
 | `movement_moment` | momentId, mode(full/seated/tap), completed | G6 |
-| `free_choice_unrewarded` | activity (music hut, collection room, playroom) | The overjustification metric (report §"how we know we won") |
+| `free_choice_unrewarded` | activity (music hut, collection room, playroom, `camp_asleep`) | The overjustification metric (report §"how we know we won") |
 | `stop_ritual` | completed, overtimeMs, capReason | AC-STOP-* |
+| `cap_bonus_granted` | childId, minutes (10), grantedBy (guardianId or `device-local`), dayKey | DD-09 audit (cls `admin`, 11 §5.8) |
+| `turn_yielded` | childId, sessionId, nextChildId, plannedShare | §12.5 Patience heart; AC-CO-8 |
+| `ftue_completed` | childId, deviceId | §14.2 (sets `child_resume.ftueCompletedAt`) |
+| `tz_mismatch` | deviceTz, familyTz, hours | DD-31 banner |
 
 **Product metrics (for the parent, not for the children):**
 - "learning seconds per minute of play" (target ≥0.6 for K1/K2);
@@ -2398,10 +2415,10 @@ export const celebration = {
 | ID | Scenario | Binding rules (gameplay) | AC-UC-nn (testable) |
 |---|---|---|---|
 | UC-01 | **First run, K2** | §14.2 K2 flow; 3 real endowed rescues in episode 1 (§14.3); first egg = his first domain (§4.12); no text; the Plan offers 2 levels only from R-03/R-05; the tutorial is "learn by doing", no modal | Playwright: from profile pick to first friend ≤60 s of scripted time with 0 text nodes in the child layer; `friend_rescued` ×3 by end of episode 1 |
-| UC-02 | **First run, K1** | §14.2 K1 flow; "Skip" after 3 s; names her פנסון; placement runs inside regular levels (08 "mapping expedition" ≤10 min); egg choice 1 of 2; joystick offered once, remembered | Snapshot: skip button visible at t=3 s; `placement` events never produce grants (02 §2.7); joystick preference persisted per child |
+| UC-02 | **First run, K1** | §14.2 K1 flow; "Skip" after 3 s; names her פנסון; placement = 08's expeditions as story-wrapped `mode:'placement'` levels (§14.2–14.3: E1 Sun … E4 Wed, 8–10 min each); egg choice 1 of 2; joystick offered once, remembered; FTUE never replays (`ftueCompletedAt`) | Snapshot: skip button visible at t=3 s; `placement` events never produce grants (02 §2.7); joystick preference persisted per child; AC-FTUE-1, AC-PLC-1 |
 | UC-03 | **First run, K3** | §14.2 K3 flow; parent gate mandatory; פופי; no wrong answers; parent prompt on screen; 4:00 episode | AC-K3-1/2 hold on the first episode; the parent prompt layer is `parentOnly` (small text, not voiced) |
 | UC-04 | **Returning after 3 weeks** | §5.5 surprises accumulate (max 7 → "big letter", DD-25); pet asleep → wakes happily (§4.12); campfire unchanged (never dims, §10.4); levels left mid-way restart after 7 days with rescued friends kept (DD-26); the Plan shows "ברוכים השבים" with a warm-up of **due reviews only** (no new skill in the first episode back); nothing says "you were away" | Fold over a log with a 21-day gap: no counter decreases (02 §14.1); the first episode back has `newRatio = 0`; the mailbox holds 7 items + 1 bundle |
-| UC-05 | **Sibling grabs the device mid-level** | §12.5 instant save; switching profiles needs the picture-PIN if set (00 H3); the interrupted child's beat state is saved at the last checkpoint; the yielding child gets a "Patience heart" + a VIP surprise next time (§12.5); DD-27 auto-close after 24 h; the other child's episode starts normally; K3's profile cannot be launched this way (gate) | Test: switch at any beat → resume lands on the same beat with the same content slot; no grant is lost or duplicated (02 §18 UC-05); K3 launch from the switcher is refused without the gate |
+| UC-05 | **Sibling grabs the device mid-level** | §12.5 instant save; switching profiles needs the picture-PIN if set (00 H3); the interrupted child's beat state is saved at the last checkpoint; `session.ended{reason:'parent_exit'}` + `turn_yielded` when the §12.5 rule holds → "Patience heart" + a VIP surprise next time; DD-27 auto-close after 24 h; the other child's episode starts normally; K3's profile cannot be launched this way (gate, `launchMode:'lap'`) | Test: switch at any beat → resume lands on the same beat with the same content slot; no grant is lost or duplicated (02 §18 UC-05); K3 launch from the switcher is refused without the gate; AC-CO-8 |
 | UC-06 | **Two kids, one iPad, co-op turn-taking** | DD-08 turn ring; CO-1/CO-2 modes; each child's items at their own band (DD-13); shared meter only (§12.4); each gets "their" copy of a shared rescue (DD-23); co-op minutes count 50% to each cap; the session ends with **one** goodnight for both (each child's `episode_completed` written) | AC-CO-1..6; test: a CO-2 session emits one `episode_completed` per participant and one shared `coop_session` id |
 | UC-07 | **K3 lap mode, parent walks away** | §15.3: the playroom (MX-P01) auto-stops after 5 min with a lullaby; no exits, no menus, 12 mm dead margin; no learning segment runs without a parent prompt answered ("עשינו!") within 60 s — otherwise the episode switches to playroom; `solo minutes in learning segments` reported to the parent (10 M-14, target 0) | AC-K3-1; test: no parent tap for 60 s in a lap segment → playroom; playroom hard-stops at 5:00 ± 5 s |
 | UC-08 | **Offline for days** | DD-15 everything works; content from the installed packs; daily surprises generated locally from the seed; co-op same-device only; chests open offline (contents already in the event); sync on reconnect merges by event id (00 E6) | Playwright with network off for a simulated 5 days: all episodes playable; on reconnect `rejected = []` and no duplicate grants |
@@ -2413,7 +2430,7 @@ export const celebration = {
 | UC-14 | **App killed during a chest reveal** | §16.2 idempotent reveal (`chest_earned` → `chest_opened` at beat 6); relaunch plays beat 8 only or leaves the chest on the shelf | AC-ECO-4 |
 | UC-15 | **Clock tampering** | DD-32 monotonic DayKey; server clamp; skew telemetry; Shabbat windows prefer `serverTime` when the last sync is <24 h old, else device time | Test: set device clock −2 days → caps unchanged; +10 days → `DayKey` advances once, no bonus paid early (02 §18 UC-15) |
 | UC-16 | **Device time zone ≠ family** | DD-31 | Test: device in `America/New_York`, family Tel Aviv → episodes count toward the NY-local day; Shabbat scenery follows Tel Aviv until "travel city" is set |
-| UC-17 | **CO-3 disconnect** | DD-34; §12.1 drop-in/out; Durable Object authoritative (§20 #1); offline → CO-3 unavailable, CO-1/2 offered | AC-CO-3; test: host drop during the finale → the finale completes on the DO and every device receives the same `boss_defeated` id on reconnect |
+| UC-17 | **CO-3 disconnect** | DD-34; §12.1 drop-in/out; Durable Object authoritative (00 E5 `CoopRoom`, accepted); offline → CO-3 unavailable, CO-1/2 offered; light contributed while disconnected merges into the next evening's meter, never a retroactive fire level (§10.4) | AC-CO-3; test: host drop during the finale → the finale completes on the DO and every device receives the same `boss_defeated` id on reconnect; `fireLevel` after the merge equals the DO's count |
 | UC-18 | **K1 guide-mode overuse** | §12.6 two-level opt-in, 1/day ≤10 min, brain-token gate, no input on his items, no stats | AC-CO-5; test: a second offer on the same day never renders; mentor progress stops at 10:00 |
 | UC-19 | **Accessibility: color blindness** | DD-40; 09 §3.4 | Playwright with a CVD filter: every state pair (lit/unlit, tier, flame, jar) remains distinguishable by shape/icon |
 | UC-20 | **Accessibility: motor** | 09 §10: tap-tap alternative for every drag (`dragOrTapTap`), long-press ×1.5 setting, targets ≥ §6.3 sizes, no multi-finger gesture required, handedness mirror, chest auto-open setting, Switch Control focus ring | Test: every mechanic completes with single taps only (`inputMode='tapTap'`); 0 required multi-touch gestures (lint on gesture handlers) |
@@ -2438,3 +2455,23 @@ export const celebration = {
 - **New §21 use-case/edge-case matrix** (24 scenarios) with binding rules and AC-UC-nn; new DD-26..DD-40; new ACs (AC-ECO-3/4/5, AC-HERO-1, AC-REG-1, AC-FIRE-1, AC-PET-1, AC-MX-6..9, AC-CTRL-1, AC-STOP-4, AC-SHAB-3).
 - **F3 (04 Hebrew) items processed:** MX-H12 `rune-splitter` (the key K2 predictor `H.PA.PH.SPLIT`, Tier B shipped in S0), MX-H13 `twin-detective`, MX-H14 `writing-studio` (parent-mediated, not tracing), MX-H15 `word-machine` added with full cards (§7.3); variants syllable-clap (H05), summary-chest/story-campfire (H07), readers-theater/echo-cave/phrase-bridge (H08), prefix-peeler (H11) recorded; 04 §7.3א mapping onto MX-H01…H11 confirmed (§7.1); `hint:lens` event on MX-H06 (AC-MX-11); co-op touch zones + `assisted:'parent'|'sibling'|'none'` tagging rule (§12.2, AC-CO-7); catalog now 68, Tier B 23. 03 §5.4's eight math proposals were already adopted as MX-M13…M20 (F3 #17).
 - **Still unverified (`⟂VERIFY`):** DD-37 — whether a re-signed build installed over the existing bundle keeps the SQLite container (test with `devicectl` on one device before relying on it).
+
+### Round 2 changelog (reviewer R2, 2026-11-02)
+
+Disposition of every issue targeting this file is in `docs/review/round2-R2.md`. Changes:
+
+- **Placement (F9 GAP-12/13):** §14.2 now states that 08's mapping expeditions exist as story-wrapped `mode:'placement'` levels (08 §3.6 UI rules, no grants, rescues count); §14.3 week-1 table allocates expedition slots (K2 Sun–Tue, K1 Sun–Wed) and a week-1 episode template; `mode` added to the level schema (§6.6); UC-02 updated; AC-PLC-1.
+- **FTUE once (GAP-01):** `child_resume.ftueCompletedAt` rule + `ftue_completed` event; AC-FTUE-1.
+- **Cap/closing/grace unified with 08 §6.10 (GAP-02):** 85% → `closing`; cap inside a beat → ≤1:30 landing; 08's 60 s grace only inside `closing`; `cap_bonus_granted` event for DD-09 (Appendix B); AC-STOP-2/5.
+- **Caps/bedtime (GAP-03/04):** K3 15 min and 10's bedtimes kept (already aligned in round 1; rationale in the review file); effective lock = earliest of child/device bedtime.
+- **English island:** `palette.english` replaced by 09's `region.englishIsle` tokens (F4 #18); Mr. Mix-Up = CH-04 in island costume with a separate en-US voice (F4 #13; §2.4, §4.1, §4.5); bottles phase in §2.4 with dates and week-6 confirmation (F4 #14); Hebrew cap warning deferred to island exit (GAP-30; AC-MX-3); **new §7.4 English asset-ID list** (F7 #16).
+- **Cast roles for 06/07** after §4.1 (F4 #12); **06/07 mechanic-name mapping table** after §7.3 (F4 #15).
+- **Check-in cadence** made band-specific and identical to 07 §2.4 (S every episode, G every other day first episode, T parent-led) in §5.3 and MX-S01 (GAP-31, F4 #16).
+- **Weekly boss (GAP-63, DD-06):** absent/paused children excluded from `bossHP`, finale with any subset, quiet-day/Yom Tov window move; DO emits `boss_defeated` once; AC-BOSS-3.
+- **Campfire:** level-ups only from the four events / DO summary (GAP-21); family garden placed next to the fire, cosmetic only (F4 #11/#17); 4th child not supported in v1 (GAP-53).
+- **Co-op:** CO-4 structured authoring + `coop_letter` doc (GAP-46); `turn_yielded` detection rule for the Patience heart (GAP-33); AC-CO-8; DD-34 30-min room cap.
+- **Stopping:** K1 `camp_asleep` view state (GAP-43); "back to camp" = `session.ended{reason:'child_exit'}` with `secondsSinceLastError` (GAP-25, 08's canonical enum); car mode marked P2 with its rules (GAP-19); printing via `expo-print` A4 RTL PDFs (GAP-50); `launchMode` lap/coplayFirst/solo (GAP-11b, DD-18).
+- **Shabbat window applies by session start (GAP-14d);** DD-31 `travelCity` naming (GAP-39).
+- **Chests:** `chest_earned` is a derived fold output with `chestId = hash(sourceEventId)`; only `chest_opened` is persisted (F6 #2).
+- **Praise:** §16.3 now points to 09 §9.2 P19–P25 per row; new lines go to 09 first (F6 #1). **Routes:** AC-WORLD-1 cites 11 §4.1 route names and 09 SCR ids (F6 #2).
+- **DD-20:** iPhone hub portrait-first per 09 §8.1 (GAP-29). **§20 #1:** Durable Objects marked accepted (00 E5). **§4.10/§14.1:** parent voice clips per 12 §6.11 (GAP-67).
