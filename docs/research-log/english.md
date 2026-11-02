@@ -191,3 +191,15 @@ graphemes (s a t p → i n m d → …) because it yields real CVC words from st
 | V3 | HVPT and Hebrew-L1 vowel perception: find 2–3 peer-reviewed sources; adjust PR.* nodes if needed. | search budget | dev |
 | V4 | Copyright check for TRAD-verify songs before audio production. | — | dev (+ parent sign-off is not needed: family-only, A1) |
 | V5 | Confirm 5787 calendar from the MoE circular; update `calendar/5787.json`. | host blocked | dev |
+
+## Cross-spec alignment (same session)
+
+- `01-game-design.md` already fixed the English-only character as **Sunny** (CH-02, sea otter, f) with **ניצי** as
+  sandwich translator, region R-08 Sunny Harbor, mechanics MX-E01..E04, MV-08 "Sunny Says", Wordlings, boss
+  Mr. Mix-Up, and English island opening in arc week 6 (~2026-12-20). 05 adopts all of these. It proposes
+  "bottles from the sea" before the opening, a minimal-pairs mode for MX-E01, MX-E05..E07, and Pip the crab
+  (a decodable, non-speaking sidekick).
+- `08-assessment-engine-child-model.md`: mastery levels `proficient`/`master` (D9). Default subject weights are
+  K1 English 15% and K2 10%. 05 requests 25% and 15%.
+- `09-ux-ui-design-system.md`: `font.en` = Andika, `type.en.k1` 26pt. 05 requests decode-word and letter tokens.
+
