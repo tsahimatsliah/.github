@@ -155,7 +155,9 @@ export interface Skill {
   band: Band;                               // 00 A6: רצועת התוכן (T/G/S). חובה. gradeTag מדייק בתוכה
   subBand?: 'T+' | 'G+' | 'S-R' | 'S+';     // תת-רצועה (03 §1.2, 04 §2.1א). לא משפיע על המנוע; מידע לתוכן ולדשבורד
   titleHe: string;                          // להורה
-  kind: 'fact' | 'procedure' | 'concept' | 'discrimination' | 'knowledge' | 'motor' | 'fluency' | 'language';
+  kind: 'fact' | 'procedure' | 'concept' | 'discrimination' | 'knowledge' | 'motor' | 'fluency' | 'language'
+      | 'performance' | 'exposure';         // 06 §2.2: יחידות שאינן "ידע": ביצוע מאושר (שיר, ניסוי) / חשיפה בלבד. סמנטיקה ב-§5.1
+  masteryProfile?: { window: number; proficientClean: number; proficientP: number };  // 05 M-REC וכד'. ולידציה: clean/window ≥ 0.85, P ≥ 0.80 (C11: לעולם לא חלש יותר)
   prereqs: SkillId[];                       // DAG קשיח: מגדיר "מוכן ללמידה"
   encompasses: { skillId: SkillId; weight: number }[]; // FIRe: אילו מיומנויות מתורגלות באופן חלקי (0..1)
   anchor: number;                           // מיקום בתוכנית בשנות-כיתה: 0 = תחילת גן חובה, 3.0 = תחילת כיתה ג', 3.5 ≈ פברואר בכיתה ג'
@@ -929,6 +931,8 @@ function hshsUpdate(s, item, x: 0 | 1, tMs: number, cfg) {
 
 * K3: הרמות מחושבות פנימית לבחירת פריטים בלבד ולא מוצגות. מוצגות רק מדבקות.
 * `attemptsSinceLevelChange ≥ 10 && learningProgress < 0.05 && level ∈ {beginner, advancing}` → `stuck = true` (wheel-spinning, ‏Beck & Gong). המרכיב יורד לבדיקת קדם-דרישה (§6.4), ואם זה נמשך יותר מ-5 מפגשים מוצג להורה כרטיס "תקוע".
+* **פרופיל שליטה לפי מיומנות (`masteryProfile`, 05 M-REC, 06):** מחליף את `window`/`proficientClean`/`proficientP` של הטבלה למיומנות הזו בלבד; שאר התנאים (3 האחרונות נקיות, ≥2 ימים, בדיקה מושהית ל-`master`) **לא** ניתנים לדריסה. הטעינה דוחה פרופיל עם `proficientClean/window < 0.85` או `proficientP < 0.80` (00 C11: "never a weaker rule"). לכן M-REC של 05 (חלון 6, 5 נקיות = 0.833) **נדחה** ומוחלף ב-`{window: 7, proficientClean: 6, proficientP: 0.80}` (0.857) — ראו fable-issues-F5 → 05. `advancing` משתמש בחלון הפרופיל עם אותו 0.70.
+* **`kind:'exposure'`** (06): יחידת חשיפה. אין "נכון/לא נכון": כל השלמה היא תצפית x = 1, w = 0.5. הרמה **מוגבלת ל-`advancing`** (להורה: "פגשנו"), אין כרטיסי חזרה, אין דגלים, לא `placementEligible`, לא ב-fringe של צאצאים (כמו MP.X של 03). **`kind:'performance'`** (06): ביצוע שמאושר על ידי הורה או על ידי השלמה מובנית (שיר, ניסוי, משימה): x = 1 באישור, x = 0 ב"לא הצליח" מפורש בלבד, w = 1; רמות רגילות ו-`master` אחרי בדיקה מושהית (ביצוע חוזר אחרי ≥3 ימים); לא `placementEligible`.
 * **שער ייצוגים `O.REP`** (03 §17.2, מיומנויות מושגיות במתמטיקה; EEF 2020, concreteness fading): כשב-`skill.extraGates` יש `'O.REP'`, הכניסה ל-`proficient` דורשת **בנוסף** ≥ 2 תצפיות נקיות עם `representation:'pictorial'` **וגם** ≥ 2 עם `'abstract'` בתוך last8. תצפית בלי `representation` (תבנית ישנה) לא נספרת לשער. עד שהשער מתקיים הרמה נשארת `advancing` עם `reasons: ['needs_pictorial' | 'needs_abstract']`, והבורר (§6.5) מעדיף את הייצוג החסר. השער לא חל על `master` (הבדיקה המושהית היא מעורבבת ממילא) ולא על הורדת רמה. `extraGates` נבדקים אחרי כל תנאי §5.1 הרגילים, ב-`packages/engine/mastery/gates.ts`, כדי ש-D9 יישאר הגדרה אחת עם תוספות מוצהרות.
 
 ### 5.2 בדיקה מושהית ומעורבבת
@@ -1165,13 +1169,13 @@ function updateBandController(bc, sessionFirstTry: number[], target: number) {
 * בלוק review מערבב ≥2 מיומנויות מרמת `advancing` ומעלה בלבד (שזירה רק אחרי ~70%, Brunmair & Richter). זוגות `discriminationPairs` (ב/כ, ד/ר, +/− בבעיות מילוליות) מקבלים עדיפות.
 * **משקלי מקצועות ברירת מחדל** (`EngineConfig.subjectWeights`, ההורה משנה ב-10 §6.13 בטווח 10–60 לכל מקצוע פעיל, סכום 100):
 
-| | חשבון | עברית | אנגלית | אחר (06+07) |
-|---|---|---|---|---|
-| K1 | 30 | 30 | **25** | 15 |
-| K2 | 30 | 35 | **15** | 20 |
-| K3 | אין משקלים: 50% "מוכר ואהוב" / 50% "חידוש עדין" (§6.2) | | | |
+| | חשבון | עברית | אנגלית | העשרה (`enrichment` = science, world, logic, art, music, motor; 06) | כישורי עתיד (`fs` = ai_literacy, sel; 07) |
+|---|---|---|---|---|---|
+| K1 | 30 | 28 | **20** | 12 | 10 |
+| K2 | 30 | 30 | **15** | 15 | 10 |
+| K3 | אין משקלים: 50% "מוכר ואהוב" / 50% "חידוש עדין" (§6.2) | | | | |
 
-  **ההכרעה (בקשת 05 §17, שורה 08):** 05 ביקש להעלות אנגלית ל-25% (K1) ו-15% (K2), כי כמות הקלט היא המנבא העיקרי של רכישת שפה זרה, ו-15 דק' בשבוע לא מצטברות לכלום. קיבלתי, עם שני סייגים: (א) **עברית ≥ אנגלית תמיד** (B1, Hebrew-first), ולכן ב-K2 העלייה באנגלית באה מהחשבון (35→30) ולא מהעברית, כי מודעות פונולוגית וצלילי אותיות לפני כיתה א' הם המנבא החזק ביותר לקריאה (Yinon et al. 2026, B6), ותחושת המספר של K2 כבר חזקה לפי השאלון; ב-K1 הירידה מתחלקת שווה (35→30 בשני המקצועות). (ב) **לפני פתיחת "האי האנגלי"** (05 §15.1: פרק 6, ~20.12; עד אז שלב "בקבוקים מהים") משקל האנגלית מוגבל ל-**5** (הבקבוקים), והיתרה מתחלקת פרופורציונלית בין שאר המקצועות. תוצאה צפויה ל-K1: ~3 פרקים × 18 דק' × 25% ≈ 14 דק' אנגלית בשבוע באפליקציה, פחות מה-35–40 ש-05 רוצה; את ההפרש 05 מספק משמע ושגרות מחוץ למסך, כפי שכתב. **שיר TPR באנגלית ב-K2 נספר כפול** (00 fable-issues-F1 #11): גם ל-`english` וגם ל-`music`/`motor` בחשבון `subjectUnderweighted` (§6.4), וממלא גם את בלוק ה-fun (§6.2), כך שהאנגלית לא "גונבת" מהמשחק החופשי ומהתנועה. 00 J1: המשקלים הם של 08 (`EngineConfig`), ניתנים לעריכת הורה (H4).
+  **ההכרעה (05 §17 שורה 08, F1 #11, F4 #1):** 05 ביקש תחילה 25% (K1) / 15% (K2) לאנגלית, ו-F1 המליץ לקבל. אבל 05, 06 ו-07 ביקשו יחד הרבה יותר מ-100% מזמן המסך, ולכן 05 §2.1, 06 §2.5 ו-07 §12.1 נושאים עכשיו **טבלת תקציב שבועית אחת** (מ-02 §12.1: K1 ≈ 5×18 = 90 דק', K2 ≈ 6×10 = 60 דק') שבה אנגלית K1 = **20**. הטבלה למעלה היא אותה טבלה, והיא ברירת המחדל ב-`EngineConfig` (J1: 08 הבעלים; H4: ההורה עורך). סייגים: (א) **עברית ≥ אנגלית תמיד** (B1), ואכיפה בוולידציה של 10 §6.13. (ב) **לפני פתיחת "האי האנגלי"** (05 §15.1: פרק 6, ~20.12; עד אז "בקבוקים מהים") משקל האנגלית מוגבל ל-**5**, והיתרה מתחלקת פרופורציונלית. (ג) `sel` בתוך `fs` לא מקבל רמות מוצגות (C8) אבל כן זמן. תוצאה צפויה ל-K1: ~90 דק' × 20% ≈ 18 דק' אנגלית בשבוע באפליקציה; את ההפרש ל-35–40 דק' 05 מספק משמע ושגרות מחוץ למסך, כפי שכתב. **סימולציית מתזמן של 1,000 שבועות** (05 AC18 / 06 AC-06-22 / 07 AC-35) רצה על `composeEpisode` ובודקת שהחלק בפועל של כל קבוצה ב-4 שבועות הוא בתוך ±5 נקודות מהמשקל (S-8). **שיר TPR באנגלית ב-K2 נספר כפול** (00 fable-issues-F1 #11): גם ל-`english` וגם ל-`music`/`motor` בחשבון `subjectUnderweighted` (§6.4), וממלא גם את בלוק ה-fun (§6.2), כך שהאנגלית לא "גונבת" מהמשחק החופשי ומהתנועה. 00 J1: המשקלים הם של 08 (`EngineConfig`), ניתנים לעריכת הורה (H4).
 * **מקצוע כבוי** (ההורה כיבה ב-PA-CSET): המשקל שלו 0, והיתרה מתחלקת פרופורציונלית. מקצוע עם `contentExhausted` בכל הצירים (§10.5.9): כנ"ל, עם הודעה להורה.
 * **תת-משקל:** `subjectUnderweighted(s)` ב-§6.4 מתקיים כשהחלק של s ב-14 הימים האחרונים קטן מ-`subjectWeights[s] − 10` נקודות.
 
@@ -1376,7 +1380,8 @@ export interface StrengthsNarrativeInput {
 | `MOTOR_K2_TRACING` | K2 | מיד | סטיית מסלול חציונית מעל סף התבנית ב-≥60% מהניסיונות | 6 שבועות | 10 שבועות |
 | `LANG_K3_PARENT` | K3 | שאלון | T1 = `no` **וגם** T2 = `no` בגיל ≥ 2;6 | מיד, הודעה עדינה | אותה הודעה כוללת את מסלול הפנייה |
 | `EMO_DISTRESS` | כולם | מיד | ≥3 אפיזודות תסכול בשבוע, 3 שבועות **או** ≥3 יציאות אחרי שגיאה בשבוע | 3 שבועות: על לחץ, הפסקות ומשחק משותף | אם `parentConcern.emotional`: מדריך הדגלים האדומים (C8) |
-| `EMO_CHECKIN` (בקשת 10 §6.9; 00 C8a) | K2, K1 | רק עם `consent.checkinNudge` (T4b, ברירת מחדל כבוי) | **מונה מקומי ל-14 יום** (C8a): לכל `dayKey` נשמר רק `{checkins: n, sadOrScared: m}`, בלי התוויות עצמן, ונמחק אחרי 14 יום. הכלל: "עצוב"/"מפחד" ב-**≥3 מתוך 5 ימי הצ'ק-אין האחרונים** בתוך החלון (ימים עם צ'ק-אין, לא ימים קלנדריים). מחושב **במכשיר שבו נעשה הצ'ק-אין** בלבד; יוצא ממנו **רק** `{ruleId, status:'parent_note', dayKey}` (בוליאני אחד, C8a) למכשירי ההורים, מוצפן | **מיד** (זה לא דגל RTI אלא "דחיפה עדינה"): "אולי זה זמן טוב לשיחה" + CL-10. לא נכנס למדרג `watch`. קצב: לכל היותר פעם ב-**14 יום**, ולא נספר במכסת 28 הימים של שאר הדגלים | **אין.** לעולם לא `referral_suggested` מצ'ק-אין לבד. אם במקביל `EMO_DISTRESS` פעיל, ההודעה מאוחדת |
+| `EMO_CHECKIN` (10 §6.9; נוסח הכלל: **07 §10**, בעל ה-SEL לפי J1; 00 C8a) | K2, K1 | רק עם `consent.checkinNudge` (T4b, ברירת מחדל כבוי, OPD-27) | **מונים מקומיים ל-14 יום** (`fs_local_counters`, C8a): לכל `dayKey` רק `{checkins, stormRain, fearWords}`, בלי התוויות עצמן, נמחק אחרי 14 יום, **מושהה כש-`family.calmMode` פעיל** (B8). הכלל (07): **≥5 מתוך 7 הצ'ק-אינים האחרונים ב"סערה/גשם" על ≥5 ימים שונים בתוך 14 יום**, **או** ≥4 מילות פחד/דאגה (מרשימת 07) על ≥3 ימים. (הנוסח הקודם של 10, "3 מתוך 5 ימים", היה רגיש מדי ובוטל.) מחושב **במכשיר שבו נעשה הצ'ק-אין** בלבד; יוצא ממנו **רק** `{ruleId, status:'parent_note', week}` (בוליאני אחד) למכשירי ההורים, מוצפן | **מיד** (זה לא דגל RTI אלא "דחיפה עדינה"): "אולי זה זמן טוב לשיחה" + CL-10. לא נכנס למדרג `watch`. קצב: לכל היותר פעם ב-**14 יום**, ולא נספר במכסת 28 הימים של שאר הדגלים | **אין.** לעולם לא `referral_suggested` מצ'ק-אין לבד. אם במקביל `EMO_DISTRESS` פעיל, ההודעה מאוחדת |
+| `SEL_LADDER_PAUSE` (07 §10) | K2, K1 | מיד | סמני 07 §10 (עלייה בסימני מצוקה סביב שלבי "סולם האומץ" של 07, מ-`fs_local_counters`; הרשימה המדויקת ב-07). מושהה ב-`calmMode` | `watch` = **מיידי**: הסולם מושהה (07 קורא את `FlagState.status`) בלי הודעה. `parent_note` רק אחרי שער 28 הימים הרגיל: "השהינו את סולם האומץ; כדאי לשוחח" + CL-10 | **אין** (לעולם לא `referral_suggested`; אם במקביל `EMO_DISTRESS`, ההודעה מאוחדת) |
 | `MATH_K1_FACT_PACE` (בקשת 03 §14.3) | K1 | מיד, `maxStatus:'watch'` עד אישור ההורה בנקודת הבדיקה (I1) | אחרי ≥10 שבועות של תרגול עובדות: < 30% מעובדות הכפל (`M.FACT.MUL.*`) ב-`proficient`+, **בזמן ש**דיוק במושגי הכפל (`M.MUL.*`) ≥ 85% ב-≥30 פריטים | 10 שבועות, ≥12 מפגשים עם עובדות. **זה קצב, לא קושי:** ההודעה מציעה לשוחח עם המורה על יעד לוח הכפל (03 §16) | **אין** (לעולם לא `referral_suggested`) |
 | `MATH_K1_READ_VS_LISTEN` (בקשת 03 §14.3) | K1 | מיד, `maxStatus:'watch'` עד אישור | בבעיות מילוליות: דיוק נמוך ב-≥15 נקודות כש-`audioPrompt` כבוי (קוראת לבד) לעומת מופעל, ≥20 פריטים בכל מצב, ב-28 יום | **אין הודעה משלו.** הסמן מזין את `HEB_K1_LISTEN_READ_GAP` כראיה נוספת (נספר כ"שבוע מתקיים" גם אם ה-θ-gap קטן מ-1.0 אבל ≥ 0.7). המנוע ב-`watch`: בעיות מילוליות עם הקראה כברירת מחדל | דרך `HEB_K1_LISTEN_READ_GAP` בלבד |
 | `HEB_K1_FADE_STALL` (בקשת 04 §13.4) | K1 | מיד, `maxStatus:'watch'`, `provisional` | מסלול דעיכת הניקוד (B5, 04 §6): ≥3 נסיגות (F_n → F_{n−1}) ב-8 שבועות, **או** פער דיוק מנוקד/לא-מנוקד > 10 נק' אחרי 4 שבועות של `fadeHold` | 6 שבועות: "הקריאה בלי ניקוד עוד מתייצבת; המשחק מחזיק ניקוד מלא" | **אין** (זה קצב; אם יחד עם `HEB_K1_RATE`, ההודעה מאוחדת והפניה לפי RATE) |
@@ -1627,7 +1632,9 @@ export const DEFAULT_CONFIG: EngineConfig = {
   frustration: { scoreThreshold: 4, window: 5, idleAfterErrorMs: 10000, rageTaps: 5, rageWindowMs: 2000 },
   interest: { halfLifeDays: 25, parentSeedHalfLifeDays: 50, positionBias: 0.8, positionBiasFactor: 0.33, snoozeDays: 14 },
   profile: { shrinkM: 10, prior: 0.7, earlyEvents: 20, earlySessions: 5, earlyDays: 3, consistentEvents: 40, consistentWeeks: 3, hideBelowAccuracy: 0.7 },
-  subjectWeights: { K1: { math: 30, hebrew: 30, english: 25, other: 15 }, K2: { math: 30, hebrew: 35, english: 15, other: 20 } },   // §6.8
+  subjectWeights: { K1: { math: 30, hebrew: 28, english: 20, enrichment: 12, fs: 10 }, K2: { math: 30, hebrew: 30, english: 15, enrichment: 15, fs: 10 } },   // §6.8
+  subjectGroups: { enrichment: ['science', 'world', 'logic', 'art', 'music', 'motor'], fs: ['ai_literacy', 'sel'] },
+  masteryProfileFloor: { cleanRatio: 0.85, proficientP: 0.80 },   // §5.1 (C11)
   englishPreIslandWeight: 5,                   // §6.8: עד פתיחת האי האנגלי (05 §15.1)
   gates: { 'O.REP': { pictorialClean: 2, abstractClean: 2, pickTolerance: 0.12 } },   // §5.1, §6.5
   lazyPlacement: { probeItems: 3, placedAtMinObs: 8, placedAtMaxSe: 0.6 },            // §3.7
@@ -1637,8 +1644,9 @@ export const DEFAULT_CONFIG: EngineConfig = {
              threshold: 4, thresholdWithPin: 5, autoResolveHours: 48, pinOfferConfirmed: 2, pinOfferWindowDays: 30 },  // §10.5.3
   breakMode: { minSchoolDays: 5, composition: { K1: { warmup: .15, new: .25, review: .50, stretch: 0, fun: .10 }, K2: { warmup: .20, new: .30, review: .30, stretch: 0, fun: .20 } }, maxReviewsAfterReentry: 6 },  // §6.2א
   flags: { minNoticeGapDays: 28, minWeeklyExposure: 15, notRelevantSnoozeWeeks: 8, notRelevantTighten: 0.2, teacherGraceWeeks: 4,
-           checkin: { window: 5, hits: 3, cooldownDays: 14 },
-           maxStatus: { MATH_K1_FACT_PACE: 'watch', MATH_K1_READ_VS_LISTEN: 'watch', EMO_CHECKIN: 'parent_note' /* השאר: 'referral_suggested' */ },
+           checkin: { counterDays: 14, lastN: 7, stormRainHits: 5, stormRainDays: 5, fearWords: 4, fearDays: 3, cooldownDays: 14 },   // 07 §10
+           maxStatus: { MATH_K1_FACT_PACE: 'watch', MATH_K1_READ_VS_LISTEN: 'watch', HEB_K1_FADE_STALL: 'watch', HEB_K1_HANDWRITING: 'watch',
+                        EMO_CHECKIN: 'parent_note', SEL_LADDER_PAUSE: 'parent_note' /* השאר: 'referral_suggested' */ },
            provisional: { wcpmFloorPointed: null /* חייב להיקבע מכלי משרד החינוך או ממשוב מורה */ } },
   cadence: { bossEveryDays: 28, bossAfterProficient: 3, reentryGapDays: 21, vacationGapDays: 14, longAbsenceDays: 90, skipChallengeAcc: 0.95, probeDownAcc: 0.60,
              rolloverShortTripDelta: 0.8 },
@@ -1852,9 +1860,15 @@ export const DEFAULT_CONFIG: EngineConfig = {
 | U-LAZY-1 | ציר `continuation`, מיומנות נבחרת לראשונה | 3 פריטי probe בתחילת בלוק new, K=0.50, משוב רגיל |
 | U-LAZY-2 | 3/3 נכונים | המיומנות `known`; הקדם-דרישות `known` (סגירה) |
 | U-LAZY-3 | 8 תצפיות, se=0.55 | `placedAt` נקבע |
-| U-WGT-1 | K1, ברירת מחדל | {math 30, hebrew 30, english 25, other 15} |
-| U-WGT-2 | K1 לפני פתיחת האי (2026-12-01) | english 5; השאר פרופורציונלי: math 37, hebrew 37, other 21 (עיגול largest remainder, סכום 100) |
-| U-WGT-3 | K2, אנגלית כבויה | {math 35.3→35, hebrew 41, other 24} (largest remainder) |
+| U-WGT-1 | K1, ברירת מחדל | {math 30, hebrew 28, english 20, enrichment 12, fs 10} |
+| U-WGT-2 | K1 לפני פתיחת האי (2026-12-01) | english 5; השאר פרופורציונלי ×(95/80): math 36, hebrew 33, enrichment 14, fs 12 (largest remainder, סכום 100) |
+| U-WGT-3 | K2, אנגלית כבויה | {math 35, hebrew 35, enrichment 18, fs 12} (largest remainder) |
+| U-MPR-1 | `masteryProfile {6, 5, 0.80}` | הטעינה נדחית (0.833 < 0.85) |
+| U-MPR-2 | `masteryProfile {7, 6, 0.80}`, last7 = 6/7 נקיים, 2 ימים, P̂ 0.82 | `proficient` |
+| U-MPR-3 | `kind:'exposure'`, 20 השלמות | הרמה לא עולה מעל `advancing`; אין כרטיס חזרה |
+| U-FLG-17 | `EMO_CHECKIN`: 5/7 סערה על 5 ימים ב-14 יום | `parent_note`; 4/7 → כלום; 5/7 על 4 ימים → כלום |
+| U-FLG-18 | `calmMode=true` במשך 10 ימים | המונים לא מתקדמים; אין דגל |
+| U-FLG-19 | `SEL_LADDER_PAUSE` שבוע 1 | `watch` מיד (הסולם מושהה), `notify=false`; `parent_note` רק אחרי 28 יום |
 | U-WGT-4 | הורה קובע hebrew 20, english 40 | נדחה בוולידציה של 10 (עברית ≥ אנגלית); המנוע מקבל רק config תקין (assert) |
 
 ### 12.10ג מקרי קצה (§10.5)
@@ -1915,6 +1929,7 @@ export const DEFAULT_CONFIG: EngineConfig = {
 * **S-5 (reattribute):** יומן של 3 ילדים × 200 מפגשים; בוחרים 20 מפגשים אקראיים ושולחים `session_reattribute`. המצב אחרי החישוב מחדש זהה בתים-לבתים למצב שנבנה מהיומן בלי המפגשים האלה.
 * **S-6 (anomaly):** 1,000 מפגשים סינתטיים של "הילד הנכון" ו-1,000 של "אח אחר" (θ שונה ב-≥1.5 לוגיט). `identity_suspect` תופס ≥ 70% מהאחים ו-≤ 5% מהנכונים. המספרים הם יעדי עיצוב ל-config, לא תקפות אמפירית.
 * **S-7 (rollover):** סימולציה של שנה + rollover + שנה: אין NaN, אין `dueDay` בעבר, כל ציר `primary` מקבל "מסע קצר" לכל היותר פעם אחת.
+* **S-8 (תקציב, משותף ל-05 AC18 / 06 AC-06-22 / 07 AC-35):** 1,000 שבועות מדומים לכל ילד עם `composeEpisode`; החלק של כל קבוצת מקצועות (math/hebrew/english/enrichment/fs) בדקות ממוקדות ב-4 שבועות מתגלגלים בתוך ±5 נקודות מהמשקל, גם עם מקצוע כבוי, לפני/אחרי פתיחת האי, וב-`breakMode`.
 
 ---
 
@@ -1978,6 +1993,7 @@ export const DEFAULT_CONFIG: EngineConfig = {
 סקירת F5 (2026-11-02). כל השינויים בתוך המסמך, בלי שינוי מבנה. בקשות למסמכים אחרים ב-`docs/review/fable-issues-F5.md`.
 
 * **יישור ל-00 גרסה 2 (F1):** `Band` + `bandOf` ו-`Skill.band` (A6); המיפוי ל-02 בדיוק לפי C15 (`introduced→new`, `practicing→beginner|advancing`; `locked/ready` קדם-מצבים) והחזרת שמות הצמיחה לילד (זרע…עץ פורח) ש-C15 קובע; `EMO_CHECKIN` על מונה מקומי ל-14 יום (C8a); מצבי שבת `soft/full/off` וימים שקטים במנוע (B7/B7a, §6.10, §10.2); ספירה כפולה של TPR (F1 #11); §14 מסומן "התקבל ב-00".
+* **יישור ל-F4 (05/06/07):** משקלי המקצועות = טבלת התקציב האחת של 05/06/07 (K1 30/28/20/12/10, K2 30/30/15/15/10; "אחר" פוצל ל-`enrichment`/`fs`; אנגלית K1 20 במקום 25 — 05 עצמו נושא 20 בטבלה), עם S-8; `Skill.masteryProfile` עם רצפת C11 (05 M-REC 5/6 נדחה → 6/7) ו-`kind:'exposure'|'performance'` (06); `EMO_CHECKIN` בנוסח 07 §10 (5/7 סערה על 5 ימים ב-14, או 4 מילות פחד על 3 ימים; מושהה ב-`calmMode`) במקום "3 מתוך 5" של 10; `SEL_LADDER_PAUSE` דרך `evaluateFlags` (`watch` מיידי, הודעה בשער 28 יום).
 * **יישור ל-F6 (11):** טבלת `toEngineEvent` (מה 08 צורך מ-`item.answered` של 11, ומה עדיין חסר, עם ברירות מחדל בטוחות); `evaluateFlags` רץ על המכשיר וכותב doc מוצפן `flags/<childId>` (11 §9.8), לא שורת D1 ולא ב-cron הלילי; `LevelId`/`bandOf` מיוצאים מ-`packages/shared`.
 * **יישור ל-F3 (03/04):** `Skill.subBand`, `ChildProfile.handedness` (UI בלבד, מחוץ ל-`EngineChildView`), `StrandMeta` עם `priorFrom` ו-`scoring:'wcpm'` (ל-`hebrew.fluency`) וארבעת צירי ההמשך של 04; פריסת שאלון דרך `aliases`; **גלאי אחד** לאח-בפרופיל (`identity_suspect` = `possible_profile_swap`) עם ספי 03/04 (0.35/0.98, RT 0.4×/2.5×, 10 דק') ותהליך `pending_attribution` (✓/✗/48 ש', תמונת-PIN אחרי 2 אישורים ב-30 יום); `Plan.breakMode` ו-§6.2א "מצב חופשה"; `HEB_K1_FADE_STALL` ו-`HEB_K1_HANDWRITING` ב-`watch`; `itemKey` לפי lexId.
 * **§1.1 — `SubjectId` סגור, רשימת צירים קנונית.** הוחלט **לא** להוסיף `coding`/`finance` (הערת 06): ההבחנה נשמרת בציר (`logic.coding`, `world.finance`), והדשבורד מקבץ לפי ציר. נוספה טבלת כל הצירים לפי מקצוע (כולל 5 הצירים החדשים של 03) ובדיקת טעינה. הצירים של 04 מסומנים ⟂VERIFY.
