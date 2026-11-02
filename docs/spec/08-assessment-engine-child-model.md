@@ -83,12 +83,19 @@ export type ExtraGateId = 'O.REP' | 'O.STEP';   // שכבות-על ממקצוע 
 | מקצוע | צירים | בעלים |
 |---|---|---|
 | `math` | `math.counting`, `math.magnitude`, `math.number`, `math.operations`, `math.word_problems`, **`math.facts`, `math.fractions`, `math.geometry`, `math.measurement`, `math.patterns_data`** (03 §6.0א) | 03 |
-| `hebrew` | `hebrew.pa`, `hebrew.letters`, `hebrew.listening`, `hebrew.decoding`, `hebrew.comprehension`, `hebrew.spelling_morph`, `hebrew.writing` | 04 ⟂VERIFY: 04 עדיין לא מפרסם רשימת צירים ועמוד שדרה. עד אז המזהים כאן הם הקנוניים, ו-04 ממפה אליהם |
+| `hebrew` | `primary`: `hebrew.pa`, `hebrew.letters`, `hebrew.listening`, `hebrew.decoding`, `hebrew.comprehension`, `hebrew.spelling_morph`. `continuation` (04 §2.7): `hebrew.oral` (prior מ-`hebrew.listening`), `hebrew.writing` (prior מ-`hebrew.spelling_morph`), `hebrew.ran` (prior מ-`hebrew.letters`), **`hebrew.fluency`** (`scoring:'wcpm'`: לא Elo; הערך הוא WCPM מבדיקות הקריאה בקול, §10.3, ו-`StrandState.theta` לא מוגדר לו) | 04 (§2.7 מגדיר עמודי שדרה ומיפוי שאלון) |
 | `english` | `english.oral_vocab`, `english.listening`, `english.letter_sounds`, `english.decoding`, `english.speaking` | 05 (§3) |
 | `science`, `world`, `logic`, `art`, `music`, `motor` | לפי 06 §2: `science.*`, `world.*` (כולל `world.finance`), `logic.*` (כולל `logic.coding`), `art.*`, `music.*`, `motor.tracing`, `motor.fine`, `motor.gross` | 06 |
 | `ai_literacy`, `sel` | `ai_literacy.*`, `sel.*` (ב-`sel` אין רמות מוצגות, C8) | 07 |
 
-**בדיקת תוכן:** חבילת תוכן שבה `Skill.strand` לא ברשימה נדחית בטעינה (`ContentIndex` validator).
+**בדיקת תוכן:** חבילת תוכן שבה `Skill.strand` לא ברשימה נדחית בטעינה (`ContentIndex` validator). הרשימה עצמה חיה ב-`ContentIndex.strands`:
+
+```ts
+export interface StrandMeta { id: StrandId; subject: SubjectId; placementRole: 'primary' | 'continuation';
+  priorFrom?: StrandId;                       // לציר continuation: הציר-האח שממנו נגזר ה-prior (§3.7). בלי זה: pos
+  scoring: 'elo' | 'wcpm';                    // 'wcpm' = ערך מדוד בבנצ'מרק בלבד (hebrew.fluency), בלי θ, בלי fringe
+  scaleOverride?: number }                    // SCALE לציר (§2.1)
+```
 
 ### 1.1א שמות שלבים: ההגדרה הקנונית והמיפוי ל-02
 
@@ -146,6 +153,7 @@ export interface Skill {
   subject: SubjectId;
   strand: StrandId;
   band: Band;                               // 00 A6: רצועת התוכן (T/G/S). חובה. gradeTag מדייק בתוכה
+  subBand?: 'T+' | 'G+' | 'S-R' | 'S+';     // תת-רצועה (03 §1.2, 04 §2.1א). לא משפיע על המנוע; מידע לתוכן ולדשבורד
   titleHe: string;                          // להורה
   kind: 'fact' | 'procedure' | 'concept' | 'discrimination' | 'knowledge' | 'motor' | 'fluency' | 'language';
   prereqs: SkillId[];                       // DAG קשיח: מגדיר "מוכן ללמידה"
@@ -280,6 +288,7 @@ export interface ChildProfile {
   birthMonth: string;                       // 'YYYY-MM'
   tier: Tier; grade: Grade;
   readingMode: 'pre_reader' | 'emerging' | 'fluent_pointed' | 'fluent_unpointed';
+  handedness: 'right' | 'left' | 'unknown';  // 00 H2 / OPD-01. ל-UI בלבד (09 מיקום לוחות מקשים; 04 דפי עבודה). לא ב-EngineChildView
   successTarget: number;                    // נגזר מ-tier ומ-challengeDial (§6.6)
   challengeDial?: 'easy' | 'just_right' | 'hard';   // K1 בלבד
   stretchZoneOptIn: boolean;                // K1 בלבד (C2)
