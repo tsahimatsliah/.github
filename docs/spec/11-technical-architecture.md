@@ -206,7 +206,10 @@ Rules:
 | expo-localization | 58.0.5 | plugin `{supportsRTL:true, forcesRTL:true, supportedLocales:["he","en"]}` |
 | expo-local-authentication / expo-secure-store / expo-crypto | 58.0.2 / 58.0.2 / 58.0.7 | |
 | expo-notifications | 58.1.7 | **local only** in phase 1 (no push entitlement on a free team) |
-| expo-gl / expo-sensors | 58.0.4 / 58.0.4 | 3D and motion |
+| expo-gl / expo-sensors | 58.0.4 / 58.0.4 | 3D and motion (E3: tilt, shake, "device in hand" check before jump moments) |
+| expo-device / expo-battery | SDK map | `modelId → ptPerMm` (A7, 09 §4.1; unknown model → 6.42 pt/mm + telemetry) / Low Power Mode (§4.7) |
+| *(deferred)* `olam-gamecontroller` Expo Module | — | **Not in the vertical-slice allow-list.** iOS GameController (DualSense/MFi): stick = move, X = jump, haptics map → controller rumble. Allowed after C4, never required by any mechanic (00 E3, 09 PC-2). ADR when picked up. |
+| *(tiny)* `olam-thermal` Expo Module | — | `ProcessInfo.thermalState` + `os_proc_available_memory()` (§4.7). ~40 lines Swift; written at C4 perf pass |
 | expo-splash-screen / expo-screen-orientation / expo-keep-awake / expo-network / expo-constants / expo-application / expo-device | SDK map | |
 | expo-apple-authentication | 58.0.2 | installed but enabled by flag in phase 2 only |
 | react-native-webview | 14.0.1 | 3D fallback 1 and the parent's in-app web views |
@@ -592,10 +595,18 @@ Navigation rules:
   is recommended for K3 (parent checklist).
 - Deep links use scheme `olam://`, for `olam://pair?code=…` only. Universal links need associated
   domains, which means the paid program, so they're not used.
-- `RestGate` (in `(child)/_layout` and `picker`) redirects to `/rest` when `calendar.isRestNow()`
-  (Shabbat/holiday window from `@hebcal/core`, family city) or `device_settings.bedtime` says so, or
-  the child's daily cap is reached (that child only: the picker shows the sleeping avatar, SCR-01).
-  Memorial days set `rest.mode='memorial'` (quiet screen, no celebrations, B7).
+- `RestGate` (in `(child)/_layout` and `picker`) applies 00 B7's family mode from
+  `family.prefs.shabbatMode` (`soft` default / `full` / `off`) during the pause window
+  `[candle − 30 min, havdalah + 30 min]` computed by `@hebcal/core` for the family city
+  (`packages/content/calendar/5787.json` is the bundled offline copy):
+  - `soft`: play continues; the engine runs with `ctx.frozen=true` (no coins/gems, no goal/cap
+    counters, no events open/close, camp in Shabbat scenery, levels as free practice); no notifications.
+  - `full`: redirect to `/rest` (app sleeps for children; the parent gate opens it for 30 min).
+  - `off`: nothing.
+  - Bedtime (`device_settings.bedtime`) and a reached daily cap always redirect to `/rest` (that
+    child only: the picker shows the sleeping avatar, SCR-01). Quiet days (B7a list `QD-*`) set
+    `rest.mode='memorial'`-style restrictions without sleeping: celebrations capped at T1, no events,
+    no boss, calm music, no chest auto-open.
 
 **Screen ↔ route ↔ owner (every SCR in 09 §8.2 must appear here; test `routes.spec.ts` snapshots
 this table from `app/` so a new screen without a route fails CI):**
@@ -1248,7 +1259,7 @@ parent area).
 | E-21 | Child deleted while a device is offline with that child's events | server accepts the events (soft-deleted child keeps 30 days), projections skip deleted children; device drops the child from the picker on the next pull | child vanishes from picker after sync | audit row | worker test |
 | E-22 | Pack approved while the child is mid-episode | catalog pull after the episode only (`ContentPackLoader` holds downloads while `useSession().active`); the atomic switch happens at the picker | nothing mid-episode | approvals → "יורד למכשירים" | unit: loader paused during session |
 | E-23 | Guardian removed / role downgraded while signed in on a device | next API call → 403 `forbidden` → app clears the guardian session on that device (device token stays), parent area falls back to local mode L | — | "ההרשאה שונתה" | worker + client test |
-| E-24 | Memorial day / Shabbat starts mid-episode | `RestGate` lets the current episode finish (≤ 20 min) with celebrations downgraded to `calm` register from the moment the window starts; new episodes are blocked by `rest.tsx` | wind-down as usual, then rest screen | — | unit with fake clock around candle lighting |
+| E-24 | Shabbat window / quiet day starts mid-episode | `RestGate` lets the current episode finish (≤ 20 min); from the window start the engine runs `frozen` (no coins/counters, B7 `soft`) and celebrations drop to the `calm` register; in `full` mode the next episode is blocked by `rest.tsx`; a quiet day (B7a) applies T1 caps immediately | wind-down as usual; Shabbat scenery or rest screen | — | unit with fake clock around candle lighting, all three modes |
 
 ---
 
@@ -1291,7 +1302,7 @@ Authorization for any API call follows these rules:
 
 | Provider | Phase | Flow | Notes |
 |---|---|---|---|
-| `bootstrap` | 1 (day 0) | the agent runs `pnpm ops bootstrap-owner --email <owner>` (wrangler D1 via CI) → prints a one-time **setup code** `XXXX-XXXX-XXXX` (24 h) → owner enters it in the app → owner guardian + family created | lets the family start before any email domain exists; code single-use, hashed |
+| `bootstrap` | 1 (day 0) | the agent runs `pnpm ops bootstrap-owner --email <owner>` (wrangler D1 via CI) → prints a one-time **setup code** `XXXX-XXXX-XXXX` (**24 h TTL, single use**, scrypt-hashed in `bootstrap_codes`) → owner enters it in the app → owner guardian + family created | lets the family start before any email domain exists. **Revocation (00 E7 / F1 #27):** the code row is marked `used_at` on redeem; any unused code for that email is revoked the moment an `email_code` sign-in for the same email succeeds, and the nightly cron deletes expired rows. 5 redeem attempts per IP per hour (RL_AUTH); a wrong code answers 404 `code_invalid` without revealing whether the email exists |
 | `email_code` | 1 (primary) | `POST /v1/auth/email/start {email}` → 6-digit code + web link by email (Resend) → `POST /v1/auth/email/verify {email, code}` → session | needs a verified sending domain (~$10/yr). 10-min TTL, 5 attempts per code, 5 starts/hour/email, 20/hour/IP. Always answers 202 (no account enumeration). Only emails of existing guardians/invites receive codes. |
 | `apple` | 2 (paid program) | native `expo-apple-authentication` → `identityToken` + raw nonce → `POST /v1/auth/apple {identityToken, nonce, fullName?}` → verify with `jose` (`createRemoteJWKSet('https://appleid.apple.com/auth/keys')`, `iss=https://appleid.apple.com`, `aud=<bundle id>` or the web Services ID, `nonce=sha256(raw)`) → link by `sub` | web uses Sign in with Apple JS + Services ID (paid). Linking an Apple id to an existing guardian requires being signed in (no auto-merge by email: private-relay addresses differ). |
 | `passkey` | later (web only) | WebAuthn on the dashboard origin | optional |
@@ -1584,7 +1595,7 @@ PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON;
 -- identity snapshot (pulled from server; read-only locally except via docs)
 CREATE TABLE device_self (
   id TEXT PRIMARY KEY, family_id TEXT NOT NULL, name TEXT NOT NULL,
-  type TEXT NOT NULL CHECK (type IN ('ipad','iphone','web')),
+  type TEXT NOT NULL CHECK (type IN ('ipad','ipad_mini','iphone','web')),
   mode TEXT NOT NULL CHECK (mode IN ('shared_kids','single_child','parent_only')),
   paired_at INTEGER NOT NULL, signed_at INTEGER,            -- build signing time (free-team expiry)
   next_seq INTEGER NOT NULL DEFAULT 1
@@ -1605,8 +1616,9 @@ CREATE TABLE child (
   id TEXT PRIMARY KEY, family_id TEXT NOT NULL, name TEXT NOT NULL, nickname TEXT,
   birthdate TEXT NOT NULL,                                  -- YYYY-MM-DD
   grammatical_gender TEXT NOT NULL CHECK (grammatical_gender IN ('f','m','n')),
-  grade TEXT NOT NULL,                                      -- 'toddler'|'gan_chova'|'grade_3'…
-  age_band TEXT NOT NULL CHECK (age_band IN ('K1','K2','K3')),
+  grade TEXT NOT NULL,                                      -- 08 §1.1 Grade: 'toddler'|'gan_trom'|'gan_chova'|'g1'…
+  tier TEXT NOT NULL CHECK (tier IN ('K1','K2','K3')),      -- band T|G|S derived (A6)
+  dominant_hand TEXT CHECK (dominant_hand IN ('left','right','unset')) DEFAULT 'unset',
   avatar_json TEXT NOT NULL DEFAULT '{}', picture_pin_hash TEXT, picture_pin_salt TEXT,
   allowed_on_device INTEGER NOT NULL DEFAULT 1, deleted INTEGER NOT NULL DEFAULT 0, hlc TEXT NOT NULL
 ) STRICT;
@@ -1762,14 +1774,16 @@ CREATE TABLE children (
   id TEXT PRIMARY KEY, family_id TEXT NOT NULL REFERENCES families(id),
   name TEXT NOT NULL, nickname TEXT, birthdate TEXT NOT NULL,
   grammatical_gender TEXT NOT NULL CHECK (grammatical_gender IN ('f','m','n')),
-  grade TEXT NOT NULL, age_band TEXT NOT NULL CHECK (age_band IN ('K1','K2','K3')),
+  grade TEXT NOT NULL,                                   -- 08 §1.1 Grade enum
+  tier TEXT NOT NULL CHECK (tier IN ('K1','K2','K3')),   -- profile tier (A2); band T|G|S is DERIVED by packages/shared/bands.ts (A6), never stored
+  dominant_hand TEXT CHECK (dominant_hand IN ('left','right','unset')) DEFAULT 'unset',  -- H2; joystick side default (09 §3.11)
   avatar_json TEXT NOT NULL DEFAULT '{}', picture_pin_hash TEXT, picture_pin_salt TEXT,
   hlc TEXT NOT NULL, created_at INTEGER NOT NULL, deleted_at INTEGER
 ) STRICT;
 
 CREATE TABLE devices (
   id TEXT PRIMARY KEY, family_id TEXT NOT NULL REFERENCES families(id),
-  name TEXT NOT NULL, type TEXT NOT NULL CHECK (type IN ('ipad','iphone','web')),
+  name TEXT NOT NULL, type TEXT NOT NULL CHECK (type IN ('ipad','ipad_mini','iphone','web')),  -- ipad_mini = iPhone-class layout (A3)
   mode TEXT NOT NULL CHECK (mode IN ('shared_kids','single_child','parent_only')),
   token_hash TEXT NOT NULL UNIQUE, token_rotated_at INTEGER NOT NULL,
   paired_by TEXT NOT NULL, paired_at INTEGER NOT NULL,
@@ -2011,9 +2025,13 @@ stored as doc `flags/<childId>` (never in the weekly payload).
 
 ### 6.4 Event log format and clocks
 
-- The envelope is in §5.7. Canonical order for projections is `(ts, device_id, seq)`, which is
-  deterministic on every device.
-- `seq` is device-local monotonic (from `device_self.next_seq` in the same transaction).
+- The envelope is in §5.7. Canonical order for projections is **`(ts, deviceId, eventId)`** (00
+  E11a; `eventId` is uuidv7, so ties on `ts` within one device still order by creation). It is
+  deterministic on every device; two devices replaying the same log produce the identical child
+  model θ (CI replay test, E11a).
+- `seq` is device-local monotonic (from `device_self.next_seq` in the same transaction). It is used
+  for **gap detection** on push (the server rejects a batch whose `seq` jumps, asking for a
+  resend from the last acked `seq`), not for ordering.
 - **HLC** for docs: `"<physical ms 13 digits>:<counter 4 digits>:<deviceId>"`, compared
   lexicographically, implemented in `packages/shared/hlc.ts`. The server clamps the physical part to
   `serverNow + 5 min` to defeat a far-future device clock.
@@ -2210,11 +2228,14 @@ Cron times are UTC (`src/cron/index.ts` dispatches on `ev.cron`):
 The `ratelimits` binding and its exact config syntax should be checked against the current Workers
 docs at scaffold time (*verify*).
 
-**Environments:**
-- `production` (the family)
-- `preview` (wrangler env `preview`, a separate D1 `olam-db-preview` and buckets `*-preview`, used by
-  CI e2e smoke and the agent's experiments)
-- local `wrangler dev` (Miniflare)
+**Environments (timing per 00 E5):**
+- local `wrangler dev` (Miniflare) — from day 1; the **vertical slice (C4) runs fully local**
+  (SQLite, bundled packs, JSON export via the debug screen), no Cloudflare account needed.
+- `preview` = **staging** (wrangler env `preview`, a separate D1 `olam-db-preview` and buckets
+  `*-preview`, used by CI e2e smoke and the agent's experiments) — deployed at **C3 with a
+  placeholder family and no child data** (names `{K1}/{K2}/{K3}`).
+- `production` (the family) — from MVP sprint 3 (~February 2027). Until then multi-device co-op is
+  disabled (flag `coop.multiDevice=false`) and sync is off; the app runs local-only.
 
 ### 7.2 Auth and sessions
 
@@ -2608,6 +2629,32 @@ dashboard).
 | An AI reply giving the answer or something unsafe | schema flags + code checks + scripted fallback; logged for the parent |
 | Lost data from free-signing expiry or a team change | server sync + restore flow; never change team without sync |
 
+### 9.8 Sensitive derived data: encrypted to guardian devices only (00 E6a, C8a)
+
+Red-flag states (`flags/<childId>`), context-dependent dispositions, EF calibration and the derived
+`EMO_CHECKIN` boolean are computed **on the device** (08 `evaluateFlags` runs in the app from local
+counters; the nightly server run only re-derives what it can from non-sensitive events) and are
+stored on the server **only as ciphertext**:
+- **Keys:** at S1 the owner's device generates a family **X25519 keypair** (`@noble/curves`,
+  randomness from `expo-crypto getRandomValues`). The private key lives in each guardian's Keychain
+  (`requireAuthentication: true`). The public key is a plain doc `family_pubkey` pulled by every
+  device.
+- **Transfer to the co-admin:** at S2, the owner's device shows a **QR with the private key** (or a
+  24-word phrase as fallback) that the co-admin scans in "התחברות הורה במכשיר זה". The server never
+  sees it. A new guardian device without the key sees "לפתוח גישה לאזורי תשומת לב — סרקו קוד מהמכשיר
+  של {owner}" and all other parent features work.
+- **Writing:** a kids' device encrypts the doc body with `crypto_box_seal`-style ECIES
+  (X25519 + XChaCha20-Poly1305 via `@noble/ciphers`), `kind='flags'`, `enc=1`; the Worker stores and
+  syncs it as an opaque doc (field-level LWW does not apply; whole-doc LWW with the device HLC).
+- **Reading:** guardian devices and the web dashboard decrypt in the client (web: the private key is
+  entered once per browser via QR scan with the phone camera or pasted phrase, kept in
+  `sessionStorage` only).
+- **Never to AI vendors:** `/ai/reports/summary` receives the progress facts only (10 §11), never
+  `flags`, dispositions or check-in counters; a worker test asserts the request body schema has no
+  such keys. Lost key (both guardian devices wiped): the flags are recomputed from the kids' devices'
+  local 14-day counters after a new keypair is generated; older history is gone by design.
+- ⟂VERIFY `@noble/ciphers` XChaCha20-Poly1305 performance on Hermes (≤ 5 ms per 4 KB doc) at C3.
+
 ---
 
 ## 10. Co-op and multiplayer
@@ -2643,8 +2690,8 @@ dashboard).
 3. Both connect `wss://…/v1/coop/rooms/:id/ws?ticket=…`. The Worker validates the ticket and forwards
    to `env.COOP.idFromName(roomId)`. The DO calls `this.ctx.acceptWebSocket(ws, [deviceId])` and
    handles `webSocketMessage/webSocketClose`.
-4. The room ends when all leave, after 2 min idle, or after 30 min max (episode cap). The DO writes
-   `coop_rooms.summary_json`.
+4. The room ends when all leave, after **15 min idle** (00 E5; "idle" = no `action`/`pose` from
+   any member), or after 30 min max (episode cap). The DO writes `coop_rooms.summary_json`.
 
 **Authority model:**
 - Each client simulates its own avatar locally (no input lag) and sends `pose` at 10 Hz.
@@ -2820,6 +2867,19 @@ jobs:
       - run: pnpm --filter "./packages/*" test -- --coverage   # vitest + fast-check (seed printed)
       - run: pnpm --filter mobile test -- --ci                  # jest-expo + RNTL
       - run: pnpm --filter api test                             # vitest-pool-workers (D1 + migrations + tenancy)
+      - run: pnpm content:validate                              # zod, nikud, gender variants, banned words, math recompute, audio LUFS
+      - run: node tools/ci/routes-and-owners.mjs                # §4.1 tables: every 09 SCR has a route, every CMP an owner
+      - run: node tools/ci/test-delta.mjs                       # no deleted/skipped tests without label `tests-removed`
+      - run: pnpm --filter mobile exec react-compiler-healthcheck src/games src/world   # zero bail-outs (rule 7)
+  mutation:                                                     # quality playbook §4: Stryker incremental on PR, full nightly
+    needs: unit
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - (setup)
+      - run: pnpm --filter "@olam/engine" exec stryker run --incremental   # threshold: break < 80 % on engine/economy/migrations
   bundle:
     needs: static
     runs-on: ubuntu-24.04
@@ -2942,8 +3002,23 @@ Also:
 3. Chest contents are fixed at earn time: opening never changes contents.
 4. Success-band selector: over simulated learners at ability θ, observed correctness stays within the
    band ±5% after warm-up.
-5. HLC LWW is monotonic and commutative.
+5. HLC LWW is monotonic and commutative (whole-doc and field-level, §6.5).
 6. `local_only` events are never present in any push payload.
+7. **Never stuck** (quality playbook §2): the session state machine (`picker → hub → level → game →
+   results → wind-down → picker`, plus `pause`, `background`, `rest`, `error`) is a typed reducer
+   with a discriminated union; `fc.commands` fires random events (including `background`,
+   `memoryWarning`, `interruption`, `update_ready`, `rest_window_start`) and asserts a path back to
+   `picker` always exists and no transition changes coins outside `results`.
+8. **Save/migration round-trip:** arbitrary old local DB fixtures (v-1..v-3) → migrate → validates
+   against the latest zod schema; projections rebuilt equal golden.
+9. **Replay determinism (E11a):** the same event log on two simulated devices yields identical θ,
+   wallet, collection (bit-for-bit JSON).
+10. **Field-level LWW convergence (E-11):** two writers, random field subsets and interleavings →
+    identical merged doc on both sides.
+
+**Edge-case suite:** every `E-xx` row in §4.18 has a test named `E-xx-*` (unit, worker, Playwright
+or Maestro as the row says). `tools/ci/edge-matrix.mjs` greps the spec table and fails CI when a
+row has no test.
 
 **Replay:**
 - Every bug report from the parent's "דיווח על בעיה" attaches the last 500 events, `updateId` and a
@@ -2971,12 +3046,12 @@ Also:
 
 | Dimension | Values |
 |---|---|
-| Viewport (device descriptors) | iPad Pro 11 landscape (1194×834), iPad Pro 11 portrait, iPad mini landscape (1133×744), iPhone 16 portrait (393×852), iPhone 16 landscape (game scenes only) |
-| Profile | K1 (f, grade 3, nikud partial), K2 (m, gan), K3-f, K3-m (lap mode), family/co-op (pl) |
+| Viewport (device descriptors; **09 §13.2 is the source**) | `ipad-11-l`/`-p` 1180×820 / 820×1180 @2 (primary), `ipad-mini-l` 1133×744 @2 (ptPerMm 6.42), `ipad-pro-13-l` 1376×1032 @2, `iphone-16-p`/`-l` 393×852 / 852×393 @3, `iphone-se-p` 375×667 @2 (small-screen edge) |
+| Profile | K1 (f, grade 3, nikud partial), K2 (m, gan), K3-n, K3-f, K3-m (lap mode), family/co-op (pl) |
 | Guardian addressee | guardian-f, guardian-m, plural (parent screens) |
 | Direction | RTL (all), English island LTR screens, mixed bidi strings |
-| Theme/size | default; largest Dynamic Type (parent screens); `prefers-reduced-motion` |
-| Network | online; offline banner states (route-intercepted) |
+| Theme/size | default; child text scale 100/135/150 % (profile slider); parent screens at AX3; `prefers-reduced-motion`; world day/night |
+| Network | online; offline banner states (route-intercepted); Worker-down (503 intercept) |
 
 **Screens:**
 - picker
@@ -3085,6 +3160,11 @@ This follows `performance_reliability_playbook.md` §11E:
   self-hosted `app.error` plus Mac Console logs are the baseline.
 - **Uptime:** a GitHub Actions cron calls `/v1/health` every 6 h and emails on failure. That's enough
   for a family.
+- **Hang watchdog (playbook §8):** in `development`/`preview` builds a JS heartbeat (`setInterval`
+  500 ms) records gaps > 250 ms as `app.perf{jsStallMs}`; a UI-thread heartbeat via `useFrameCallback`
+  writes a shared-value timestamp and a gap > 1 s is logged as `app.error{kind:'ui_hang'}`. Never in
+  the `family` channel's hot path (cost), only sampled 1 session in 20.
+- **Thermal and Low Power histograms** per session (§4.7) feed the Ops tab "חום/סוללה" card.
 
 ---
 
@@ -3154,15 +3234,13 @@ This follows `performance_reliability_playbook.md` §11E:
    birthdates, K3 grammatical gender, school/gan, devices list with models (for perf budgets), and the
    `familyslug` for bundle IDs.
 10. **TTS vendor** account per the bake-off (E9). ElevenLabs only with written approval (E8a).
-11. **Cloud environment network allowlist** (so the agent can verify docs and run CLIs from the
-    container):
-    - Cloud environment menu → Edit → Network access → add these to Allowed domains:
-      - `docs.expo.dev`, `expo.dev`, `api.expo.dev`, `u.expo.dev`, `qr.expo.dev`
-      - `developers.cloudflare.com`, `api.cloudflare.com`, `*.workers.dev`, `*.pages.dev`
-      - `appleid.apple.com`, `rive.app`, `hono.dev`
-      - `playwright.azureedge.net`, `cdn.playwright.dev`
-      - the TTS vendor API host
-    - Optional. CI works without it.
+11. **Cloud environment network allowlist**: the single list is **00 E13** (Cloud environment menu →
+    Edit → Network access → Allowed domains). Optional: CI deploys regardless. Today the container
+    cannot reach Expo/Cloudflare hosts (research log), so `expo start --tunnel`, `eas update`,
+    `eas build`, `wrangler deploy/d1` run **only from GitHub Actions or the parent's Mac** — 13 §3.1's
+    "tunnel from the container" line is not available until E13 is applied (see
+    `docs/review/fable-issues-F6.md`). A blocked host is logged in `docs/research-log/` and listed
+    under "allowlist requests" in the weekly status; never bypassed.
 
 ### 15.2 What the agent does alone
 
@@ -3241,6 +3319,20 @@ approval gates (E10, content approval, voice); naming the kids; approving `famil
 12. **Backups:** a nightly export exists in R2, and a restore drill into preview passes the integrity
     script.
 13. **3D spike:** ADR 0003 records gate outcomes. If a gate fails, the fallback is chosen per §4.9.
+14. **Resilience (§4.18):** every `E-01…E-24` row has a passing test (`tools/ci/edge-matrix.mjs`
+    green); on device: airplane-mode first launch after re-sign reaches the picker; a poisoned
+    migration fixture reaches the picker in ≤ 6 s; `UpdateGate` never reloads with a child route
+    mounted; a 6th pairing attempt burns the pairing; two parents editing different settings within
+    1 s both persist; a call during an episode resumes to "לגעת כדי להמשיך" with the VO replayed.
+15. **Crons (10 §15.3, 00 E5):** the Friday report is sent between 12:00 and 14:00 Israel and ≥ 3 h
+    before candle lighting for every Friday of תשפ"ז (test with `@hebcal/core`, Tel Aviv and
+    Jerusalem, fake clock); erev-chag Fridays shift per 10 §11.1; nothing is sent twice
+    (`reports.id` idempotency); the alert queue never sends inside the Shabbat window or quiet hours
+    (10 AC-11); `GET /reports/weekly` has no `flags` key (schema test).
+16. **Routes and owners:** `routes-and-owners.mjs` green — every 09 SCR has a route, every CMP an
+    owner package.
+17. **Sensitive data:** no `flags`/dispositions/check-in keys in any AI request body (worker test);
+    `flags/*` docs on the server are ciphertext (test reads D1 directly).
 
 ---
 
@@ -3292,6 +3384,21 @@ approval gates (E10, content approval, voice); naming the kids; approving `famil
 7. **E4:** add "**Maestro** golden-path flows on the Mac's iOS Simulator via Remote Control" and
    "Playwright baselines generated only in the pinned Playwright Docker image".
 
+**Status after 00 revision 2 (Fable review):** items 1–7 were accepted into 00 (E1, E7/H2/H6, E3,
+E1b, H6, E11, E4). Remaining proposals from this review:
+
+8. **E5 crons:** 00 lists `*/15 6-12 * * *` for the weekly-report scheduler and "every 15 min" for the
+   alert queue. This spec implements both inside **one** `*/15 * * * *` trigger (window filter in
+   code, §7.1) — functionally identical, one fewer trigger, and the batch poll + expiry nudge share
+   it. Proposed wording: "a 15-minute Cron trigger that runs the alert queue, the Friday `send_at`
+   check, batch polling and expiry nudges".
+9. **E5 `CoopRoom`:** "auto-close after 15 min idle" is adopted; add "30 min hard cap (C3 episode
+   length)".
+10. **A3/H1:** `UIRequiresFullScreen: true` (no Split View / Stage Manager resizing on iPad) — a
+    safety and test-matrix decision; propose adding to A3.
+11. **E6a:** the key-distribution mechanism (family X25519 keypair, private key only in guardian
+    Keychains, QR transfer at S2) in §9.8 — propose referencing it from E6a.
+
 ---
 
 ## 19. Sources (primary where reachable; see `docs/research-log/tech.md` for method)
@@ -3322,3 +3429,58 @@ approval gates (E10, content approval, voice); naming the kids; approving `famil
   `hebrew_first_language_voice.md`, `tech_3d_world.md`, `learning_through_movement.md`,
   `performance_reliability_playbook.md`, `quality_bug_prevention_playbook.md`,
   `personalization_tech.md`, `coop_economy_ios.md`, `photo_to_game_pipeline.md`.
+
+---
+
+## Fable review changelog
+
+Reviewer F6, 2026-11-02. Inputs: 00 revision 2 (E3, E5, E6a, E7, E11a, E12, E13, A6, A7, B7/B7a,
+C15, H1/H2), `docs/review/fable-issues-F1.md` #8/#14/#15/#19/#27/#28, 10 §15–§18, 05 §20.2, 09, 02
+§2.1, 08 §1, 13 §3, the two playbooks. No web research was needed; nothing new was added to the
+research log.
+
+- **Crons (10 §18.2, 00 E5):** replaced `41 4 * * 0` (Sunday report) and `0 */6 * * *` with a single
+  `*/15 * * * *` job (alert queue → Friday `send_at` report check → batch polling → expiry nudges) next
+  to the nightly `10 0 * * *`; `send_at = clamp(candle − 3h, 12:00, 14:00)` Friday / erev chag, idempotent
+  `reports.id = family:isoWeek`. §0, §1, §7.1, §8.1, §18 #8.
+- **Weekly payload:** removed `flags[]` from `GET /reports/weekly`; flags only via `/children/:id/flags`
+  and the monthly view (§7.10). Added 10's new endpoints as §7.10a and 10's tables as migration
+  `0005_parent_area.sql` (§6.2) with a note on what stays a projection/doc rather than a table.
+- **Events (§5.8):** added `focus.span` (computed on device, raw taps never stored), `episode.completed`,
+  `skill.level_changed` (08 LevelId), `skill.delayed_check`, `world.secret/boss`, mission/mentor/holiday
+  events, `app.update/storage_full/resigned`; made earnings/chest contents a pure fold of learn events
+  (02 §2.1) with only user actions stored as `econ.*`; one wire↔engine name mapping in `packages/shared`.
+- **Parent gate (S4):** `disableDeviceFallback:true` on `shared_kids`/`single_child`, `false` on
+  `parent_only`; ON-06 "kids know the passcode" → PIN only; guardian picker after success for the audit
+  log; cooldown persisted. Pairing: burn after 5 attempts, ≤ 3 open pairings per family (§5.3, §9.2).
+- **00 rev 2 alignment:** canonical order `(ts, deviceId, eventId)` (E11a); `expo-device`,
+  `expo-battery`, deferred game-controller and `olam-thermal` modules (E3, F1 #19/#28); bootstrap code
+  TTL/revocation (E7, F1 #27); allowlist → 00 E13; staging at C3 / prod sprint 3 / VS local (E5);
+  `CoopRoom` 15-min idle (E5); `dominant_hand`, `tier`+derived band, `ipad_mini` device type (H1/H2/A3/A6);
+  B7 modes `soft/full/off` + B7a quiet days in `RestGate`; §9.8 encryption of sensitive derived data to
+  guardian devices (E6a/C8a) with key transfer at S2.
+- **Playbooks (E12, spec 14):** every one of the 25 performance rules now has an enforcement point
+  (§4.15 table); new lints `no-raw-design-values`, `no-raw-pressable`, `engine-purity`,
+  `no-skipped-tests`, exhaustiveness/floating-promises as errors, React-Compiler healthcheck; CI gained
+  `content:validate`, routes/owners check, test-delta check and a Stryker incremental job (§2.4, §11.5);
+  tests gained never-stuck, migration round-trip, replay determinism and field-LWW properties (§12.1);
+  hang watchdog + thermal histograms (§13).
+- **Coherence with 09:** every SCR-01…20 now has a route (added `map`, `results`, `base`, `pet`,
+  `move/[activityId]`, `playroom`, `safe-room`, `rest`; pause is a modal) and every CMP-01…48 an owner
+  package (§4.1 tables, CI-checked); fonts fixed to 09 B5a static files (§0, R-10); viewports and
+  determinism hook names unified with 09 §13.2 (`window.__olam.*`); audio session `doNotMix` + parent
+  toggle for silent mode; `UIRequiresFullScreen: true` (§0).
+- **Edge-case walk (§4.18, 24 rows) + the rules behind it:** first launch offline and `bootstrapping`
+  state (§4.8); DB recovery ladder for migration failure / corruption with event salvage and Keychain
+  copy of the device identity (§6.3); storage-full, Low Power Mode and thermal degradation (§4.7);
+  `UpdateGate` apply timing — never mid-episode (§3.3, §11.3); 7-day expiry walk (§3.3); Worker/AI
+  vendor/$-cap/R2-missing handling (§4.11); field-level LWW for concurrent parent edits (§6.5); audio
+  interruptions and route changes (§4.5); orientation/GL-context-loss/multitasking (§4.9); Dynamic Type
+  extremes with nikud (R-11), VoiceOver in Hebrew (R-12), known RN RTL bugs → regression tests (R-13).
+- **Acceptance criteria** 14–17 added (§16). `⟂VERIFY` markers: Stage Manager behaviour with
+  `UIRequiresFullScreen`, expo-gl context-loss event name, Workers cron-trigger limit, Reanimated build
+  flags vs Skia, `adjustsFontSizeToFit` with nikud on iOS 27, FlashList horizontal RTL, `@noble/ciphers`
+  speed on Hermes.
+- Cross-file issues for 13 (script path, channel name, tunnel line, Playwright viewports), 02/08 (event
+  name mapping), 10 (PIN lockout numbers already aligned; `reports` table shape), 12 (nightly time) are
+  in `docs/review/fable-issues-F6.md`.

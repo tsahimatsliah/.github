@@ -68,10 +68,13 @@ export type EpochMs = number;
 export type DayKey = string;              // 'YYYY-MM-DD' לפי Asia/Jerusalem. ימים קלנדריים נמדדים לפי DayKey בלבד
 export type SubjectId = 'math' | 'hebrew' | 'english' | 'science' | 'world' | 'ai_literacy' | 'sel' | 'logic' | 'art' | 'music' | 'motor';
 export type Tier = 'K1' | 'K2' | 'K3';    // שכבת הגיל של הפרופיל (A2), לא זהות
+export type Band = 'T' | 'G' | 'S';       // 00 A6: רצועת גיל של *תוכן* (T 2–4, G 5–6, S 7–10). מיוצא מ-packages/shared/bands.ts
 export type Grade = 'toddler' | 'gan_trom' | 'gan_chova' | 'g1' | 'g2' | 'g3' | 'g4' | 'g5' | 'g6';
 export type LevelId = 'new' | 'beginner' | 'advancing' | 'proficient' | 'master';
 export type ExtraGateId = 'O.REP' | 'O.STEP';   // שכבות-על ממקצוע (03 §3.2). הסמנטיקה ב-§5.1 וב-§4.1
 ```
+
+**רצועות (A6).** מיומנויות מתויגות ברצועה (`Skill.band`, ועוד `gradeTag` אופציונלי), לא בילד. הילד מקבל רצועה **נגזרת**: `bandOf(child) = grade ∈ {toddler, gan_trom} ? 'T' : grade === 'gan_chova' ? 'G' : 'S'` (ברירת מחדל לפי `tier`: K3→T, K2→G, K1→S), מחושבת מחדש ביום הולדת ובשינוי כיתה (§10.5.7). `bandOf` חי ב-`packages/shared/bands.ts`. המנוע משתמש ברצועה רק כמסנן תוכן (`fringe` לא מציע מיומנות ברצועה שמעל רצועת הילד + 1; מיומנות T לילד S מותרת רק כ-warmup/fun), **לא** כפרמטר של הקושי (θ כבר מכסה את זה). כל הכללים "לפי שכבה" במסמך (`cfg.episode[tier]`, סולמות, RT) נשארים לפי `Tier`, כי הם כללים על הילד ולא על התוכן.
 
 **`SubjectId` סגור.** אין `coding` ו-`finance` (הערת 06 §2): תכנות ממופה ל-`logic` וכסף ל-`world`, וההבחנה לדיווח להורה נשמרת ב-**ציר** (`logic.coding`, `world.finance`). הדשבורד (10) מקבץ לפי `StrandId`, ולכן לא צריך מקצוע נפרד. כך `subjectWeights` נשאר קצר (10 §6.13, סכום 100).
 
@@ -89,45 +92,46 @@ export type ExtraGateId = 'O.REP' | 'O.STEP';   // שכבות-על ממקצוע 
 
 ### 1.1א שמות שלבים: ההגדרה הקנונית והמיפוי ל-02
 
-| `LevelId` | תווית קנונית | תצוגה להורה | תצוגה לילד |
+| `LevelId` | תווית קנונית | תצוגה להורה | תצוגה לילד (00 C15; 09 מצייר) |
 |---|---|---|---|
-| `new` | חדש | "שלב: חדש" | לפי 02 §4.2 (ניצן סגור / "באתר בנייה") |
-| `beginner` | מתחיל | "שלב: מתחיל" | לפי 02 §4.2 (נבט) |
-| `advancing` | מתקדם | "שלב: מתקדם" | לפי 02 §4.2 (שתיל) |
-| `proficient` | שולט | "שלב: שולט" | לפי 02 §4.2 (פרח ארד) |
-| `master` | מאסטר | "שלב: מאסטר" | לפי 02 §4.2 (פרי כסוף / פרי זהב) |
+| `new` | חדש | "שלב: חדש" | זרע |
+| `beginner` | מתחיל | "שלב: מתחיל" | נבט |
+| `advancing` | מתקדם | "שלב: מתקדם" | שתיל |
+| `proficient` | שולט | "שלב: שולט" | עץ |
+| `master` | מאסטר | "שלב: מאסטר" | עץ פורח |
 
-התווית מתייחסת **לשלב של המיומנות** ומתאימה לשם העצם "שלב" (זכר דקדוקי), ולכן היא לא תלויה במגדר הילד. **המיפוי החזותי לילד שייך ל-02 §4.2** (צמח, תג, פרי); הטבלה כאן רק מפנה אליו, כדי שלא יהיו שני סולמות (10 §18.2).
+התווית מתייחסת **לשלב של המיומנות** ומתאימה לשם העצם "שלב" (זכר דקדוקי), ולכן היא לא תלויה במגדר הילד. לילד מוצגים שמות של שלבי צמיחה, שאין בהם מגדר (B3). **00 C15 קובע את חמשת השמות האלה, גם לילד.** 02 §4.2 (ניצן/נבט/שתיל/פרח/פרי) חייב להתיישר אליהם (fable-issues-F5 → 02): הצמח הוא הרמה; **התג** (ארד/כסף/זהב) הוא תוספת של 02 על `proficient`/`master`/`retained`, לא שלב צמיחה נוסף.
 
-**02 משתמש בשבעה "מצבים"** (`locked → ready → introduced → practicing → proficient → mastered → retained`). שניים מהם הם מצבי גרף ואחד הוא מצב חזרה, ולכן הם **נגזרים** ולא רמות. המיפוי הקנוני, ממומש פעם אחת ב-`packages/shared/levels.ts` ומיובא על ידי המנוע, הכלכלה (02) והדשבורד (10):
+**02 משתמש בשבעה "מצבי טריגר" פנימיים** (`locked → ready → introduced → practicing → proficient → mastered → retained`, 00 C15: "internal economy triggers"). הם **נגזרים** מהרמה ומהגרף, ולא רמות. המיפוי הקנוני לפי C15 (`introduced→new`, `practicing→beginner|advancing`, `proficient→proficient`, `mastered|retained→master`; `locked/ready` = קדם-מצבים בלי רמה), ממומש פעם אחת ב-`packages/shared/levels.ts` ומיובא על ידי המנוע, הכלכלה (02) והדשבורד (10):
 
 | מצב 02 | נגזרת מ-08 | הערה |
 |---|---|---|
-| `locked` | `level === 'new' && !ready(k)` | `ready(k)` = כל הקדם-דרישות הקשות ≥ `proficient` (§3.5, "השוליים") |
-| `ready` | `level === 'new' && ready(k)` | — |
-| `introduced` | `level === 'beginner'` | — |
-| `practicing` | `level === 'advancing'` | — |
+| `locked` | `level === 'new' && !ready(k)` | קדם-מצב. `ready(k)` = כל הקדם-דרישות הקשות ≥ `proficient` (§3.5, "השוליים") |
+| `ready` | `level === 'new' && ready(k) && !firstSeenAt` | קדם-מצב: בשוליים, עוד לא הוצגה |
+| `introduced` | `level === 'new' && firstSeenAt` | הוצגה (למשל בלוק מודרך/דוגמה) ועדיין אין תצפית מנוקדת. ← C15 `introduced→new` |
+| `practicing` | `level ∈ {beginner, advancing}` | ← C15 `practicing→beginner\|advancing` |
 | `proficient` | `level === 'proficient'` | תג ארד (02) |
-| `mastered` | `level === 'master'` | "Mastered" של D9. תג כסף ויהלום (D1) |
-| `retained` | `level === 'master' && card.ladder[card.rung] ≥ 30` | עבר את שלב החזרה של 30 יום (02 §4.1). תג זהב |
+| `mastered` | `level === 'master' && ladder[rung] < 30` | "Mastered" של C11/D9. תג כסף ויהלום (D1) |
+| `retained` | `level === 'master' && ladder[rung] ≥ 30` | עבר את שלב החזרה של 30 יום (02 §4.1). תג זהב |
 
 ```ts
-// packages/shared/levels.ts — מקור אחד לשני הסולמות
+// packages/shared/levels.ts — מקור אחד לשני הסולמות (00 C15, E11)
 export type LevelId = 'new' | 'beginner' | 'advancing' | 'proficient' | 'master';
 export type EconomySkillState = 'locked' | 'ready' | 'introduced' | 'practicing' | 'proficient' | 'mastered' | 'retained';
 export const LEVEL_ORDER: readonly LevelId[] = ['new', 'beginner', 'advancing', 'proficient', 'master'];
 export const LEVEL_LABEL_HE: Record<LevelId, string> = { new: 'חדש', beginner: 'מתחיל', advancing: 'מתקדם', proficient: 'שולט', master: 'מאסטר' };
-export function toEconomyState(level: LevelId, ready: boolean, reviewRungDays: number | undefined): EconomySkillState {
+export const LEVEL_CHILD_HE: Record<LevelId, string> = { new: 'זרע', beginner: 'נבט', advancing: 'שתיל', proficient: 'עץ', master: 'עץ פורח' };
+export function toEconomyState(level: LevelId, ready: boolean, seen: boolean, reviewRungDays: number | undefined): EconomySkillState {
   switch (level) {
-    case 'new':        return ready ? 'ready' : 'locked';
-    case 'beginner':   return 'introduced';
+    case 'new':        return !ready ? 'locked' : !seen ? 'ready' : 'introduced';
+    case 'beginner':
     case 'advancing':  return 'practicing';
     case 'proficient': return 'proficient';
     case 'master':     return (reviewRungDays ?? 0) >= 30 ? 'retained' : 'mastered';
   }
 }
-export function fromEconomyState(s: EconomySkillState): LevelId {   // לייבוא נתונים ישנים ולבדיקות בלבד
-  return ({ locked: 'new', ready: 'new', introduced: 'beginner', practicing: 'advancing', proficient: 'proficient', mastered: 'master', retained: 'master' } as const)[s];
+export function fromEconomyState(s: EconomySkillState): LevelId | null {   // לייבוא נתונים ישנים ולבדיקות בלבד. null = קדם-מצב בלי רמה
+  return ({ locked: null, ready: null, introduced: 'new', practicing: 'beginner', proficient: 'proficient', mastered: 'master', retained: 'master' } as const)[s];
 }
 ```
 
@@ -141,6 +145,7 @@ export interface Skill {
   id: SkillId;
   subject: SubjectId;
   strand: StrandId;
+  band: Band;                               // 00 A6: רצועת התוכן (T/G/S). חובה. gradeTag מדייק בתוכה
   titleHe: string;                          // להורה
   kind: 'fact' | 'procedure' | 'concept' | 'discrimination' | 'knowledge' | 'motor' | 'fluency' | 'language';
   prereqs: SkillId[];                       // DAG קשיח: מגדיר "מוכן ללמידה"
@@ -346,7 +351,7 @@ export type BehaviorSignal = SignalBase & (
   | { kind: 'recovery' }                    // חזר והצליח אחרי אפיזודת תסכול באותו מפגש
   | { kind: 'novelty_offer'; accepted: boolean }
   | { kind: 'not_into_this'; topic: TopicId } | { kind: 'want_more'; topic: TopicId }
-  | { kind: 'emotion_checkin'; value: 'happy' | 'sad' | 'angry' | 'scared' | 'calm' }   // C8: `local_only` (11 §5.7). נשמר במכשיר עד 90 יום, רק לצורך EMO_CHECKIN (§9.2)
+  | { kind: 'emotion_checkin'; value: 'happy' | 'sad' | 'angry' | 'scared' | 'calm' }   // C8a: `local_only`. התווית לא נשמרת מעבר לפרק; נשאר רק מונה מצטבר ל-14 יום (`checkinCounters`) לצורך EMO_CHECKIN (§9.2)
   | { kind: 'parent_correction'; target: string; value: unknown }
 );
 ```
@@ -1125,7 +1130,7 @@ function updateBandController(bc, sessionFirstTry: number[], target: number) {
 | K2 | 30 | 35 | **15** | 20 |
 | K3 | אין משקלים: 50% "מוכר ואהוב" / 50% "חידוש עדין" (§6.2) | | | |
 
-  **ההכרעה (בקשת 05 §17, שורה 08):** 05 ביקש להעלות אנגלית ל-25% (K1) ו-15% (K2), כי כמות הקלט היא המנבא העיקרי של רכישת שפה זרה, ו-15 דק' בשבוע לא מצטברות לכלום. קיבלתי, עם שני סייגים: (א) **עברית ≥ אנגלית תמיד** (B1, Hebrew-first), ולכן ב-K2 העלייה באנגלית באה מהחשבון (35→30) ולא מהעברית, כי מודעות פונולוגית וצלילי אותיות לפני כיתה א' הם המנבא החזק ביותר לקריאה (Yinon et al. 2026, B6), ותחושת המספר של K2 כבר חזקה לפי השאלון; ב-K1 הירידה מתחלקת שווה (35→30 בשני המקצועות). (ב) **לפני פתיחת "האי האנגלי"** (05 §15.1: פרק 6, ~20.12; עד אז שלב "בקבוקים מהים") משקל האנגלית מוגבל ל-**5** (הבקבוקים), והיתרה מתחלקת פרופורציונלית בין שאר המקצועות. תוצאה צפויה ל-K1: ~3 פרקים × 18 דק' × 25% ≈ 14 דק' אנגלית בשבוע באפליקציה, פחות מה-35–40 ש-05 רוצה; את ההפרש 05 מספק משמע ושגרות מחוץ למסך, כפי שכתב. **שיר TPR באנגלית ב-K2 ממלא גם את בלוק ה-fun** (§6.2), כך שהאנגלית לא "גונבת" מהמשחק החופשי.
+  **ההכרעה (בקשת 05 §17, שורה 08):** 05 ביקש להעלות אנגלית ל-25% (K1) ו-15% (K2), כי כמות הקלט היא המנבא העיקרי של רכישת שפה זרה, ו-15 דק' בשבוע לא מצטברות לכלום. קיבלתי, עם שני סייגים: (א) **עברית ≥ אנגלית תמיד** (B1, Hebrew-first), ולכן ב-K2 העלייה באנגלית באה מהחשבון (35→30) ולא מהעברית, כי מודעות פונולוגית וצלילי אותיות לפני כיתה א' הם המנבא החזק ביותר לקריאה (Yinon et al. 2026, B6), ותחושת המספר של K2 כבר חזקה לפי השאלון; ב-K1 הירידה מתחלקת שווה (35→30 בשני המקצועות). (ב) **לפני פתיחת "האי האנגלי"** (05 §15.1: פרק 6, ~20.12; עד אז שלב "בקבוקים מהים") משקל האנגלית מוגבל ל-**5** (הבקבוקים), והיתרה מתחלקת פרופורציונלית בין שאר המקצועות. תוצאה צפויה ל-K1: ~3 פרקים × 18 דק' × 25% ≈ 14 דק' אנגלית בשבוע באפליקציה, פחות מה-35–40 ש-05 רוצה; את ההפרש 05 מספק משמע ושגרות מחוץ למסך, כפי שכתב. **שיר TPR באנגלית ב-K2 נספר כפול** (00 fable-issues-F1 #11): גם ל-`english` וגם ל-`music`/`motor` בחשבון `subjectUnderweighted` (§6.4), וממלא גם את בלוק ה-fun (§6.2), כך שהאנגלית לא "גונבת" מהמשחק החופשי ומהתנועה. 00 J1: המשקלים הם של 08 (`EngineConfig`), ניתנים לעריכת הורה (H4).
 * **מקצוע כבוי** (ההורה כיבה ב-PA-CSET): המשקל שלו 0, והיתרה מתחלקת פרופורציונלית. מקצוע עם `contentExhausted` בכל הצירים (§10.5.9): כנ"ל, עם הודעה להורה.
 * **תת-משקל:** `subjectUnderweighted(s)` ב-§6.4 מתקיים כשהחלק של s ב-14 הימים האחרונים קטן מ-`subjectWeights[s] − 10` נקודות.
 
@@ -1144,7 +1149,11 @@ function updateBandController(bc, sessionFirstTry: number[], target: number) {
 * לא חותכים באמצע פריט. כשעברו 85% מזמן הפרק, עוברים לבלוק `closing`.
 * אם נגמרה התקרה בזמן הסיום: עד 60 ש' חסד, ואז סיום חם (תיבה, סיכום, "נתראה מחר").
 * בלי autoplay ובלי "עוד אחד" (C3). פרקים נוספים באותו יום מותרים רק בתוך התקרה.
-* שבת וחגים: המנוע לא חוסם (החלטת משפחה, B7). המונים והמטרות לא רצים, וימי המנוחה לא נספרים לחזרות.
+* **שבת וחגים (00 B7, מצב משפחתי `soft` | `full` | `off`, ברירת מחדל `soft`, OPD-04):** בחלון [הדלקת נרות − 30 דק', הבדלה + 30 דק'] לפי `@hebcal/core` ועיר המשפחה:
+  * `soft`: המנוע **כן** מרכיב פרקים (תרגול חופשי), ו-θ/u/רמות **כן** מתעדכנים (ראיה היא ראיה). **לא** מתוזמנים: בוס, בנצ'מרק, בדיקה מושהית (`insertDelayedChecks` מדלג), אתגר דילוג. היום לא נספר ב-`elapsedActiveDays` ולא ב-`availableDays` (02 §10.1), `dueDay` שנופל בו זז (§5.4). מטבעות/יהלומים: 0 (02). הודעות: אין (10 Q-2).
+  * `full`: האפליקציה ישנה לילדים; המנוע לא נקרא. יום מנוחה לכל דבר.
+  * `off`: יום רגיל.
+  * **ימים שקטים (B7a):** יום רגיל למנוע (נספר ב-`elapsedActiveDays`), **אבל** בלי בוס (§10.2), בלי אתגר דילוג, ובלי חגיגות מעל T1 (C14; ה-`EpisodePlan.reasons` מסמן `quiet_day` כדי שה-UI ידע).
 
 ---
 
@@ -1326,7 +1335,7 @@ export interface StrengthsNarrativeInput {
 | `MOTOR_K2_TRACING` | K2 | מיד | סטיית מסלול חציונית מעל סף התבנית ב-≥60% מהניסיונות | 6 שבועות | 10 שבועות |
 | `LANG_K3_PARENT` | K3 | שאלון | T1 = `no` **וגם** T2 = `no` בגיל ≥ 2;6 | מיד, הודעה עדינה | אותה הודעה כוללת את מסלול הפנייה |
 | `EMO_DISTRESS` | כולם | מיד | ≥3 אפיזודות תסכול בשבוע, 3 שבועות **או** ≥3 יציאות אחרי שגיאה בשבוע | 3 שבועות: על לחץ, הפסקות ומשחק משותף | אם `parentConcern.emotional`: מדריך הדגלים האדומים (C8) |
-| `EMO_CHECKIN` (בקשת 10 §6.9) | K2, K1 | רק עם `consent.checkinNudge` (T4b, ברירת מחדל כבוי) | בצ'ק-אין הרגשי (§1.9, `local_only`) נבחר "עצוב" או "מפחד" ב-**≥3 מתוך 5 ימי הצ'ק-אין האחרונים** (ימים עם צ'ק-אין, לא ימים קלנדריים). מחושב **במכשיר שבו נעשה הצ'ק-אין** בלבד; יוצא ממנו **רק** `{ruleId, status, dayKey}` בוליאני למכשירי ההורים (00-Δ3 ב-10) | **מיד** (זה לא דגל RTI אלא "דחיפה עדינה"): "אולי זה זמן טוב לשיחה" + CL-10. לא נכנס למדרג `watch`. קצב: לכל היותר פעם ב-**14 יום**, ולא נספר במכסת 28 הימים של שאר הדגלים | **אין.** לעולם לא `referral_suggested` מצ'ק-אין לבד. אם במקביל `EMO_DISTRESS` פעיל, ההודעה מאוחדת |
+| `EMO_CHECKIN` (בקשת 10 §6.9; 00 C8a) | K2, K1 | רק עם `consent.checkinNudge` (T4b, ברירת מחדל כבוי) | **מונה מקומי ל-14 יום** (C8a): לכל `dayKey` נשמר רק `{checkins: n, sadOrScared: m}`, בלי התוויות עצמן, ונמחק אחרי 14 יום. הכלל: "עצוב"/"מפחד" ב-**≥3 מתוך 5 ימי הצ'ק-אין האחרונים** בתוך החלון (ימים עם צ'ק-אין, לא ימים קלנדריים). מחושב **במכשיר שבו נעשה הצ'ק-אין** בלבד; יוצא ממנו **רק** `{ruleId, status:'parent_note', dayKey}` (בוליאני אחד, C8a) למכשירי ההורים, מוצפן | **מיד** (זה לא דגל RTI אלא "דחיפה עדינה"): "אולי זה זמן טוב לשיחה" + CL-10. לא נכנס למדרג `watch`. קצב: לכל היותר פעם ב-**14 יום**, ולא נספר במכסת 28 הימים של שאר הדגלים | **אין.** לעולם לא `referral_suggested` מצ'ק-אין לבד. אם במקביל `EMO_DISTRESS` פעיל, ההודעה מאוחדת |
 | `MATH_K1_FACT_PACE` (בקשת 03 §14.3) | K1 | מיד, `maxStatus:'watch'` עד אישור ההורה בנקודת הבדיקה (I1) | אחרי ≥10 שבועות של תרגול עובדות: < 30% מעובדות הכפל (`M.FACT.MUL.*`) ב-`proficient`+, **בזמן ש**דיוק במושגי הכפל (`M.MUL.*`) ≥ 85% ב-≥30 פריטים | 10 שבועות, ≥12 מפגשים עם עובדות. **זה קצב, לא קושי:** ההודעה מציעה לשוחח עם המורה על יעד לוח הכפל (03 §16) | **אין** (לעולם לא `referral_suggested`) |
 | `MATH_K1_READ_VS_LISTEN` (בקשת 03 §14.3) | K1 | מיד, `maxStatus:'watch'` עד אישור | בבעיות מילוליות: דיוק נמוך ב-≥15 נקודות כש-`audioPrompt` כבוי (קוראת לבד) לעומת מופעל, ≥20 פריטים בכל מצב, ב-28 יום | **אין הודעה משלו.** הסמן מזין את `HEB_K1_LISTEN_READ_GAP` כראיה נוספת (נספר כ"שבוע מתקיים" גם אם ה-θ-gap קטן מ-1.0 אבל ≥ 0.7). המנוע ב-`watch`: בעיות מילוליות עם הקראה כברירת מחדל | דרך `HEB_K1_LISTEN_READ_GAP` בלבד |
 
@@ -1430,7 +1439,7 @@ function evaluateFlags(state, childId, ctx): FlagState[] {
 
 ### 10.2 בוס חודשי
 
-* **טריגר:** עברו ≥28 ימים מהבוס הקודם במקצוע, **או** ≥3 מיומנויות הגיעו ל-`proficient` מאז. לא ביום מנוחה. אחד למקצוע בחודש לכל היותר.
+* **טריגר:** עברו ≥28 ימים מהבוס הקודם במקצוע, **או** ≥3 מיומנויות הגיעו ל-`proficient` מאז. לא ביום מנוחה (B7, גם ב-`soft`), ולא ביום שקט (B7a). אחד למקצוע בחודש לכל היותר. יום הבוס המשפחתי המועדף: חמישי (OPD-07), ולכן כשהטריגר מתקיים הבוס ממתין ליום הזה אם הוא בתוך 6 ימים.
 * **הרכב:** K2 6 פריטים, ‏K1 10 פריטים. 50% מיומנויות שממתינות לבדיקה מושהית (proficient ≥3 ימים), 30% חזרות בעדיפות גבוהה ומיומנויות שנשלטו לאחרונה, 20% "הצצה" לשוליים (מנוקד, לא נספר לבדיקה המושהית).
 * **בלי רמזים** ("קשה לי" מותר).
 * **מסגור:** קרב בוס. סרגל החיים של הבוס יורד עם תשובות נכונות **ומאמץ**. הבוס תמיד "נסוג" בסוף, ואין הפסד. ניצחון → יהלום (D1).
@@ -1763,11 +1772,16 @@ export const DEFAULT_CONFIG: EngineConfig = {
 | ID | קלט | צפוי |
 |---|---|---|
 | U-LVL-1 | `new`, `ready=false` | `locked` |
-| U-LVL-2 | `new`, `ready=true` | `ready` |
+| U-LVL-2 | `new`, `ready=true`, `seen=false` | `ready` |
+| U-LVL-2b | `new`, `ready=true`, `seen=true` | `introduced` |
+| U-LVL-2c | `beginner` / `advancing` | `practicing` (שניהם) |
 | U-LVL-3 | `master`, rung ימים 14 | `mastered` |
 | U-LVL-4 | `master`, rung ימים 30 | `retained` |
 | U-LVL-5 | `master` → הורדה ל-`proficient` (§5.3) | `toEconomyState` = `proficient`; 02 שומר `maxStateEver='mastered'` (בדיקה ב-02) |
-| U-LVL-6 | כל `LevelId` | `fromEconomyState(toEconomyState(l, …))` מחזיר את l (עבור `new` שני המצבים חוזרים ל-`new`) |
+| U-LVL-6 | `fromEconomyState` | `locked`/`ready` → null; `introduced` → `new`; `practicing` → `beginner`; זהה לטבלת C15 (snapshot test) |
+| U-BND-1 | `grade='gan_chova'` | `bandOf='G'`; אחרי rollover ל-`g1` → `'S'` |
+| U-BND-2 | ילד G, מיומנות `band:'S'` עם כל הקדם-דרישות proficient | **כן** ב-fringe (S = G+1, מותר). ילד T עם מיומנות `band:'S'` → לא ב-fringe (S = T+2) |
+| U-BND-3 | ילד S, מיומנות `band:'T'` | לא כמוקד `new`; מותרת רק ב-warmup/fun |
 
 ### 12.10ב שכבות-על ממקצוע, צירי המשך, משקלים
 
@@ -1840,7 +1854,10 @@ export const DEFAULT_CONFIG: EngineConfig = {
 * **S-1 (בקר):** ילד סינתטי עם θ אמיתי שעולה ב-0.5 לוגיט ב-200 פריטים, ו-priors שגויים ב-+0.4 לתבנית. ההצלחה הנצפית ב-50 הפריטים האחרונים: `targetP ± 0.05`.
 * **S-2 (מיקום):** 500 ילדי גוטמן-רועשים (a=1.5) עם θ ~ U(‎−2, 2). ‏|θ̂ − θ| ≤ 0.5 ב-≥90% מהריצות (K1). ממוצע פריטים ≤ 11.
 * **S-3 (replay):** יומן של 1000 אירועים בסדר אקראי מ-3 מכשירים. אחרי מיון קנוני, המצב זהה בתים-לבתים למצב שנבנה ברצף.
-* **S-4 (ביצועים):** `composeEpisode` עם 1500 מיומנויות ו-20,000 פריטים < 30 ms ב-iPhone 12 (Hermes). ‏`reduce` < 1 ms לאירוע.
+* **S-4 (ביצועים):** `composeEpisode` עם 1500 מיומנויות ו-20,000 פריטים < 30 ms ב-iPhone 12 (Hermes). ‏`reduce` < 1 ms לאירוע. קיפול מחדש מאפס של שנת אירועים של ילד אחד (≈ 60,000 אירועים) < 60 ש' ברקע.
+* **S-5 (reattribute):** יומן של 3 ילדים × 200 מפגשים; בוחרים 20 מפגשים אקראיים ושולחים `session_reattribute`. המצב אחרי החישוב מחדש זהה בתים-לבתים למצב שנבנה מהיומן בלי המפגשים האלה.
+* **S-6 (anomaly):** 1,000 מפגשים סינתטיים של "הילד הנכון" ו-1,000 של "אח אחר" (θ שונה ב-≥1.5 לוגיט). `identity_suspect` תופס ≥ 70% מהאחים ו-≤ 5% מהנכונים. המספרים הם יעדי עיצוב ל-config, לא תקפות אמפירית.
+* **S-7 (rollover):** סימולציה של שנה + rollover + שנה: אין NaN, אין `dueDay` בעבר, כל ציר `primary` מקבל "מסע קצר" לכל היותר פעם אחת.
 
 ---
 
@@ -1856,12 +1873,21 @@ export const DEFAULT_CONFIG: EngineConfig = {
 8. **פרטיות:** הקלט לנרטיב (§8.4) עובר ולידציית סכמה, ואין בו שדות אסורים (U-PRF-6). דגלים, ‏EF ורגש לא נכללים ב-payload לשרת מלבד סנכרון מוצפן להורים.
 9. **שקיפות:** לכל `Block` יש `reasons.length ≥ 1` שמוצג באזור ההורה.
 10. **חגיגות:** `celebrationMs / sessionMs ≤ 0.15` בפרקים מדומים (מדידה ב-E2E).
-11. **סימולציה:** S-1, ‏S-2 ו-S-4 עוברים ב-CI.
+11. **סימולציה:** S-1, ‏S-2, ‏S-4, ‏S-5 ו-S-7 עוברים ב-CI. S-6 רץ ב-CI ומדווח (לא חוסם) עד כיול.
+12. **סולם אחד:** `packages/shared/levels.ts` הוא הייבוא היחיד של שמות שלבים ב-`packages/engine`, `packages/engine/economy` ו-`apps/*` (ESLint `no-restricted-imports` על מחרוזות `'introduced'|'practicing'|'mastered'|'retained'` מחוץ לקובץ הזה). U-LVL-* עוברים.
+13. **שכבות-על:** `O.REP` ו-`O.STEP` ממומשים ב-`mastery/gates.ts` ו-`estimate/score.ts` בלבד; MATH-AC-12 של 03 עובר עם הגרף המתמטי. U-STEP-*, U-REP-* עוברים.
+14. **צירים:** כל `Skill.strand` בחבילות התוכן שייך לרשימה ב-§1.1; חבילה עם ציר לא מוכר נדחית (בדיקת טעינה).
+15. **משקלים:** ברירות המחדל של §6.8 ב-config; לפני פתיחת האי האנגלי אנגלית ≤ 5; עברית ≥ אנגלית נאכף בוולידציה (U-WGT-*).
+16. **מקרי קצה:** כל בדיקות §12.10ג עוברות. `session_reattribute` משחזר מצב זהה למצב ללא המפגש (S-5). `reset_progress` לא מוחק אירועים.
+17. **דגלים חדשים:** `maxStatus` נאכף; `EMO_CHECKIN` לא מייצא דבר מלבד `{ruleId, status, dayKey}` (בדיקת payload של ה-sync pusher, יחד עם 11 §12.1 סעיף 6).
+18. **עמידות לשעון:** U-SKEW-* עוברים; אין NaN/Infinity במצב אחרי אירועים עם ts שרירותי (property test, 10,000 יומנים).
 
 ---
 
 ## 14. Proposed change to 00
 
+> **סטטוס (סקירת Fable, 00 גרסה 2, נספח A):** כל חמש ההצעות **התקבלו** ויושמו ב-00: ‏#1 → E6a, ‏#2 → E11a, ‏#3 → C9, ‏#4 → C12 (כלל כיתה, לא גיל), ‏#5 → C2. הטקסט נשמר כאן לתיעוד הנימוק בלבד; 00 הוא המקור.
+>
 > לפי ההוראה ב-00, ההחלטות הקיימות נשמרות. אלה הצעות להוספה או הבהרה, עם נימוק.
 
 1. **הוספת E6a: "נתונים נגזרים רגישים נשארים במשפחה."** דגלים מוקדמים, נטיות תלויות-הקשר, כיול EF וצ'ק-אין רגשי מחושבים במכשיר, מסונכרנים מוצפנים רק למכשירי ההורים, ולעולם לא נשלחים לספקי AI (גם לא ל-Haiku לנרטיב). *נימוק:* תיקון 13 מגדיר הערכות אישיות ומידע רפואי ונפשי כ"רגישים במיוחד" (`cbt_sel_social_emotional.md` §6). ‏C8 ו-E8 לא אומרים זאת במפורש.
@@ -1887,3 +1913,26 @@ export const DEFAULT_CONFIG: EngineConfig = {
 * Jansen et al. 2013 (קל → יותר תרגול); ‏Hidi & Renninger 2006; ‏מטה-אנליזה 2024 על התאמה אישית לפי עניין (g≈0.48 שימור); ‏Bian, Leslie & Cimpian 2017.
 * Yinon et al. 2026 (קוהורט חיפה: ידע אותיות, PA, RAN ומורפולוגיה); ‏PMC3935894 (רגישות 52% / סגוליות 84%); ‏כל זכות: אבחון דידקטי.
 * הערות פנימיות: `placement_assessment.md`, ‏`learning_science_workbooks.md`, ‏`extra_subjects_adaptive_curriculum.md`, ‏`interest_detection_child_profile.md`, ‏`parent_dashboard_analytics.md`, ‏`gap_audit.md`, ‏`risks_failure_modes.md`, ‏`cbt_sel_social_emotional.md`.
+
+---
+
+## Fable review changelog
+
+סקירת F5 (2026-11-02). כל השינויים בתוך המסמך, בלי שינוי מבנה. בקשות למסמכים אחרים ב-`docs/review/fable-issues-F5.md`.
+
+* **יישור ל-00 גרסה 2 (F1):** `Band` + `bandOf` ו-`Skill.band` (A6); המיפוי ל-02 בדיוק לפי C15 (`introduced→new`, `practicing→beginner|advancing`; `locked/ready` קדם-מצבים) והחזרת שמות הצמיחה לילד (זרע…עץ פורח) ש-C15 קובע; `EMO_CHECKIN` על מונה מקומי ל-14 יום (C8a); מצבי שבת `soft/full/off` וימים שקטים במנוע (B7/B7a, §6.10, §10.2); ספירה כפולה של TPR (F1 #11); §14 מסומן "התקבל ב-00".
+* **§1.1 — `SubjectId` סגור, רשימת צירים קנונית.** הוחלט **לא** להוסיף `coding`/`finance` (הערת 06): ההבחנה נשמרת בציר (`logic.coding`, `world.finance`), והדשבורד מקבץ לפי ציר. נוספה טבלת כל הצירים לפי מקצוע (כולל 5 הצירים החדשים של 03) ובדיקת טעינה. הצירים של 04 מסומנים ⟂VERIFY.
+* **§1.1א — שמות שלבים: ההגדרה הקנונית והמיפוי ל-02** (בעיה חוצת-מסמכים 3 בבריף). 08 נשאר המקור (`new…master`); 7 מצבי 02 ממופים כנגזרות (`locked/ready` = גרף, `retained` = rung 30), עם `packages/shared/levels.ts` (`toEconomyState`/`fromEconomyState`). עמודת "תצוגה לילד" הועברה ל-02 §4.2 (הבעלים של המיפוי החזותי) במקום שני סולמות צמיחה סותרים.
+* **§1.2, §4.1, §5.1, §6.5 — בקשות 03 §17.2 התקבלו:** `Skill.extraGates` (`O.REP`, `O.STEP`); ניקוד שלבים `x = correctSteps/steps` כולל תיקון עצמי ו-BKT צל; שער ייצוגים ל-`proficient` (≥2 pictorial + ≥2 abstract ב-last8) עם ולידציית חבילה ובורר פריטים שמעדיף את הייצוג החסר.
+* **§1.1, §3.2, §3.7 — 5 צירי מתמטיקה חדשים** (03): `math.facts` נכנס ל-E1 (עובדות מייצגות), `math.fractions` ל-E3 (3 פריטים), והשאר הם צירי `continuation` עם **מיקום עצל** (3 פריטי probe בבלוק new הראשון), כדי לשמור על תקרת 25 הפריטים למקצוע.
+* **§3.3א — מפת מזהי השאלון** (03 §6.0א, 05 §17): המזהים הזמניים הם `questionId` וממופים ב-`questionnaire-map.json` ל-`M.*` ו-`E.*`; 04/06 ⟂VERIFY. `english.listening_vocab` → `english.listening`.
+* **§6.8 — משקלי מקצועות:** התקבלה בקשת 05 (K1 אנגלית 25, K2 15) עם נימוק ושני סייגים: עברית ≥ אנגלית (B1; ב-K2 הירידה מהחשבון), ואנגלית ≤ 5 עד פתיחת האי האנגלי. נוסף כלל למקצוע כבוי/מוצה.
+* **§9.2 — שלושה כללים חדשים:** `EMO_CHECKIN` (בקשת 10, opt-in T4b/`consent.checkinNudge`, מחושב במכשיר, רק בוליאני יוצא, פעם ב-14 יום, בלי הפניה); `MATH_K1_FACT_PACE` ו-`MATH_K1_READ_VS_LISTEN` (03 §14.3) ב-`maxStatus:'watch'` עד אישור הורה. נוסף מנגנון `maxStatus`.
+* **§9.6–9.7 — התרעות שווא:** אפקט מדויק לכל פעולת הורה ("לא רלוונטי" = השהיה 8 שבועות + החמרת סף 20%; "דיברנו עם המורה" = 4 שבועות חסד), כלל "אותו סמן ברצף", `minWeeklyExposure` כדי שילד שמשחק מעט לא יקבל דגל מרעש, וכללי ייצוא.
+* **§1.4, §1.9, §1.9א, §1.10, §1.11 — טיפוסים:** `Attempt.steps/representation` (ו-`item.answered` v2 על החוט), `behavior.signal` על החוט, **`ParentInput` הוגדר לראשונה** (היה מוזכר בלי טיפוס), `Session.attributedTo/anomaly`, **`SessionEndReason` קנוני** (מאחד את 08/10/11), `modelEpoch`, `PlacementStatus.quality/resumable`, נקודות ביקורת מוגדרות (כל 200 אירועים, 30 נשמרות).
+* **§2.1 — `pos` נעצר על 1.0 בקיץ, `gradeStart` מפורש, ו-`grade` משתנה רק ב-rollover.**
+* **§3.6 כלל 6, §3.7, §3.8 — מיקום שנקטע, צירי המשך, תשובות אקראיות:** כללי חידוש (14 יום), התחלה מחדש, סגירה כפויה (21 יום), גילוי חוסר עקביות גוטמן, מסע קצר חוזר פעם אחת. נוסף כלל 10 (עזרת הורה במיקום) וסייג אחים לכלל 7.
+* **§10.5 — מקרי קצה (חדש, 12 סעיפים):** מיקום נקטע, תשובות אקראיות, **אח בפרופיל של אח** (היוריסטיקת `identity_suspect` + כלי תיקון `session_reattribute` שמחזיר את המצב דרך חישוב מחדש), שני מכשירים, סטיית שעון, שני סוגי איפוס (מודל פרופיל / התקדמות דרך `modelEpoch`, בלי מחיקת אירועים), **עליית כיתה 1.9.2027** (אישור הורה, rtPolicy ל-K2 בכיתה א', מסע קצר), היעדרות ≥90 יום והשהיה, לומד מהיר ותוכן שמוצה, ייצוא, הורים חולקים (hlc; מיזוג שאלון), שבוע ראשון.
+* **§11 — config:** כל המספרים החדשים מרוכזים (`subjectWeights`, `gates`, `lazyPlacement`, `placementResume`, `inconsistency`, `anomaly`, `flags.maxStatus/checkin/minWeeklyExposure`, `clock`, `checkpoints`, `firstWeek`, `cadence.longAbsenceDays`).
+* **§12.10א–ג, §12.11, §13 — בדיקות וקבלה:** ~60 בדיקות יחידה חדשות (U-LVL, U-STEP, U-REP, U-LAZY, U-WGT, U-PLR, U-RAND, U-ANM, U-SYNC, U-SKEW, U-RST, U-ROLL, U-ABS, U-CEIL, U-FLG-11..16, U-Q, U-FW), סימולציות S-5..S-7, וקריטריוני קבלה 12–18.
+* **לא שונה:** הנוסחאות של Elo/HSHS/מיקום, ספי השליטה (D9), סולמות החזרה, מודל העניין, הפרופיל, נוסחי הדגלים הקיימים.

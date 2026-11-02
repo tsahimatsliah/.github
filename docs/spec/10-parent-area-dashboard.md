@@ -40,7 +40,8 @@
 | שלב | תכולה | תלוי ב |
 |---|---|---|
 | **P0 ליבה** (`10/PARENT-MINI`, ‏`10/PARENT-WEEKLY`) | הרשמה ו-onboarding (PA-ON), שער הורים, ניהול משפחה, ילדים ומכשירים (PA-FAM), יומן ביקורת, בית המשפחה, סקירת ילד, מפת מיומנויות (תצוגת רשת), פירוט מיומנות בסיסי, יומן פעילות עם סינון לפי ילד ולפי מכשיר, הגדרות ליבה (מגבלות זמן, שעות שקט, שבת, "מה למדו החודש"), תור אישורים לצילום-למשחק, דוח שבועי במייל ובתיבת הדואר באפליקציה, ייצוא ומחיקה | מנוע, סנכרון, Worker |
-| **P1** (`10/PARENT-DASHBOARD-FULL`) | מנוע התראות, מבט חודשי, תחומי עניין, "מה שמנו לב", מיקום והערכה, ספריית אימון, תמלילי AI, פיקוח כלכלה, תגמולים, Push (דורש development build), "לתשומת לב" שלב 1, לוח web לקריאה בלבד | P0, ו-build עם Push |
+| **P1** (`10/PARENT-DASHBOARD-FULL`) | מנוע התראות (ערוצים: תיבה + מייל), מבט חודשי, תחומי עניין, "מה שמנו לב", מיקום והערכה, ספריית אימון, תמלילי AI, פיקוח כלכלה, תגמולים, "לתשומת לב" שלב 1, לוח web לקריאה בלבד | P0 |
+| **P1-push** | Push מרחוק (APNs) לכל ההתראות שמסומנות "Push" במסמך | **תוכנית מפתחים בתשלום** (00 E3/E7/H6, OPD-25). עד אז "Push" פירושו: תיבה + מייל (CH-1 ב-§10.1) |
 | **P2** (`10/GRANDPARENT-CARDS` ועוד) | "לתשומת לב" שלב 2 עם PDF, בוט טלגרם, כרטיסי שיתוף ותפקיד Viewer, גרף תלויות, לוח web עם עריכה, נעילת שינה מרחוק | P1 |
 
 ---
@@ -162,20 +163,34 @@ PA-PRIV  פרטיות ונתונים (§8)                       SET-01 שבת �
 
 המדדים לא מגדירים אירועים משלהם. הם קוראים את מעטפת האירוע של 11 §5.7 (`familyId, childId, deviceId, sessionId, appVersion, ts, cls`) ואת `Attempt` של 08 §1.4. **צ'ק-אין רגשי הוא `local_only` ולא יוצא מהמכשיר** (11 §5.7, C8). ראו גם `EMO_CHECKIN` ב-§6.9.
 
-| צורך במדד | שדה קיים | הערה |
-|---|---|---|
-| ניסיון ראשון נקי | `Attempt.firstTryCorrect && hintsUsed === 0 && !excluded` | ההגדרה של "נקי" ב-08 §4.1 |
-| אשכול שגיאות (`itemType`) | `Attempt.chosenErrorTag`, ואם חסר אז `templateId` | תג המסיח מקטלוג הטעויות |
-| דילוג "קשה לי" | `outcome === 'too_tricky'` | נכנס ל-N ולא ל-C |
-| ניחוש מהיר, חוסר פעילות, רקע | `ScoredObservation.excluded ∈ {rapid_guess, idle, backgrounded, timeout}` | מוחרג מ-M-04 ומ-M-01 |
-| מצב (סולו / משותף / ברכיים / בוס / בנצ'מרק) | `Attempt.context.mode`, ‏`session.started.mode` | — |
-| הקשות זעם | `touchesBeforeAnswer`, ‏`idleMaxMs` | לפי גלאי התסכול ב-08 §6.7 |
-| סיום מפגש | `session.ended.reason` | — |
-| חילוץ ואיסוף | `world.rescue`, ‏`world.collect` | — |
-| כלכלה | `econ.*`, ‏`chest.*` | — |
-| **טווח מיקוד** | **חדש: `focus.span`** `{start, end, focusedSec, screenType}`, מסוג `learn` | **הצעה ל-11** (§18.2). מחושב על המכשיר. הקשות גולמיות לא נשמרות |
+**ביקורת חישוביות (סקירת F5):** כל מדד ב-§4.2 נבדק מול רשימת האירועים של 11 §5.8 ומול הטיפוסים של 08. "קיים" = ב-11 §5.8 היום. "08" = מוגדר ב-08 ועל 11 לרשום אותו. "חסר" = לא מוגדר באף מקום לפני הסקירה, מוגדר כאן, ומבוקש מ-11 (`docs/review/fable-issues-F5.md`). עד שהאירוע קיים, המדד שתלוי בו מוצג כ-ES-1 ("נאסף מידע"), לא כאפס.
+
+| צורך במדד | אירוע / שדה | סטטוס | הערה |
+|---|---|---|---|
+| ניסיון ראשון נקי, דילוג "קשה לי", מצב, תפקיד בלוק, תג טעות, הקשות, רקע, סיוע, שלבים | `item.answered` **v2** = `Attempt` של 08 §1.4 (`outcome`, `firstTryCorrect`, `hintsUsed`, `chosenErrorTag`, `touchesBeforeAnswer`, `idleMaxMs`, `appBackgrounded`, `context.{role,mode,assisted}`, `steps`) | **08** (11 v1 חסר את רוב השדות) | "נקי" לפי 08 §4.1. `excluded` הוא נגזרת של המנוע (`ScoredObservation`), לא שדה אירוע; המדדים קוראים אותו מ-`EngineState` או מחשבים מחדש באותה פונקציה |
+| אשכול שגיאות (`itemType`) | `Attempt.chosenErrorTag`, ואם חסר אז `templateId` | 08 | תג המסיח מקטלוג הטעויות |
+| סיום מפגש וסיבתו | `session.ended{reason: SessionEndReason}` לפי 08 §1.10 (`completed`, `daily_cap`, `child_exit`, `parent_exit`, `frustration_break`, `disengaged`, `bedtime_lock`, `inactivity`, `app_killed`) + `plannedMinutes`, `blocksCompleted`, `focusedMs` | **08** (11 מגדיר רק `reason?` חופשי ו-`'switch'`) | "טבעי" במסמך זה = `completed`. "childQuit" = `child_exit` |
+| פרק הושלם (M-03) | `session.ended{reason:'completed'}` או `blocksCompleted ≥ plan.blocks.length − 1` | 08 | — |
+| **טווח מיקוד** (M-01) | **`focus.span`** `{start, end, focusedSec, screenType}`, cls `learn` | **חסר** → מבוקש מ-11 §5.8 | מחושב על המכשיר. הקשות גולמיות לא נשמרות (C8a, `local_only`) |
+| זמן רקע ומסכים (M-02) | **`screen.enter`/`screen.exit`** `{screenType, ms}` (cls `learn`, מצטבר לכל מסך, לא לכל מעבר), **`app.background`/`app.foreground`** | **חסר** | בלי זה M-02 הוא רק `session_end − session_start` |
+| אותות התנהגות (M-07, M-08 סגנון, M-12, M-13 "אני תוהה", AL-04 rageTap) | **`behavior.signal`** = `BehaviorSignal` של 08 §1.9 | **08** (לא ב-11) | `emotion_checkin` נשאר `local_only` |
+| מעברי שלב (M-05 היסטוריה V-07, M-10) | **`skill.level_changed`** `{skill, from: LevelId, to: LevelId, reason}` ו-**`skill.level_reverted`** (08 §10.5.3); `skill.mastered` קיים | **חסר** (רק `mastered` קיים) | נפלט על ידי המנוע, דטרמיניסטי. בלעדיו V-07 נבנה מנקודות ביקורת ליליות בלבד |
+| בדיקה מושהית (◆ ב-V-07) | `item.answered{context.role:'delayed_check'}` | 08 | — |
+| תוצאות בנצ'מרק ומיקום (M-11 קריאה, W-ASM-02/05) | `placement.step` קיים; **`benchmark.result`** `{window:'BOY'\|'MOY'\|'EOY', strand, theta, se, wordsCorrect45s?, wcpm?, errors?, pointed?}` ו-**`placement.finished`** `{subject, strand, theta, se, reason, quality}` | **חסר** | בלי זה M-11(ב) לא ניתן לחישוב |
+| בחירה חופשית, יצירות (M-13) | `behavior.signal{kind:'topic_choice'}`; **`creation.saved`** `{kind:'build'\|'drawing'\|'story', id}` | חסר (creation) | — |
+| פגיעה במגבלה (M-14, AL-06) | `session.ended{reason:'daily_cap'}` | 08 | — |
+| ניסיונות כניסה בשעות שקט / שינה (M-14, AL-06) | **`launch.blocked`** `{reason:'quiet_hours'\|'bedtime'\|'shabbat_full'\|'cap'}` | **חסר** | אירוע ברמת מכשיר (`childId` אופציונלי) |
+| דקות סולו של K3 (M-14) | `session.started{mode:'lap'\|'solo'}` + `childId` של K3 | קיים | סולו ב-K3 = `mode:'solo'` (לא אמור לקרות, H3) |
+| חילוץ ואיסוף (M-15) | `world.rescue`, ‏`world.collect` | קיים | — |
+| כלכלה (PA-ECO) | `econ.*`, ‏`chest.*` + אירועי 02 §2.1 | קיים | — |
+| "עשינו ✔" של "הערב" (מעורבות הורה) | **`parent.tonight_done`** `{cardId, childId}` cls `admin` | **חסר** | — |
+| משימה בעולם האמיתי | `offline_mission_confirmed` (02 §2.1) | 02 | — |
+| מדדי מכשיר (MD-01) | טבלאות `devices`, `device_children`, `/sync` meta, `app.start` | קיים | — |
+| צ'ק-אין רגשי | `checkin.mood` (`local_only`, 11) = `behavior.signal{kind:'emotion_checkin'}` (08) | קיים | שני שמות לאותו דבר; 11 מתבקש לאחד לשם של 08 |
 
 `LearningScreen ∈ {learn, review, placement, boss, probe, photoGame, coopLearn, story_interactive}`. מחוץ לרשימה: hub, myspace, shop, avatar, celebration, menu, safeRoom.
+
+**סיכום האירועים החסרים ב-11 §5.8 (לבקשה):** `focus.span`, `screen.enter/exit`, `app.background/foreground`, `behavior.signal`, `skill.level_changed`, `skill.level_reverted`, `benchmark.result`, `placement.finished`, `creation.saved`, `launch.blocked`, `parent.tonight_done`; ושדרוג `item.answered` ל-v2 ו-`session.ended` ל-`SessionEndReason`.
 
 ### 4.2 המדדים
 

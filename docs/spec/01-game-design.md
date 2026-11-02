@@ -32,6 +32,10 @@
 
 **Age shorthand.** K1 = the girl, 8.5, grade 3. K2 = the boy, 5.5, gan chova. K3 = the toddler, 2.5, lap-mode.
 
+**Age bands (00 A6).** Content and mechanics are tagged by band, never by child: `T` = 2–4 (today K3), `G` = 5–6 (today K2), `S` = 7–10 (today K1). `packages/shared` exports `Band` and `bandOf(child)` (`K3→T, K2→G, K1→S`, re-evaluated on birthdays/grade changes, DD-18). Where this document says "K2" in a mechanic card, read "band G"; the K-names are kept for readability only.
+
+**Skill levels (00 C15).** The only level names that children and parents see are 08's: `new / beginner / advancing / proficient / master` (חדש / מתחיל / מתקדם / שולט / מאסטר). "Mastered" in this document = 08 `master` (D9). 02's internal economy trigger states are mapped once in `packages/shared/levels.ts` (02 §4.1).
+
 **Phrases**
 - "Learning action" = an action whose correctness depends on the skill (00 C1).
 - "Episode" = one finite session (00 C3).
@@ -718,7 +722,8 @@ Every level must include ≥4 of the following 8 types (CI lint on the level fil
 | Min target size (physical, gap §4.7) | ≥20 mm (≈120pt iPhone / ≈104pt iPad) | ≥15 mm (≈90/80pt) | ≥10 mm (≈60/52pt) |
 | Handedness | — | Toggle to mirror the jump button | Toggle to mirror joystick/buttons |
 
-- The world is **not mirrored in RTL** (E1b). Only the 2D HUD is RTL.
+- The world is **not mirrored in RTL** (E1b). Only the 2D HUD is RTL. Number lines, equations and math expressions inside the HUD are always LTR (00 B9d); coding/arrow strips for band G flow RTL (00 B9a); movement arrows mean absolute screen direction (00 B9b).
+- **Game controller (00 E3):** optional after the vertical slice (C4); stick = move, X = jump, haptics → rumble. Never required by any mechanic; every control scheme above stays fully playable by touch (AC-CTRL-1).
 - **"Forward" progression in the hub and regions is right to left.** For example, the first gate is on the right, and progress on the Lost Friends Board runs right to left (Apple HIG RTL).
 
 ### 6.4 HUD (2D, RTL, Reanimated)
@@ -1250,6 +1255,146 @@ That is **64 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
 - **Knobs:** the number of toys rises (from 3 to 6), and new words are added over the weeks (the parent can choose a "word of the week").
 - **Safety:** no exits, no menus. Exit is through the parent gate only. Sound volume is limited (`audio.k3.maxGainDb = -6`).
 
+### 7.3 Mechanics requested by other specs (full cards)
+
+> Every card below follows the same fields as §7.2. Skill IDs are the owning spec's (03 `M.*`, 05 `E.*`, 06 `S.*`, 07 `TK.*`/`AI.*`). Distractors and answers are computed in code from the owning spec's error catalogs (00 E8).
+
+#### MX-M13 `balance-scale` (מאזני הקסם) — 03 `MECH.BALANCE`, remediation `R.BALANCE`
+- **Ages · Skills · Input:** K2 heavy/light, "which pan goes down?" (`M.MEAS.WEIGHT.BALANCE`); K1 "=" as a relation (`M.OPS.EQ.MEANING`), missing-symbol puzzles (`M.PAT.BALANCE.EQ`). Input: drag crystals/objects onto two pans; tap "balanced?".
+- **Rules:** the Muddler's scale guards a gate. K2: "which is heavier, the feather or the apple?" — drag, the pan sinks, the gate tilts open only when the child predicted correctly. K1: each pan shows an expression (`4 + 4` | `6 + 2`); the child balances by adding/removing crystals or decides "balanced / not balanced". Twist (Ten): symbols (🔺 + 🔺 = 12) — find the symbol's weight.
+- **Learning = action:** the scale's tilt *is* the comparison; the gate opens when the scale is level. A wrong prediction shows the real tilt, which is informative, never a buzzer.
+- **Feedback:** the beam animates with physics (overshoot, settle 400ms); the pan that is heavier "thuds"; balance = a chime + the gate lights.
+- **Knobs:** object count (2–6), representation (objects → dots → numerals → expressions), symbol puzzles (K1), tolerance for "about equal" (K2 only: visibly different masses).
+- **Failure:** after 2 errors the scale shows a translucent "ghost" of the correct tilt; after 3, ניצי weighs each side aloud (worked example).
+- **Evening/Battle:** compact form — "balance the shadowling": choose the expression equal to the one on its belly.
+
+#### MX-M14 `camp-clock` (שעון המחנה) — 03 `MECH.CLOCK_CAMP`
+- **Ages · Skills · Input:** K2 daily sequence and "what comes before/after" (`M.MEAS.TIME.SEQ`, `M.MEAS.TIME.WEEK`); K1 analog clock on the hour/half/quarter (`M.MEAS.TIME.HOUR_HALF`), 5-minute precision (`M.MEAS.TIME.CLOCK5`), elapsed time (`M.MEAS.TIME.ELAPSED`). Input: rotate the hands (drag), or tap a time card.
+- **Rules:** the camp's big clock stopped when the Muddler sneezed; the friends don't know when to wake up. Set the clock to "the time the shadowling wakes (7:00)" and the friend's door opens. Elapsed time (K1): "the bread needs 25 minutes; it went in at 3:10" — rotate forward and the oven dings. **The minute hand drives the hour hand** (geared), so quarter-past shows the hour hand slightly past (03: C stage "clock with gears").
+- **Learning = action:** the set time *is* the event: the door opens, the oven dings, the lighthouse lights at the chosen time. A wrong time makes the friend yawn and point at the sun/moon (a context hint).
+- **Feedback:** each 5-minute step clicks; a digital readout appears under the clock **after** the child sets it (analog → digital link).
+- **Knobs:** precision (hour → half → quarter → 5 min → 1 min), hand-gearing on/off, digital shown before/after, elapsed-time spans (5–60 min).
+- **Failure:** after 2 errors the target time appears as a faint ghost on the dial; after 3, the hands move themselves while ניצי says the time.
+- **Never a visible timer:** this mechanic shows clock faces as *content* only; it never shows a countdown (03 §9.1, MATH-AC-06).
+- **Offline:** "set the real clock at home to bath time" (03 `HOME.06`).
+
+#### MX-M15 `camp-shop` (המכולת של המחנה) — 03 `MECH.MAKOLET`
+- **Ages · Skills · Input:** K2 coins as objects, paying exact amounts to 10 (`M.NUM.*` money contexts); K1 shekels/agorot, paying and making change (`M.MEAS.MONEY.*`). Input: drag play coins/notes to the counter; tap "pay".
+- **Rules:** ברגית runs a camp grocery where friends buy supplies with **play money (שקלים)** found in the level. "The bucket costs 7 ₪. Pay." Twist: pay with a 10 ₪ note and receive the change — the child counts it back ("8, 9, 10").
+- **Hard separation from the game economy (binding):** play shekels are a **level prop**, not the game's coins. They appear only inside this mechanic, reset at level end, are never shown next to the coin receipt, and use a different icon (a shekel sign, not the camp coin). No shop item is ever priced in shekels and no play shekel converts to anything (AC-MX-7).
+- **Learning = action:** the correct payment *is* what lifts the item off the shelf; over/under-payment makes ברגית hold the coins up and count aloud.
+- **Knobs:** amounts (to 10 / 20 / 100), coin set (1, 2, 5, 10 ₪; agorot only for K1 S-band), change required, multiple items (addition).
+- **Failure:** after 2 errors the coins needed glow; after 3, worked example.
+
+#### MX-M16 `mirror-lake` (קסם המראה) — 03 `MECH.MIRROR`
+- **Ages · Skills · Input:** K2 complete a symmetric picture across a vertical axis (`M.GEO.SYM.COMPLETE`); K1 vertical/horizontal/diagonal axes, find the axes of a shape, "is the diagonal an axis?" (`M.GEO.SYM.LINE`). Input: tap tiles in a grid / draw with Skia (tolerance 8 mm).
+- **Rules:** the fog lake reflects half a bridge; build the other half so the friend can cross. K1 twist: the lake tilts the axis (diagonal). Purim/Yom HaAtzmaut skins: complete the flag (03 `U.K1.09`).
+- **Learning = action:** the reflection becomes solid only where it is correct; the bridge holds only when both halves match.
+- **Feedback:** a correct tile "ripples" into place; a wrong tile floats away (informative).
+- **Knobs:** grid size (4×4 → 8×8), axis orientation, number of colors, "find the axis" vs "complete".
+- **Failure:** after 2 errors a faint reflection appears for 2s; after 3, the axis is drawn and the tiles mirror one by one with ניצי.
+- **Offline:** a folded-paper print (03 `PRN.K1.09.2`).
+
+#### MX-M17 `number-talk` (שיחת מספרים ליד המדורה) — 03 `MECH.NUMBER_TALK`, P10
+- **Ages · Skills · Input:** K1 (weekly, at least once): solve one problem in ≥2 ways and compare strategies (`M.WP.TALK.MULTI`, `M.WP.EXPLAIN`); K2 oral form with ניצי (how did you count?). Input: choose/drag strategy cards; optional 15s voice recording (on device).
+- **Rules:** an evening scene by the fire. A problem (e.g., 25 + 19) appears. Step 1: the child solves with any tool from the tool belt (MX-T01). Step 2: "another way?" — a second strategy. Step 3: a scripted "other child" (a VIP friend, never a sibling) shows a third way; the child says which is faster and why (chips). **No speed, no timer, no score** (03 §9.1).
+- **Learning = action:** each strategy lights one lantern around the fire; the "comparison" lights the big one. The friend wakes when ≥2 lanterns are lit.
+- **Feedback:** process praise only ("פֵּרַקְתְּ אֶת 19 לְ-20 פָּחוֹת 1"). The recording plays back to the parent in Show&Tell.
+- **Knobs:** number range, strategy set (count-on, make-ten, compensation, doubles, decomposition), number of ways required (2–3), K2 oral mode.
+- **Failure:** none (no wrong strategy, only "did it work?"). If the first answer is wrong, the scripted friend models checking, not correcting.
+- **Compact form:** one "another way?" prompt after any MX-M01/M04/M05 item (07 `another-way` hook).
+
+#### MX-M18 `light-duel` (מי חזק יותר?) — 03 `MECH.DUEL`
+- **Ages · Skills · Input:** K2 compare two quantities (more/fewer, 1–10), then numerals (`M.NUM.COMP.*`); K1 numerals to 1000, <, >, = symbols, fractions (`M.NUM.COMP.*`, `M.FRAC.COMP`). Input: tap the stronger torch / drag the crocodile mouth (the symbol).
+- **Rules:** two torches of fireflies face a shadowling; the brighter one warms it. "Which torch is stronger: 7 or 9?" Tapping the bigger one sends its light. Twist: the quantities are shown in different representations (dots vs numeral). K1: drag the "mouth" (<, >) to point at the bigger number.
+- **Learning = action:** only the correct comparison lights the shadowling; a wrong tap makes the weaker torch sputter (visible magnitude).
+- **Feedback:** the two torches briefly show their quantities side by side after the answer (always informative).
+- **Knobs:** range, representation mix, visual distance between quantities (03 "distance effect"), symbols on/off.
+- **Failure:** after 2 errors the quantities line up as two rows (1:1 correspondence); after 3, counted aloud together.
+- **Movement:** MV-09 (lean toward the bigger).
+
+#### MX-M19 `shadow-tangram` (צללית) — 03 `MECH.TANGRAM`
+- **Ages · Skills · Input:** K3 (T+): 2–3 big shapes into a silhouette, every placement accepted; K2 compose a house/boat from 3–5 shapes (`M.GEO.COMPOSE.SHAPE`); K1 7-piece tangram, rotations, decomposition (`M.GEO.DECOMPOSE`). Input: drag; rotate by a tap (90°/45°); no multi-finger gestures required (09 §10).
+- **Rules:** a shadowling cast a strange shadow on the tent wall; fill the silhouette with shapes and it turns into a friend (a cat, a boat).
+- **Learning = action:** the silhouette becomes a friend only when fully covered with no overlaps.
+- **Feedback:** a shape snaps (20 mm) with a soft click; an overlap "wobbles" out.
+- **Knobs:** number of pieces (2–7), rotation needed, outline shown (full / partial / none, K1), time-free.
+- **Failure:** after 2 misplacements the next piece's outline glows; after 3, one piece places itself.
+- **Offline:** a printable tangram (03 `PRN.K2.08`).
+
+#### MX-M20 `scout-chart` (דוח הסיירים) — 03 `MECH.SCOUT_CHART`
+- **Ages · Skills · Input:** K2 sort and count into a pictograph (`M.DATA.PICTO`); K1 tables, bar charts, "how many more?" questions (`M.DATA.*`). Input: drag tokens into columns; tap to answer.
+- **Rules:** after an evening, ניצי asks for the scouts' report: "how many shadowlings became friends of each color?" The child builds the pictograph from the actual friends rescued in this episode (real data, no fake numbers), then answers 1–2 questions from the chart.
+- **Learning = action:** the report is pinned on the camp board and the chart *is* the decoration; the question's answer opens the mailbox.
+- **Knobs:** categories (2–5), scale (1 token = 1 / 2 / 5), question type (read / compare / difference).
+- **Failure:** after 2 errors the relevant column highlights; after 3, counted together.
+- **Hub hook (06 §4.5 weather station):** the same component renders the family's monthly weather chart, read-only, shared (00 C6-safe: the data is the weather, not a child).
+
+#### MX-E01 `echo-shell` — added **`pairs` mode** (minimal pairs, 05 T09 `echo_pairs`)
+- **Ages · Skills · Input:** K1 (K2 "soft" version without scoring): perception of English contrasts (05 `PR.MP.*`: w/v, th, ship/sheep, cat/cut/cot). Input: tap 1 of 2 pictures (AX); ABX at higher levels.
+- **Rules:** the shell echoes a word in the voice of **one of 4 adult speakers + the human recording** (05 §12: 2 women, 2 men; never a childlike voice). Two pictures; tap the one you heard. **Listening before production** (05 EN-7): no pronunciation is ever scored.
+- **Learning = action:** the right picture comes alive and joins as a Wordling; the wrong one just blinks.
+- **Feedback:** after any answer the pair is re-played side by side with both pictures highlighted in turn (always informative).
+- **Knobs:** contrast set, speaker variability (1 → 4 voices), AX → ABX, number of pairs per block (4–6).
+- **Failure:** 2 errors → the two words play again slowly with the mouth-shape card (05); no third ladder step (perception training, not a test).
+- **K2:** the same pairs as pure exposure, every tap "finds" something; no state is recorded beyond `exposures`.
+
+#### MX-E05 `lighthouse-lights` (אורות המגדלור)
+- **Ages · Skills · Input:** K1 tricky/irregular words (05 `TW.*.READ`: the, said, was…). Input: tap the word when the beam lights it.
+- **Rules:** waves carry words past the lighthouse. Sunny says a tricky word; the beam sweeps; tap the right word while it is lit (the beam is slow: 1.5s per word, no "miss" penalty — it comes around again). Twist: the same word in two fonts/cases (Pip vs pip, 05 `E.DIR.CASE.*`).
+- **Learning = action:** the caught word becomes a Wordling (a star, 4.11) and the lighthouse glows one notch brighter per word.
+- **Feedback:** Sunny repeats the word and uses it in a 3-word sentence; the "tricky part" of the word is underlined after the catch (05 heart-word convention).
+- **Knobs:** number of words on the waves (2–4), speed of the beam (1.5s → 1.0s only after `proficient`), case variation, decodable distractors.
+- **Failure:** after 2 misses the target word stays lit; after 3, Sunny taps it with the child.
+
+#### MX-E06 `ship-log` (יומן הספינה של Sunny)
+- **Ages · Skills · Input:** K1 decodable stories of 3–6 pages (05 `RD.SENT.READ`, `RD.TEXT.COMP`); K2 listens (Sunny reads, pages turn). Input: tap a page to turn; tap the picture that matches; optional on-device ASR (05 PP-5: feedback only, never stored as mastery; never punitive).
+- **Rules:** each page of Sunny's log is a decodable sentence with **Pip** (CH-11) doing something; reading the page **lights one lantern in the harbor**; at the end a comprehension choice ("what did Pip find?") from 2 pictures. **"Read to your brother" mode** (guide mode, §12.6): K1 reads aloud, K2 taps the picture; K1's Mentor Track progresses, K2 gets exposure only.
+- **Learning = action:** the harbor lights up page by page; the story's outcome (a found object) appears in the scene.
+- **Feedback:** after each page, Sunny re-reads it fluently (model), then "Next!".
+- **Knobs:** pages (3–6), phonics stage of the text (05 S2 → S6), comprehension question type, ASR on/off.
+- **Failure:** tapping a word plays it; after 2 wrong comprehension picks, the key sentence is highlighted and re-read. No "wrong" display ever (AC-MX-5 applies).
+
+#### MX-E07 `dock-talk` (שיחה על הרציף)
+- **Ages · Skills · Input:** K2 choose a reply bubble (picture + voice); K1 choose or **record-and-compare** (05 `OR.S.*`: name, age, likes, yes/no). Input: tap a bubble; K1 optional 5s recording played back next to Sunny's model (on device, never uploaded, never scored).
+- **Rules:** Sunny asks a scripted question on the dock ("What's your name?" / "Do you like boats?"); 2–3 reply bubbles; the chosen reply is voiced by Sunny's bank (K2) or by the child (K1). Pre-written dialogue trees only (00 C7: no open-ended chat). K2 always gets the sandwich via ניצי standing on the dock's Hebrew side (right; 05 spatial convention: English character on the left).
+- **Learning = action:** a fitting reply makes the boat cast off and a Wordling boards; an unfitting one makes Sunny tilt her head and ask again with a gesture (never "wrong").
+- **Feedback:** Sunny repeats the child's choice in a full sentence.
+- **Knobs:** number of bubbles (2–3), question set (05 `CH.*`), record-and-compare on/off (K1 only), gloss level.
+- **Failure:** 2 unfitting picks → the gesture hint; 3 → Sunny models the answer and the boat casts off anyway (no fail).
+
+#### MX-T01 `tool-belt` (חגורת הכלים) — **unified with 07 `TOOLBELT`** (replaces the earlier card)
+- **Ages · Skills · Input:** K2: 3 math tools + 3 reading tools (count all / count on / draw; sound out / look at the picture / ask) plus 07's SEL/thinking tools as they unlock (dragon breath, I-message, idea cloud…). K1: 6–8 tools incl. "work backwards", "a smaller case", "a table", "ask a person", "ask the machine to explain, not answer". Input: choose an icon.
+- **One structure for every strand (07 §2.2):** every tool is a **tool card** (illustration, name, "when to use it", a "used" counter — a count, not a score). Cards live in "המרחב שלי" (the neighborhood) and show on the פנסון's belt (cosmetic arms change in the next mechanic).
+- **"Which tool?" moment (07 §2.2):** on 2 errors **or** 10s of no action after an error, a fan of 2–4 relevant tools opens (icons + voice for K2, text for K1). Choosing a tool is free and never costs anything.
+- **Tool mastery states (07, replaces accuracy):** `seen` → `tried` (used when offered) → `used` → `chosen` (≥3 independent choices over ≥2 weeks) → `transferred` (a parent confirmed real-world use). `chosen` gives the card a spark; `transferred` a "world star". These are skill-name badges (00 D4), never coins.
+- **Rules kept from the original card:** "another way?" bonus line for solving the same problem with 2 tools; an "Efficiency" line for finding the shorter one; "invent a tool" (K1) names and adds a card.
+- **Ritual hook:** `ritual_mid` (§5.3) is a 60–120s "tool minute" that opens one card and uses it on one easy item.
+
+#### MX-T06 `brain-token` (אסימון מוח) — 07 `BRAIN_TOKEN`; a **gate**, not a level mechanic
+- **Ages · Skills · Input:** K2, K1. Input: deposit an attempt — an answer, a choice of 2–3, a guess, a plan, or a quick drawing.
+- **Rules (binding across every mechanic with a גלגלון hint ladder):** the "help from the machine" button is **disabled until the child deposits a brain token**. Two wrong attempts on an item count as a deposit; so does any explicit choice/guess. The deposit lights the lamp on גלגלון's head; only then is hint step 1 available. Help order is always: a returned question ("מה לדעתך הצעד הראשון?") → a hint → an explanation; **never a final answer first** (07 §2.3, 00 C7).
+- **Learning = action:** the lamp on גלגלון *is* the token; the hint ladder literally cannot start without it.
+- **Feedback:** גלגלון: "ביפ! קודם המוח שלך, אחר כך הגלגלים שלי. מה הניחוש שלך?" → after the deposit: "קיבלתי את הניסיון שלך. רוצה רמז קטן או בדיקה?"
+- **Knobs:** deposit type per mechanic (`answer` | `choice` | `drawing` | `plan`), K2 always `choice`.
+- **Failure:** none; the token is never judged.
+- **Guide mode:** K1's hint tokens (§12.6) obey the same gate on K2's deposit.
+- **AC:** 07 AC-07 (machine help unavailable before a deposit) is implemented once in `packages/engine/hints/brainToken.ts` and reused by every mechanic.
+
+#### MX-X02 `test-it-lab` — added **content skins** (06 §4.5)
+- The round structure stays 07's (`blicket`, `TK.EXP.1`): 2 unambiguous trials → 1 confounded trial → "want to test again?" → a single test → "what did you find?", with the prediction recorded **before** each test.
+- **Skins (06):** "בודק המוליכים" (which object closes the circuit → `S.ENG.05`), "גלאי המגנט" (→ `S.MAT.05`), "מה נובט?" (seeds with water/light, accelerated time → `S.LIFE.02`). K1 fair-test labs with the 3-locked-variables board: "עציצים", "מצנחים", "מטריות" (→ `S.LIFE.02/06`, `S.MAT.07`, `S.MAT.02`). Changing two variables → the advisor asks "איך נדע מה גרם לשינוי?" (a hint, not a failure).
+- **Camp hook:** every circuit closed in the conductor skin lights a lantern in the camp (06 "פנס המחנה"; it adds **light**, not logs or coins).
+
+#### MX-X05 `build-sim` (ארגז החול הפיזיקלי) — 06 §4.5
+- **Ages · Skills · Input:** K2 push/pull, ramps, shadows (`S.ENG.01/02`); K1 bridges, wheels, pulleys, circuits, plan-build-test-improve with ≥2 versions (`S.TECH.02`, `S.TECH.03`, `S.ENG.05`). Input: drag/place parts; tap "run".
+- **Rules:** a 2D physics sandbox (Skia + Reanimated, simple equations, no physics library, E2) in ברגית's yard. Each challenge has a goal ("bring the logs to the fire") and a **material limit** (8 beams) that forces planning. Run → watch → improve. K1 rubric: ≥2 versions tried, a test against the goal (06 M-PERF).
+- **Learning = action:** the contraption works or visibly doesn't (the log stops, the bridge sags); success brings the goods to the camp (visible in the hub).
+- **Feedback:** slow-motion replay of the failure point (0.5× for 2s); ברגית names the cause ("הרמפה תלולה מדי").
+- **Knobs:** part set, material limit, goal distance, gravity/friction presets (fixed, not child-tunable), circuit parts (K1).
+- **Failure:** no fail state; after 3 runs without success, one part glows as a suggestion; the child can keep tinkering indefinitely (creative mode earns nothing, 02 §2.7).
+- **Safety:** circuits are a cartoon battery + bulb only; no mains sockets, no alarm buttons (06 S.ENG.05, 00 B8).
+
 ---
 
 ## 8. Learning through movement (G6)
@@ -1267,8 +1412,9 @@ That is **64 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
    - **Phase 2:** front-camera pose (Apple Vision via a custom Expo Module, dev build; frames in memory only).
 5. **Safety:**
    - A one-time setup screen for the parent (2×2 m of clear space, grippy socks or bare feet, the device on a stand 2–3 m away or leaning against a wall).
-   - **Never jumping with a device in the hand.**
+   - **Never jumping with a device in the hand.** Before any jump moment (MV-03, MV-04, MV-11) the app checks `expo-sensors` DeviceMotion for 1.5s (00 E3): if the device is moving (acceleration variance above `motion.inHandThreshold`), it shows "הניחו את המכשיר" and waits; after 10s without stillness it switches to the `seated` variant automatically. iPhone defaults to `seated` for all jump moments unless the parent marks "on a stand" (OPD-14).
    - One active player in the camera zone at a time.
+   - **Real-world/offline missions carry safety tags** from 00 C13 (`adult-required`, `no-flame`, `no-mains`, `choking-hazard-T`, `outdoor-with-adult`, `food-allergy-check`, `photo-on-device`); the content linter rejects a mission without tags. While a child under 3 lives at home (K3 until ~May 2027), no mission for any child uses small parts or small magnets (MV-04 floor markers are printed paper, MX-M19 offline tangram is a printed sheet, MV-05 uses feet only).
    - Quiet mode: no jumps (marching in place / arms) by default from 20:00, on Shabbat if it is on, and in a parent-set "apartment" mode.
 6. **Frequency:**
    - K2: 1 moment per level (≤45s), with a total of ≤2:00 per episode.
@@ -1787,7 +1933,8 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
   - "ספרו כמה מדרגות יש בבניין"
   - "Sunny asks: find something *blue*"
   - "תכנני את הפנסון שלך על דף" (printable)
-  - Done/not done is marked by the parent or not marked at all; nothing is lost.
+  - Done/not done is marked by the parent or not marked at all; nothing is lost. A parent-confirmed mission is the economy event `offline_mission_confirmed` (02 §2.2: a wood chest, XP); an unconfirmed one costs nothing.
+  - Every mission card carries `safety: SafetyTag[]` (00 C13) and the tags are printed on the card for the parent (e.g., "עם מבוגר", "בלי אש"). The content linter rejects a mission without tags (AC-STOP-4).
 - **Exit in the middle:** a "back to camp" button (in the pause menu) at any time, with no cost. A level that was left is saved by checkpoint.
 
 ### 15.2 Character exit lines (approved)
@@ -1819,9 +1966,9 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 
 ### 15.4 Shabbat and holidays (00 B7)
 
-- **Detection:** the time of candle lighting and havdalah is computed by an algorithm from sunset (a NOAA solar algorithm) for the city chosen by the parent (default: Tel Aviv, lighting 20 min before sunset; Jerusalem 40 min; havdalah = the appearance of 3 stars ≈ sunset + 40 min, a configurable parameter).
-- **Holidays** from the calendar config (§13). Yom Tov days get the same treatment as Shabbat.
-- **Modes (family choice, an open item for the parent):**
+- **Detection (00 B7, one library for the whole app):** candle-lighting and havdalah times come from **`@hebcal/core` zmanim** for the parent's city (OPD-04; default Tel Aviv; city-specific candle offsets as hebcal provides them, with a manual override in the parent area). The **pause window is `[candleLighting − 30 min, havdalah + 30 min]`**. There is no second (NOAA) implementation anywhere in the code; `packages/shared/calendar.ts` exposes `shabbatWindow(date, city)` and every consumer (counters, scenery, notifications, economy) calls it (AC-SHAB-3).
+- **Holidays** from the calendar file `packages/content/calendar/5787.json` (generated from hebcal, cross-checked, 00 B7; §13). Yom Tov days get the same treatment as Shabbat.
+- **Modes (family choice; default `soft` per 00 B7 / OPD-04):**
 
 | Mode | Behavior |
 |---|---|
@@ -1968,7 +2115,21 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 
 - **AC-ECO-1:** No coins are paid per raw time or per spark. Every coin event is tied to an event from §11.2 (a test of the payment table).
 - **AC-ECO-2:** There is no pre-announcement of a reward for a task (lint on strings: "תקבל/י … אם").
-- **AC-ECO-3:** Treasure: the contents and frame are known before opening (silhouette). The number of taps = 1 + effortMarks (a test). There is no RNG in the reward path (a lint rule bans `Math.random` in `economy/`).
+- **AC-ECO-3:** Chests: the contents and tier are known before opening (silhouette + label, 02 §6.3) and the tier is identical in all 8 reveal beats (snapshot). Taps per tier are 02's (wood 1, silver 2, gold 3, legendary 3 + hold). There is no RNG in the reward path (a lint rule bans `Math.random` in `economy/`). Effort marks appear only as receipt lines (test: `effortMarks` never changes any grant).
+- **AC-ECO-4:** `chest_opened` is written at the start of reveal beat 6; killing the app at any beat and relaunching never grants twice and never loses a chest (a fold test over the three cut points: before `chest_earned`, between earned and opened, after opened).
+- **AC-ECO-5:** Play shekels in MX-M15 never appear in any wallet, receipt or shop; a static test asserts the `camp-shop` module has no import from `economy/`.
+- **AC-HERO-1:** `hero-naming.lint`: no string, asset name, Rive artboard, prompt file or code comment under `apps/mobile`, `packages/content` or `tools/` uses "robot/bot/mech/android/רובוט" for the hero; the gear icon asset is referenced only by `machine/*` components (גלגלון, bots, "machine-made" tag). 0 hits.
+- **AC-REG-1:** Region unlock = (story calendar OR `fireLevel` threshold) AND readiness (§10.4). A simulation with a family that never meets a weekly goal still opens every region on its chapter week; a family at fire level 9 by week 3 opens R-04..R-09 early only if readiness holds.
+- **AC-FIRE-1:** `fireLevel` is monotonic over the whole event log and across season boundaries (fold test with 3 seasons: never decreases; a new season adds a ring, never a reset).
+- **AC-PET-1:** Pet stage is a pure function of `masteredSkillsInDomain` (and `retained` for legendary) per 02 §8.2; completing a species set changes `accessories`, not `stage` (unit test).
+- **AC-MX-6:** Every mechanic in §7.3 has a card with all §7.0 fields and a `MechanicDef` with `compactForms` (test: catalog completeness).
+- **AC-MX-7:** Brain-token gate: in every mechanic that exposes גלגלון's ladder, `hintAvailable === false` until a deposit event exists for that item (engine test across the catalog, implements 07 AC-07).
+- **AC-MX-8:** MX-E01 `pairs`: no pronunciation score is ever computed or stored; the speaker pool rotates among the 4 adult voices + the human recording (test).
+- **AC-MX-9:** Tool belt: `toolState` transitions follow 07 §2.2 (`chosen` requires ≥3 independent choices over ≥2 weeks; `transferred` requires a parent confirmation event).
+- **AC-CTRL-1:** Every mechanic is completable with touch only; the optional controller never appears in any tutorial or prompt (snapshot).
+- **AC-STOP-4:** Every offline mission card has ≥1 safety tag from 00 C13; the small-parts rule is enforced while `youngestChildAge < 3` (content lint).
+- **AC-SHAB-3:** All Shabbat/holiday window checks go through `packages/shared/calendar.ts` (`@hebcal/core`); a grep test finds no other sunset/zmanim computation.
+- **AC-UC-\*:** the acceptance criteria of §21 (one per use case) are part of this list.
 - **AC-CEL-1:** T0 ≤800ms, T1 ≤1500ms, T2 ≤3000ms, T3 ≤6000ms, T4 ≤10000ms (a timer test on each animation sequence).
 - **AC-CEL-2:** Celebrations + transitions ≤15% of the episode time on average over a week (telemetry).
 - **AC-CEL-3:** No flashing >3 Hz. Shake 0 for K3. Reduce Motion is respected (an animation test).
@@ -2006,7 +2167,7 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 | DD-06 | Weekly boss day | Thursday, 17:00–19:00 is the default "opening hour" for the finale (the finale is available from Thursday until Friday at noon) |
 | DD-07 | Is Saturday night a new week? | Yes. The week runs Sunday → Saturday night |
 | DD-08 | Two children want the same device | The turn ring decides by last use. If both want to, a CO-2 suggestion is shown |
-| DD-09 | A child who wants to keep going after the cap | No. The goodnight ritual, then "the camp is asleep". The parent can grant +10 min through the gate (a "bonus" button, not shown to the child) |
+| DD-09 | A child who wants to keep going after the cap | No. The goodnight ritual, then "the camp is asleep". The parent can grant +10 min through the gate (a "bonus" button, not shown to the child; max 1 per child per day; audit-logged; it extends minutes, never adds an episode or any reward) |
 | DD-10 | Number of choices in Plan | K2: 2, K1: 3 + a flame, K3: 3 doors |
 | DD-11 | Default letter order (K2) | The default in the Hebrew spec (sound-first, high utility, confusables separated); the parent's "letter of the week" overrides |
 | DD-12 | Which numbers K3 hears | 1–3 only (Give-N), in the lookup forms (feminine for rote counting; noun agreement as in the lexicon) |
@@ -2023,17 +2184,36 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
 | DD-23 | Two siblings rescued the same friend in co-op | Each one gets "their" copy in their neighborhood (no splitting, no fights) |
 | DD-24 | Content that is too easy for K1 (boredom) | Mystery/Stretch flame offered automatically after 3 levels with ≥95% |
 | DD-25 | Daily surprise when the child skipped days | They accumulate up to 7, and then "a big letter" that bundles them |
+| DD-26 | A level left mid-way and not resumed | Checkpoint state is kept for **7 days**; after that the level restarts from Ki with the same content slots, and friends already rescued in it stay rescued (they are never "un-rescued") |
+| DD-27 | An episode interrupted (profile switch, app killed, cap) and not resumed within 24 h | The engine auto-closes it as `episode_closed{reason:'abandoned'}`: item grants already earned are paid on the next receipt, `episodeComplete` is **not** paid, the family-goal day counts only if ≥1 full level was completed (02 §18 UC-03) |
+| DD-28 | Child input faster than the UI can respond (tap spam) | Input is debounced per target (300 ms K3, 200 ms K2/K1); during T2+ celebrations taps are swallowed except "skip"; a 3rd wrong answer in <800 ms each (K1) triggers the rapid-guess rule (02 §2.6) and the engine steps down one band for the next 3 items; never a message about speed |
+| DD-29 | Child stuck on the same level across 3 visits | Visit 4 starts with the pet pointing at the next friend immediately (DD-17), the engine serves the level's items one band lower, and ניצי "takes a lantern breath" first; the level is marked `assisted` for the parent report only. There is no "skip level" offered to the child; the parent can mark a skill `notRelevant` (10 API-12) which removes that content |
+| DD-30 | Child avoids every learning action (wanders, pokes friends, visits the shop) | Allowed; nothing hostile happens. Free play earns nothing (02 §2.7). After 2 consecutive episodes with 0 `item_answered` events the parent gets an informational card (not an alert); the next Plan step offers only 2 levels and no camp-first option |
+| DD-31 | Device time zone differs from the family's (travel) | Day boundaries (`DayKey`) use the **device** time zone; Shabbat/holiday windows use the **family city** until the parent switches "travel city" in the parent area. A banner for the parent appears when `deviceTz ≠ family.tz` for >24 h |
+| DD-32 | Device clock jumps backward or forward | Grants use the device `ts`; the server clamps far-future time (11 §6.4). `DayKey` for caps and diminishing returns is **monotonic per device** (never earlier than the last DayKey seen), so moving the clock back cannot reset a day's caps; moving it forward only ends the day early (no gain). Skew >2 min is telemetry for the parent (11 §6.5) |
+| DD-33 | Two devices offline, same child, same chest track item | 02 §6.3 rule 6: the later chest keeps the item, the earlier one shows "כבר יש לך, קיבלת X מטבעות במקום"; nothing is removed |
+| DD-34 | CO-3 room: a device disconnects mid-finale | Its player is replaced by the scripted friend within ≤1 s (§12.1); rejoin within 15 min resumes the role; the Durable Object emits `boss_defeated{participants}` once to all devices, so each child's grant derives from the same event id |
+| DD-35 | Parent lowers a cap below the minutes already played today | The soft warning fires at once and the episode lands within ≤1:30; tomorrow's cap is the new one; nothing earned today is removed |
+| DD-36 | App killed during the goodnight ritual or receipt | `episode_completed` is written **before** the ritual starts; relaunch shows "the camp is asleep" directly; the receipt is shown once on the next entry if it was never displayed (`receipt_shown` event) |
+| DD-37 | Free-signing install expired mid-week (00 E1a) | Kids see nothing (the app just won't launch); the parent area showed a banner from day 5 and the app syncs at every episode end and on background, so at most the current episode's unsynced events are at risk; on re-sign over cable the data container is preserved `⟂VERIFY` (install the re-signed build over the existing bundle id with `devicectl` on a test device and confirm SQLite survives; if not, the re-sign script must run "סנכרון עכשיו" first via the parent area) |
+| DD-38 | Content pack or audio clip missing (vendor/API failure, offline) | The engine never blocks on content: a missing level chunk falls back to the static pack (DD-14); a missing VO clip plays the text via the HUD only (K1) or the character's 2-note signature + a picture prompt (K2/K3) and logs `asset.missing`; a missing numeral clip is a **hard error in CI**, never at runtime (the table ships complete) |
+| DD-39 | Reduce Motion / calm mode on | No shake, no confetti, springs → `spring.reduced` (09), chest reveal: beats 3–5 collapse to a single 300 ms glow, auto-open after 4 s is the default; parallax and camera bob off; nothing is skipped in content |
+| DD-40 | Color-only cues | Never color alone (09 §3.4): chest tiers differ by shape, evening flames by icon (blue = snowflake, green = leaf, gold = star, purple = question mark), jars by icon + label, lit/unlit runes by glow + a check mark, heat map "warm/cold" by sound + size |
 
 ---
 
 ## 19. Open items for the parent (minimal; nothing here blocks: placeholders + defaults are in use)
 
-1. **The children's names** and **K3's grammatical gender** (00 A2). Default: DD-05.
-2. **Shabbat mode:** `soft` / `full` / `off` (§15.4) + the city for computing times. Default: `soft`, Tel Aviv.
-3. **Recording parent voices:** the child's name ×3 children + 3 short lines per parent (≈10 minutes, a guided in-app recording). Default: no recording → TTS is not used for names; ניצי says "!אור בוקר" without a name.
-4. **Taste approval (E10):** the world name, the hero (פנסון), the cast (a sheet of 8 characters). The first defaults are used until approval.
-5. **Grandparents** in the game? (Yes/no + names.) Default: no.
-6. **The family boss day:** default Thursday.
+> IDs in brackets are 00's deduplicated **Open Parent Decisions** table; where a default here and in 00 differ, **00 wins**.
+
+1. **The children's names** and **K3's grammatical gender** (00 A2) [OPD-01, OPD-02]. Default: placeholders; K3 `n` (neutral) everywhere in band T (00 overrides DD-05's alternation).
+2. **Shabbat mode:** `soft` / `full` / `off` (§15.4) + the city for zmanim [OPD-04]. Default: `soft`, Tel Aviv.
+3. **Recording parent voices:** names + lines (≈20 minutes, a guided in-app recording) [OPD-12]. Default: no recording → TTS is never used for names; ניצי says "!אור בוקר" without a name.
+4. **Taste approval (E10):** the world name, the hero (פנסון), the cast (a sheet of 9 characters incl. Pip), 6 pets × 5 stages, chest sheet [OPD-11]. The first defaults are used until approval.
+5. **Grandparents** in the game? (Yes/no + names.) [OPD-22] Default: no.
+6. **The family boss day** [OPD-07]: default Thursday.
+7. **Movement constraints at home** (space, neighbours, hours; is the iPad on a stand?) [OPD-14]. Default: seated alternative always offered; jump moments off on iPhone-in-hand.
+8. **Children's drawings for co-design** (3–5 each, hero + lost friend) and consent to send them to the image model [OPD-10]. Default: drawings stay on device, processed locally only (§3.4).
 
 ---
 
@@ -2050,8 +2230,7 @@ The UX spec is the canonical owner of the phrase list (00 C4). These are the gam
    - **Reason:** R8 (age of onset of fear of the dark), and fireworks are explosions.
 4. **D1 — clarification:** "sparks" (`spark`) in levels are a **non-persistent in-episode resource** that doesn't convert to coins. They are not a third currency.
    - **Reason:** they serve as breadcrumbs (G1) without breaking the "mastery, not time" rule.
-5. **D2 — clarification of "upgrade steps" in the reveal:** a multi-tap with visible "upgrades" is allowed **only** when each step represents an effort mark that has already been earned (§16.2).
-   - **Reason:** to keep the beloved Starr Drop/Lucky Chest ritual without randomness (R3).
+5. **D2 — "upgrade steps" in the reveal: WITHDRAWN (Fable review).** 02 §6.5 and 00 D2 keep the tier visible from the first frame with a fixed tap count per tier; effort marks are receipt lines (§16.2). Nothing to change in 00.
 6. **E1b — clarification of "Hebrew text only in the 2D HUD":** in-world glyphs (one letter/syllable as a learning object) are allowed as **a pre-baked image texture** (`tools/glyph-baker`, nikud validated), not text.
    - **Reason:** without this, "a rune on a stone" (MX-H01) and letter-friends can't exist in the world.
 7. **C7 + G4 — rule:** the player's hero (פנסון) is a **silent vessel**, not AI and not a character with dialogue. The AI helper (גלגלון) must have a distinct shape language (boxy, a screen face, gears, an "AI • מכונה" label).
@@ -2113,3 +2292,52 @@ export const celebration = {
 - free choice of activities with no rewards;
 - persistence after a mistake;
 - number of creations.
+
+---
+
+## 21. Use cases and edge cases (gameplay side; the money side of each is 02 §18 with the same UC id)
+
+> Format: scenario → binding rule(s) → acceptance criterion `AC-UC-nn`. Rules reference the section that owns the mechanism; nothing here introduces a new number that 02 owns.
+
+| ID | Scenario | Binding rules (gameplay) | AC-UC-nn (testable) |
+|---|---|---|---|
+| UC-01 | **First run, K2** | §14.2 K2 flow; 3 real endowed rescues in episode 1 (§14.3); first egg = his first domain (§4.12); no text; the Plan offers 2 levels only from R-03/R-05; the tutorial is "learn by doing", no modal | Playwright: from profile pick to first friend ≤60 s of scripted time with 0 text nodes in the child layer; `friend_rescued` ×3 by end of episode 1 |
+| UC-02 | **First run, K1** | §14.2 K1 flow; "Skip" after 3 s; names her פנסון; placement runs inside regular levels (08 "mapping expedition" ≤10 min); egg choice 1 of 2; joystick offered once, remembered | Snapshot: skip button visible at t=3 s; `placement` events never produce grants (02 §2.7); joystick preference persisted per child |
+| UC-03 | **First run, K3** | §14.2 K3 flow; parent gate mandatory; פופי; no wrong answers; parent prompt on screen; 4:00 episode | AC-K3-1/2 hold on the first episode; the parent prompt layer is `parentOnly` (small text, not voiced) |
+| UC-04 | **Returning after 3 weeks** | §5.5 surprises accumulate (max 7 → "big letter", DD-25); pet asleep → wakes happily (§4.12); campfire unchanged (never dims, §10.4); levels left mid-way restart after 7 days with rescued friends kept (DD-26); the Plan shows "ברוכים השבים" with a warm-up of **due reviews only** (no new skill in the first episode back); nothing says "you were away" | Fold over a log with a 21-day gap: no counter decreases (02 §14.1); the first episode back has `newRatio = 0`; the mailbox holds 7 items + 1 bundle |
+| UC-05 | **Sibling grabs the device mid-level** | §12.5 instant save; switching profiles needs the picture-PIN if set (00 H3); the interrupted child's beat state is saved at the last checkpoint; the yielding child gets a "Patience heart" + a VIP surprise next time (§12.5); DD-27 auto-close after 24 h; the other child's episode starts normally; K3's profile cannot be launched this way (gate) | Test: switch at any beat → resume lands on the same beat with the same content slot; no grant is lost or duplicated (02 §18 UC-05); K3 launch from the switcher is refused without the gate |
+| UC-06 | **Two kids, one iPad, co-op turn-taking** | DD-08 turn ring; CO-1/CO-2 modes; each child's items at their own band (DD-13); shared meter only (§12.4); each gets "their" copy of a shared rescue (DD-23); co-op minutes count 50% to each cap; the session ends with **one** goodnight for both (each child's `episode_completed` written) | AC-CO-1..6; test: a CO-2 session emits one `episode_completed` per participant and one shared `coop_session` id |
+| UC-07 | **K3 lap mode, parent walks away** | §15.3: the playroom (MX-P01) auto-stops after 5 min with a lullaby; no exits, no menus, 12 mm dead margin; no learning segment runs without a parent prompt answered ("עשינו!") within 60 s — otherwise the episode switches to playroom; `solo minutes in learning segments` reported to the parent (10 M-14, target 0) | AC-K3-1; test: no parent tap for 60 s in a lap segment → playroom; playroom hard-stops at 5:00 ± 5 s |
+| UC-08 | **Offline for days** | DD-15 everything works; content from the installed packs; daily surprises generated locally from the seed; co-op same-device only; chests open offline (contents already in the event); sync on reconnect merges by event id (00 E6) | Playwright with network off for a simulated 5 days: all episodes playable; on reconnect `rejected = []` and no duplicate grants |
+| UC-09 | **Shabbat / holiday / quiet day** | §15.4 modes (`soft` default); window via `@hebcal/core` (B7); `soft`: scenery, counters frozen, levels as free practice, no coins/gems, no events open/close; `full`: app sleeps for kids; quiet days: no boss/events, ≤T1, no siren-like SFX, chests go to the shelf (02 §6.5); Hanukkah night 1 on Friday opens after havdalah cumulatively (AC-EV-3) | AC-SHAB-1/2/3; AC-EV-3; test: a chest earned at 15:00 on a quiet day sits on the shelf with `autoReveal=false` |
+| UC-10 | **Child spams taps / rapid guesses** | DD-28 debounce; K1 rapid-guess rule (02 §2.6, silent); after 3 rapid wrongs the engine steps down and ניצי models "lantern breath" once; K2/K3: no RT in scoring (AC-MX-4), the UI simply ignores taps during the 0.6 s bounce; K3 co-op taps rate-limited 1/0.8 s (§12.4) | Test: 20 taps in 2 s on a K2 item register ≤4 attempts; no string about speed exists (lint) |
+| UC-11 | **Parent changes caps mid-session** | §15.1: applied at the next segment boundary; lower-than-elapsed → land within ≤1:30 (DD-35); raise → immediate room; settings doc LWW by HLC (11 §6.5); the child sees no message | Test: cap 25→10 at minute 12 → `stop_ritual{capReason:'parentChange'}` within 90 s of the boundary; cap 25→40 → no stop |
+| UC-12 | **Child stuck on a level 3 times** | §6.5 frustration guard per item; DD-29 per level (pet points at once, band −1, `assisted` flag); boss phases move to Cozy at ≥3 errors (§9.2); never 4 errors in a row on one item (AC-LV-6) | Simulation: a 0%-accuracy bot completes any K2 level in ≤8 min with ≤3 errors per item and reaches Ketsu |
+| UC-13 | **Refuses learning but wants rewards** | DD-30; no reward path without learning (P-1, AC-LV-3, AC-ECO-1); the shop/collection room are free to browse (02 `neverEarns`); camp-first entries >40% → the app opens on the map (02 §14.3) | Test: an episode with 0 `item_answered` yields 0 coins, 0 XP, 0 chests, and still ends with the goodnight ritual (no punishment, no lecture) |
+| UC-14 | **App killed during a chest reveal** | §16.2 idempotent reveal (`chest_earned` → `chest_opened` at beat 6); relaunch plays beat 8 only or leaves the chest on the shelf | AC-ECO-4 |
+| UC-15 | **Clock tampering** | DD-32 monotonic DayKey; server clamp; skew telemetry; Shabbat windows prefer `serverTime` when the last sync is <24 h old, else device time | Test: set device clock −2 days → caps unchanged; +10 days → `DayKey` advances once, no bonus paid early (02 §18 UC-15) |
+| UC-16 | **Device time zone ≠ family** | DD-31 | Test: device in `America/New_York`, family Tel Aviv → episodes count toward the NY-local day; Shabbat scenery follows Tel Aviv until "travel city" is set |
+| UC-17 | **CO-3 disconnect** | DD-34; §12.1 drop-in/out; Durable Object authoritative (§20 #1); offline → CO-3 unavailable, CO-1/2 offered | AC-CO-3; test: host drop during the finale → the finale completes on the DO and every device receives the same `boss_defeated` id on reconnect |
+| UC-18 | **K1 guide-mode overuse** | §12.6 two-level opt-in, 1/day ≤10 min, brain-token gate, no input on his items, no stats | AC-CO-5; test: a second offer on the same day never renders; mentor progress stops at 10:00 |
+| UC-19 | **Accessibility: color blindness** | DD-40; 09 §3.4 | Playwright with a CVD filter: every state pair (lit/unlit, tier, flame, jar) remains distinguishable by shape/icon |
+| UC-20 | **Accessibility: motor** | 09 §10: tap-tap alternative for every drag (`dragOrTapTap`), long-press ×1.5 setting, targets ≥ §6.3 sizes, no multi-finger gesture required, handedness mirror, chest auto-open setting, Switch Control focus ring | Test: every mechanic completes with single taps only (`inputMode='tapTap'`); 0 required multi-touch gestures (lint on gesture handlers) |
+| UC-21 | **Accessibility: Reduce Motion** | DD-39; §16.1; 09 §5.5 | Animation test: with RM on, no `shake`, no `confetti`, all springs = `spring.reduced`, chest beats 3–5 ≤300 ms total |
+| UC-22 | **Accessibility: hearing** | 09 §10: captions for every VO (default on for K1 and the parent; toggle for K2), every meaningful sound has a visual twin (sound tells → glints, counting voice → numerals shown, English phonics → mouth-shape card), haptics on iPhone as a third channel | Test: with audio muted, every secret type in §6.2 still has a visual cue; every K2 instruction has an icon prompt |
+| UC-23 | **Vendor/API/content failure** | DD-14, DD-38; nothing kid-facing is generated live (00 C7, E9); the static pack is always installed | Test: delete a level chunk and a VO clip → the episode still completes; `asset.missing` telemetry recorded; numerals table completeness is a CI gate |
+| UC-24 | **Grade change (Sept 2027)** | DD-18; bands re-evaluated by `bandOf(child)`; a light re-placement; nothing in the collection or hub changes | Test: K2's band `G→S` flips text rendering to band S without touching rescues, buildings or pets |
+
+---
+
+## Fable review changelog (reviewer F2, 2026-11-02)
+
+- **Hero naming (00 G4, parent request):** §2.1, §3.1, §3.2 rewritten — the פנסון is a "toy-suit with a living spark", never a robot; vocabulary, part names (`antenna`→`topper`, no claws/wheels), spike base mesh and prompts scrubbed; gear icon reserved for גלגלון; new lint AC-HERO-1; glossary note ניצוץ vs ניצוצות.
+- **01 ↔ 02 reconciliation (00 D4/D7):** §11.2 numbers table removed and replaced by a pointer + 9 design requirements; §16.2 "effort steps" withdrawn (02's fixed taps per tier, tier visible from frame 1), effort marks moved to receipt lines; chest tiers renamed wood/silver/gold/legendary with 02's shapes; §16.1 maps wood→T2 and silver/gold/legendary→T3; §9.2/§9.3/§13.3 rewards now cite 02 triggers; §10.2 thresholds replaced by 02's paced config values + per-season building; §10.3 species set → accessory + chest, not evolution; §4.12 pets rewritten to 02 §8 (6 species by domain, 5 stages, mastery thresholds, treats, friendship; K3 = פופי the bunny); §10.4 campfire **never resets** (unbounded level, color rings per 10, lit-zone cap), logs as the shared unit; §20 proposal 5 withdrawn.
+- **Region unlocks made precise (§2.2, §10.4):** story-calendar-or-fire-level (earliest) AND readiness, with a per-region table; learning is never gated by a shared counter (00 G2).
+- **Astro-Bot pillars completed:** rescue counts per region (§9.2: K1 57, K2 41 for 8 levels), hub fill states F0–F5 (§10.2), secret levels secretA/B/goldenRemix referenced to 02 §5.3, day/night rule by episode phase (§9.5), capsule machine (deterministic, next capsule visible) in §10.3.
+- **Requests from other specs incorporated:** 03 → MX-M13..M20 + variants (lasso, cart/hut, table-map, board-game); 05 → MX-E01 `pairs` mode, MX-E05..E07, CH-11 Pip (silent crab), "bottles from the sea" warm-up in S0 (§13.2, §5.3); 07 → MX-T01 unified with `TOOLBELT` (tool cards, states, "which tool?" fan), MX-T06 brain-token gate across all hint ladders, ritual minutes mapped to episode segments (`ritual_mid`, open+close ≤10%); 06 → MX-X02 content skins, MX-X05 build-sim, hub weather station, camp lantern, never-wilting garden. Catalog now 64 mechanics with a Tier A/B/C build order (§7.1); full cards in new §7.3.
+- **00 rev 2 applied:** A6 bands + C15 level names in §0; B7 `@hebcal/core` window and `soft` default replace the NOAA paragraph in §15.4 (AC-SHAB-3); C13 safety tags on offline missions (§8.1, §15.1, AC-STOP-4); E3 device-in-hand check before jump moments and optional controller (§6.3, §8.1, AC-CTRL-1); B9 direction conventions noted in §6.3; §19 open items carry OPD ids and defer to 00 defaults.
+- **Caps/bedtime aligned to 10 §6.13** (K3 15 min, K2 bedtime 20:00), "app sleeps" windows, mid-session cap-change rule, +10 min bonus rule (§15.1, DD-09).
+- **Guide mode** (§12.6): parent-enabled first (10 default off), cap behaviour mid-session, brain-token link.
+- **Endowed progress must be real rescues** (§14.3, per 02 §5.2 rule 8).
+- **New §21 use-case/edge-case matrix** (24 scenarios) with binding rules and AC-UC-nn; new DD-26..DD-40; new ACs (AC-ECO-3/4/5, AC-HERO-1, AC-REG-1, AC-FIRE-1, AC-PET-1, AC-MX-6..9, AC-CTRL-1, AC-STOP-4, AC-SHAB-3).
+- **Still unverified (`⟂VERIFY`):** DD-37 — whether a re-signed build installed over the existing bundle keeps the SQLite container (test with `devicectl` on one device before relying on it).
