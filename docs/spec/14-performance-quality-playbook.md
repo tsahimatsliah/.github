@@ -178,14 +178,17 @@ reachable. The following were read from the **published tarballs of the versions
   reflow). `fontFamily` values are the fonts' PostScript names (read with `fc-scan --format '%{postscriptname}\n'` in
   `tools/assets/fonts`), mapped once in `packages/ui/tokens/fonts.ts`. Web uses `@font-face` from the same files with
   `font-display: block`.
-- **PQ-R-42 (MUST)** The splash stays until fonts (embedded, so instant), the SQLite migration, remote-config cache
-  read and the picker's Rive/placeholder are ready, with a **3 s hard timeout** (11 §4.7) after which the app
-  continues with placeholders and logs `app.boot_timeout` (`PQ-P-07`).
+- **PQ-R-42 (MUST)** The splash stays until fonts (embedded, so instant), the SQLite migration (incl. the 11 §6.3
+  recovery ladder), remote-config cache read and the picker's Rive/placeholder are ready: **target 3 s, hard
+  timeout 4 s** (11 §4.7, 09 §11 — the extra second is the DB recovery budget) after which the app continues with
+  placeholders and logs `app.boot_timeout` (`PQ-P-07`).
 - **PQ-R-43 (MUST)** Nikud text uses the 09 §3.6 tokens: lineHeight ratio 1.6 (K2 read styles), 1.55 (K1 pointed), 1.45
   (K1 unpointed), 1.6 (story); container `paddingVertical ≥ 0.12em`; **no `overflow: hidden` on the nearest ancestor**
   of pointed text; `letterSpacing` 0; no `fontVariant` that disables `ccmp/mark/mkmk`. In-game labels cap
-  `maxFontSizeMultiplier` at 1.5 (the profile "גודל אותיות" slider range is 100–150%); parent screens scale to 200%.
-  `PQ-P-09` is the only component allowed to render pointed Hebrew.
+  `maxFontSizeMultiplier` at 1.5 (the profile "גודל אותיות" slider range is 100–150%); parent screens scale with
+  system Dynamic Type up to **AX5 (`maxFontSizeMultiplier` 3.1)** with the **no-clipping gate at AX3 (≈ 235 %)**
+  (09 §3.6, 10 AC-35, 11 R-11); beyond AX3 the screen scrolls. `PQ-P-09` is the only component allowed to render
+  pointed Hebrew.
 - **PQ-R-44 (MUST)** The nikud torture strings in `packages/i18n/test/nikud-sample.txt` (high marks: holam, shin/sin
   dot; low marks: kamatz, segol, hiriq, kubutz, sheva, hataf; dagesh; final letters with kamatz `ךָ`; mixed with Latin and
   digits) are rendered in the Playwright nightly at font scale 100/135/150 and on device in `/(parent)/debug` → "ניקוד"
@@ -199,10 +202,12 @@ reachable. The following were read from the **published tarballs of the versions
   during the celebration.
 - **PQ-R-47 (MUST)** Fixed logical game resolution (per scene config, e.g. 1180×820 logical points for iPad landscape,
   09 §13.2) scaled uniformly into the safe area with letterboxing; the board is computed once from
-  `useWindowDimensions` + insets and re-derived only on a real size change (rotation, Split View, Stage Manager), behind a
-  150 ms fade. Orientation is locked per scene via `expo-screen-orientation` (`landscape` for world and most games on
-  iPad; iPhone menus portrait, 00 A3). ⟂VERIFY on iPadOS 26/27 that `UIRequiresFullScreen: false` + runtime resize
-  events arrive as `useWindowDimensions` changes while in Split View.
+  `useWindowDimensions` + insets and re-derived only on a real size change (rotation; a Split View / Stage Manager
+  resize **should never arrive** because `UIRequiresFullScreen: true` is bound by 00 A3 / 11 §0 — the letterbox is
+  the **defensive fallback** if one ever does), behind a 150 ms fade. Orientation is locked per scene via
+  `expo-screen-orientation` (`landscape` for world and most games on iPad; iPhone menus portrait, 00 A3). ⟂VERIFY
+  on iPadOS 27 that a full-screen-required app also stays unresizable under Stage Manager (11 §0 owns the check);
+  if it does not, `GameBoard` must survive the resize without reflow (`PQ-DEV-12`).
 
 ### 1.8 Reliability: errors, lifecycle, memory, storage, network
 
@@ -301,7 +306,7 @@ class, A12/A13, 3 GB, 60 Hz** ⟂VERIFY with the parent's device list, Q to 13 �
 | PQ-B-21 | Rive file size | ≤ 200 KB | ≤ 300 KB | `pnpm lint:assets` | `PQ-CI-02` |
 | PQ-B-22 | SFX latency tap → audible | p95 ≤ 50 ms | p95 ≤ 80 ms | in-app latency screen + 240 fps video (10 taps) | `PQ-DEV-08` |
 | PQ-B-23 | Haptic latency tap → felt | ≤ 20 ms | n/a (no instrument) | same handler as visual | review |
-| PQ-B-24 | Per-level assets (2D mini-game pack) | ≤ 5 MB on disk | ≤ 8 MB on disk, ≤ 150 MB decoded | `pnpm lint:assets` + Allocations | `PQ-CI-02`, `PQ-DEV-06` |
+| PQ-B-24 | Per-level assets (2D mini-game pack) | ≤ 5 MB on disk | ≤ 8 MB on disk, ≤ 150 MB decoded. **Splitting** an oversized pack by `skillId` is the **content pipeline's job** (12 V21 in `content:validate`, at build time); `lint:assets` only asserts the limit and never rewrites a pack | `pnpm lint:assets` + Allocations | `PQ-CI-02`, `PQ-DEV-06` |
 | PQ-B-25 | Per-zone assets (3D) | ≤ 30 MB | ≤ 50 MB (11/09) | same | same |
 | PQ-B-26 | Layout shift after first paint | 0 | **0** (CLS web = 0.00; device diff = 0 px outside masks) | Playwright `layout-shift` observer; Maestro double screenshot | `PQ-CI-07`, `PQ-T-06` |
 | PQ-B-27 | Crash-free sessions (rolling 30 days, from `app.start.prevExitClean`) | 100% | ≥ 99% **and** 0 crashes reproducible on the Low device; any S1 crash blocks promotion | Ops tab (11 §13) | `PQ-REL-04` |
@@ -342,7 +347,7 @@ marked `(review)`. Allow-list exceptions live next to the rule file with a comme
 | PQ-X-17 | `test.only`, `it.only`, `describe.skip`, `xit`, deleting a test file without PR label `tests-removed` | `eslint-plugin-no-only-tests` ⟂VERIFY plugin name/ESLint 10 flat-config support; `tools/ci/test-delta.mjs` | fix the test |
 | PQ-X-18 | committing Playwright baselines generated outside the pinned Docker image; `--update-snapshots` without PR label `visual-change` | `tools/ci/baseline-origin.mjs` (checks the `__screenshots__/.origin` stamp written by the CI job) | `workflow_dispatch` update job (11 §12.2) |
 | PQ-X-19 | native `react-native-screens` headers, stock `Slider`, `Switch` in kid screens; `Pressable`/`TouchableOpacity` raw in kid screens | 09 `UX-AC-10`, 11 R-7 | `packages/ui` components |
-| PQ-X-20 | `Updates.reloadAsync()` outside `(parent)`; `checkForUpdateAsync` during a session | `no-restricted-imports` scoped | apply on cold start (11 §3.3) |
+| PQ-X-20 | `Updates.reloadAsync()` anywhere except `src/services/updates/UpdateGate.ts`; `checkForUpdateAsync` while a child session is open | `no-restricted-imports` scoped | `UpdateGate` moments only: cold start, idle picker ≥ 60 s, episode boundary / profile switch, foreground after ≥ 30 min background, parent action (11 §3.3) |
 | PQ-X-21 | third-party analytics/crash SDKs except opt-in Sentry in dev/preview (11 §13); any SDK that phones home | `olam/no-third-party-analytics` | self-hosted events |
 | PQ-X-22 | `patch-package`/`pnpm patch` without an ADR; `npm install`/`yarn add`; non-exact versions; `expo install` bypassed for Expo-managed packages | review + `tools/ci/assert-native-versions.mjs` | `npx expo install`, `pnpm add -E` |
 | PQ-X-23 | Hebrew text inside Skia paragraphs/GL text on kid screens (until nikud verified on device, 11 R-9) | `olam/perf-bans` (import of `Paragraph` in `src/games`) | `HText` overlay |
@@ -553,7 +558,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useState } from 'react';
 SplashScreen.preventAutoHideAsync().catch(() => {});                  // module scope, before first render
 SplashScreen.setOptions({ duration: 200 });
-const BOOT_TIMEOUT_MS = 3000;                                        // PQ-R-42
+const BOOT_TIMEOUT_MS = 4000;                                        // PQ-R-42 hard timeout (target 3 s; telemetry.mark reports the actual)
 export default function Root() {
   const [ready, setReady] = useState(false);
   useEffect(() => {
@@ -618,7 +623,7 @@ export function HText({ token, pointed = false, children, ...rest }: TextProps &
     <Text
       {...rest}
       allowFontScaling
-      maxFontSizeMultiplier={t.audience === 'parent' ? 2 : 1.5}
+      maxFontSizeMultiplier={t.audience === 'parent' ? 3.1 : 1.5}   // AX5 for parents (clip gate at AX3), profile slider for kids
       style={[{ fontFamily: t.fontFamily, fontSize: size, lineHeight, letterSpacing: 0,
                 textAlign: dir === 'rtl' ? 'right' : 'left', writingDirection: dir, includeFontPadding: true }, rest.style]}>
       {children}
@@ -857,7 +862,7 @@ Weights (11 §12.1): pure logic ~70%, components ~15%, Playwright visual ~10%, M
 | PQ-T-01 | Pure logic + property/model-based | vitest 4.1.12 + fast-check 4.10.2 | Linux CI | every PR | all green; coverage branches ≥ 80% on `packages/engine`, `economy`, `content` validators (13 §9) |
 | PQ-T-02 | Render-performance regression | reassure 1.6.1 (jest-expo 58.0.13) | Linux CI | PRs touching `apps/mobile/src/**`, `packages/ui/**` | no added render count; duration +10% max (`PQ-B-29`) |
 | PQ-T-03 | Components | jest-expo 58.0.13 + RNTL 14.1.0 + Reanimated jest setup (`react-native-reanimated/jest/resolver`, `setUpTests()` ⟂VERIFY the worklets jest guide for 0.13 in `node_modules/react-native-worklets/README.md`) | Linux CI | every PR | green |
-| PQ-T-04 | Visual / RTL / gender / nikud / layout-shift | Playwright 1.64.1 in `mcr.microsoft.com/playwright:v1.64.1-noble` on `expo export -p web` | Linux CI | PR smoke (≈120 shots ≤ 5 min) + nightly (≈1,500) | `maxDiffPixelRatio` 0.002 (2D), 0.01 (3D); CLS = 0; no console errors; `UX-AC-01…16` |
+| PQ-T-04 | Visual / RTL / gender / nikud / layout-shift | Playwright 1.64.1 in `mcr.microsoft.com/playwright:v1.64.1-noble` on `expo export -p web` | Linux CI | PR smoke (≈120 shots ≤ 5 min) + nightly (≈1,500) | `maxDiffPixelRatio` 0.002 (2D), 0.01 (3D); CLS = 0; no console errors; `UX-AC-01…20` (09 §13.2 incl. `UX-AC-03b`, the co-op zone test `UX-AC-20`) |
 | PQ-T-05 | Migrations | vitest fixtures (local v−1..v−3), `applyD1Migrations` (Workers) | Linux CI | migration PRs | upgrade + rebuild projections equals golden |
 | PQ-T-06 | E2E golden paths + native layout-shift | **Maestro** (CLI pinned in `tools/mac/doctor.sh` ⟂VERIFY current version via `maestro --version`; install `curl -fsSL https://get.maestro.mobile.dev | bash`) on the Mac's iOS Simulator via Remote Control | Mac | before each native build and before `promote` | 10 flows green; double-screenshot diff = 0 outside masks |
 | PQ-T-07 | Worker/API contract | vitest-pool-workers 0.23.0 (workerd, real D1/R2/DO) + Hono `testClient` + shared zod | Linux CI | every PR touching `workers/**`, `packages/shared/**` | green; RBAC route × role coverage 100% |
@@ -900,6 +905,9 @@ loosened thresholds) except in the dedicated `world-first-frame` shots at `maxDi
 **PQ-T-06 Maestro flows** (`apps/mobile/e2e-maestro/*.yaml`, each ≤ 90 s, 10 flows):
 `01-bootstrap-owner`, `02-add-child-pin`, `03-pair-device-code`, `04-picker-to-hub-K2`, `05-episode-2d-game-K2`,
 `06-world-walk-collect-K1` (uses `window.__olam`-equivalent dev deep link `olam://dev/moveTo?x=&z=` in dev builds only),
+each flow starting from `olam://dev/fixture?id=FX-<flow>` (loads a fixture family and resets the DB) and
+`olam://dev/setNow?ts=` (injected clock) — the closed dev-only link list of 11 §4.1, stripped from the `family` variant —
+and selecting elements only by the mandatory `testID`s (09 §7 common props, §12 #17; lint `olam/require-testid`);
 `07-chest-reveal`, `08-parent-gate-settings`, `09-offline-episode-sync` (airplane mode simulated via dev flag),
 `10-background-resume-mid-level`. Each flow ends with `takeScreenshot`; the **layout-shift check** takes a screenshot at
 `ready` and again after 2 s on every static screen and fails if the masked diff > 0 px (`tools/ci/pixel-diff.mjs`,
@@ -946,8 +954,8 @@ Branch protection on `main`: required checks `static`, `unit`, `bundle`, `reassu
 
 ## 7. Release checklist
 
-Channels/branches per 11 §11.3: `dev` → dev client; `preview` → `main` (parent iPhone canary); `family` → kids.
-(13 §10.2 calls the canary `family-preview`; 11's names are canonical — issue filed.)
+Channels/branches per 11 §11.3: `dev` → dev client; `preview` → `main` (parent iPhone canary); `family` → kids
+(13 §10.2 now uses the same names).
 
 ### PQ-REL-01 Pre-OTA (automatic in `ota.yml`, publishes to `preview` only)
 1. CI green on the merge commit incl. `reassure`, `web-visual`, `content`.
@@ -956,8 +964,11 @@ Channels/branches per 11 §11.3: `dev` → dev client; `preview` → `main` (par
 4. Source maps uploaded with the update (`--dump-sourcemap` artifact kept 90 days) so `app.error` stacks symbolicate
    via `tools/ops/symbolicate.mjs`.
 5. Changelog line in Hebrew for the parent appended to `docs/parent/changelog.md` by the PR (template in 13 §18.3).
-6. Not Friday after 12:00, Shabbat or a holiday (B7; 13 §10.2) unless S0 — enforced by `tools/ci/calendar-guard.mjs`
-   using the bundled Hebcal table; S0 override needs label `s0-hotfix`.
+6. Not Friday after 12:00 Israel, not inside the Shabbat/holiday window (B7: `[candle − 30 min,
+   havdalah + 30 min]`, Tel Aviv unless OPD-04 says otherwise) and **not on a B7a quiet day** (Yom
+   HaShoah, Yom HaZikaron, Tisha B'Av, Yom Kippur — from the same bundled Hebcal table
+   `packages/content/calendar/5787.json`) unless S0 — enforced by `tools/ci/calendar-guard.mjs`;
+   S0 override needs label `s0-hotfix` / input `s0-hotfix=true` (11 §11.5, 13 §10.2).
 
 ### PQ-REL-02 Staged rollout to one device (canary)
 1. `preview` update lands on the **parent's iPhone** (built with `OLAM_CHANNEL=preview`), applied at next cold start.
@@ -978,7 +989,9 @@ canary (11 §11.3) is allowed only when `PQ-REL-02` #3 is green by script (`tool
 - Command: `eas update:republish --branch family --group <previous-good-group>` (fast, keeps the same runtime); if the
   update corrupts startup: `eas update:roll-back-to-embedded --branch family`. Both are in `rollback.yml`
   (`workflow_dispatch`, inputs `group|embedded`, agent-runnable, no parent approval needed for S0).
-- Devices pick it up on the next cold start; the parent area shows "עדכון זמין — להפעיל מחדש?" so a parent can force it.
+- Devices pick it up at the next `UpdateGate` moment (cold start, idle picker, episode boundary / profile switch,
+  foreground after a long background — 11 §3.3, so a shared iPad that is never cold-started still gets it within
+  one episode); the parent area shows "עדכון זמין — להפעיל מחדש?" so a parent can force it.
 - Within 1 h for S0 (13 §10.1). Post-mortem note in `docs/decisions/incidents/<date>.md` with the replay log.
 
 ### PQ-REL-05…10 Native release (adds to 11 §11.6)
@@ -1011,7 +1024,7 @@ first run, and the working versions are then committed to `tools/mac/perf/*.sh`.
 | PQ-DEV-09 | Nikud + RTL + fonts | `/(parent)/debug` → "ניקוד" torture strings at 100/150%; 13 §10.3 RTL items incl. the ScrollView second-visit case | no clipping; marks placed; ★ parent eye |
 | PQ-DEV-10 | Soak | 30 min autoplay (`olam://dev/route?loop=1`) with `xcrun xctrace record --template 'Energy Log' …` ⟂VERIFY template availability on iOS 26/27; record thermal state, battery %, memory trend | `PQ-B-30`; memory flat |
 | PQ-DEV-11 | Crash logs | `xcrun devicectl device copy crashes --device <UDID> --destination perf/crashes/` ⟂VERIFY subcommand; else Xcode → Window → Devices → View Device Logs; symbolicate with the build's dSYM | 0 crashes for the release build |
-| PQ-DEV-12 | Interruption matrix | incoming call, Siri, alarm, Control Center pull-down, backgrounding mid-level, Low Power Mode on, airplane mode mid-episode, silent switch on, Bluetooth headphones connect/disconnect mid-SFX, rotation, Split View / Stage Manager resize, Dynamic Type largest, Guided Access, 10-finger mash, palm on screen | resumes to "לגעת כדי להמשיך"; no lost rescue/coins; audio routes; `PQ-R-47` letterbox |
+| PQ-DEV-12 | Interruption matrix | incoming call, Siri, alarm, Control Center pull-down, backgrounding mid-level, Low Power Mode on, airplane mode mid-episode, silent switch on, Bluetooth headphones connect/disconnect mid-SFX, rotation, **Split View / Stage Manager attempt (must be refused by iPadOS because of `UIRequiresFullScreen: true`; if a resize still happens, `PQ-R-47` letterbox)**, Dynamic Type AX3 (no clipping) and AX5 (scrolls) on parent screens, Guided Access, 10-finger mash, palm on screen | resumes to "לגעת כדי להמשיך"; no lost rescue/coins; audio routes; no multitasking window |
 | PQ-DEV-13 | Record | `perf/results/<version>.md` from the template `perf/results/TEMPLATE.md` (one row per `PQ-B`, measured vs gate, trace file names); red → release blocked; results summarised in the weekly parent report | — |
 
 Hermes/worklets memory smoke (11 §12.5) is `PQ-DEV-06` restricted to 10 min in the world + the 2D loop after every
@@ -1099,7 +1112,7 @@ Each situation names the rule/pattern/test that handles it (brief requirement).
 | K1 text size 150% | `maxFontSizeMultiplier` 1.5 + `GameBoard` fixed logical size `PQ-R-43/47`; Playwright scale 150 |
 | iPad shared, child switches mid-level | `HOME`/switch → `saveResume` atomic `PQ-P-11`; `session.ended{reason:'switch'}` |
 | iPhone landscape game, rotation mid-level | orientation lock per scene; `PQ-R-47` fade re-layout; `PQ-DEV-12` |
-| Split View / Stage Manager resize | `PQ-R-47` letterbox; no reflow |
+| Split View / Stage Manager resize | N/A by design: `UIRequiresFullScreen: true` (00 A3, 11 §0); `PQ-R-47` letterbox only as the defensive fallback |
 | Offline first run / offline mid-episode | bundled core + `PQ-R-54`; Maestro `09`; Playwright offline states |
 | Sync conflict after offline play on 2 devices | 11 §6.5 + property #1 convergence; `PQ-T-01` #13 |
 | Returning user after 7-day signing expiry | 11 §3.3 re-sign; data kept; `PQ-REL-05` smoke |
@@ -1148,7 +1161,7 @@ Each situation names the rule/pattern/test that handles it (brief requirement).
 | 3 | expo-gl MSAA/`antialias` support, exposed extensions | spike gate #1: log `gl.getContextAttributes()`, `gl.getSupportedExtensions()` |
 | 4 | R3F native destroys the GL context on unmount | read `node_modules/@react-three/fiber/native/dist/*.js` |
 | 5 | `setAudioModeAsync` combination accepted on iOS 17–27 | first device boot; log the promise rejection if any |
-| 6 | `UIRequiresFullScreen:false` resize events on iPadOS 26/27 | Split View on the family iPad, `useWindowDimensions` log |
+| 6 | `UIRequiresFullScreen: true` really prevents Stage Manager resizing on iPadOS 27 (11 §0 owns this check) | try to resize the app window under Stage Manager on the family iPad; `useWindowDimensions` log must stay constant |
 | 7 | `transformOrigin` support in RN 0.88 styles | `node_modules/react-native/types_generated/.../StyleSheetTypes.d.ts` grep |
 | 8 | `expo-file-system` SDK 58 `File`/`Directory` API names | `node_modules/expo-file-system/build/*.d.ts` |
 | 9 | `SkRSXform.set` argument order | `node_modules/@shopify/react-native-skia/lib/typescript/src/skia/types/RSXform.d.ts` |
@@ -1207,3 +1220,22 @@ Each situation names the rule/pattern/test that handles it (brief requirement).
   layout-shift check via Maestro double screenshots, `child_resume_bak` previous-good save, machine timeouts per state,
   calendar guard for OTA on Shabbat/holidays, `pr-hygiene` and `baselines.yml` jobs, `rollback.yml`, flaky-test
   quarantine rule, edge-case coverage map, per-property fast-check list #7–14.
+
+### Round 2 changelog
+
+Reviewer R6, 2026-11-02. Inputs: 00 revision 3 (A3, B7a, E9), `fable-issues-F7.md` #17–18, `round2-R1.md` R1-2, the
+current 11 §0/§3.3/§4.1/§4.7/§6.3/§11.1 and 09 §3.6/§13.2/§7. Disposition table: `docs/review/round2-R6.md`.
+
+- **F7 #17:** `PQ-B-24` says the 2D-pack split by `skillId` is the content pipeline's job (12 V21); `lint:assets` only
+  asserts.
+- **F7 #18:** `PQ-REL-01` #6 — `calendar-guard.mjs` also blocks on the B7a quiet days, with the exact window and the
+  bundled table named.
+- **R1-2 / 00 A3:** `UIRequiresFullScreen: true` everywhere: `PQ-R-47` is now the defensive fallback (resize should
+  never arrive), `PQ-DEV-12` tests that multitasking is refused, §11 Split View row = N/A by design, ⟂VERIFY #6 points
+  at 11 §0's Stage Manager check.
+- **Consistency with 11/09 (self-found):** splash **target 3 s / hard timeout 4 s** (`PQ-R-42`, `PQ-P-07`; 11 §4.7 and
+  09 §11 both say 4 s — the DB recovery ladder needs it); parent Dynamic Type up to **AX5 (3.1)** with the clipping gate
+  at AX3 (`PQ-R-43`, `PQ-P-09`; 09 §3.6 / 11 R-11); `PQ-X-20` and `PQ-REL-04` follow 11 §3.3's `UpdateGate` moments
+  (idle picker, episode boundary, foreground after ≥ 30 min), not "cold start only"; `PQ-T-04` gate list `UX-AC-01…20`;
+  `PQ-T-06` flows start from the dev-only `olam://dev/fixture` / `setNow` links of 11 §4.1 and select by mandatory
+  `testID`s (09 §7); the stale "13 calls the canary `family-preview`" note removed (13 aligned).

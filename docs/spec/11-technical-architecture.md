@@ -213,6 +213,7 @@ Rules:
 | *(local)* `modules/vision-privacy` Expo Module | — | Swift, ~80 lines: `VNDetectFaceRectanglesRequest` (rects grown 20 % → Skia blur σ=25 + pixelate) and `VNRecognizeTextRequest` for the "non-family names" list when Hebrew is supported — the **on-device face/name blur that runs before any photo upload** (12 §3.3, §8.3, §9.4). Required by SCR-14; in the dev-build native allow-list from the sprint that lands it |
 | *(optional)* `react-native-document-scanner-plugin` | latest ≥ 7 days old at adoption | VisionKit document camera + perspective fix (12 §3.3). Until adopted: `expo-camera` + the Skia crop screen (CMP-44); ADR when picked up |
 | expo-splash-screen / expo-screen-orientation / expo-keep-awake / expo-network / expo-constants / expo-application / expo-device | SDK map | |
+| expo-print + expo-sharing | SDK map | printables (season certificate, offline missions, 04 cut-and-paste sheets): HTML → PDF (A4, `dir="rtl"`, embedded fonts) → share sheet / AirPrint from the parent area (15 GAP-50; ⟂VERIFY nikud rendering in `expo-print`'s WebView on day 1 — fallback: pre-rendered PDFs in the pack) |
 | expo-apple-authentication | 58.0.2 | installed but enabled by flag in phase 2 only |
 | react-native-webview | 14.0.1 | 3D fallback 1 and the parent's in-app web views |
 
@@ -936,14 +937,18 @@ Sunday savings bonus is paid only when `lastServerTime ≥ weekStart` or the dev
 ≥ 7 days (02 UC-15); the Shabbat window prefers server-derived time when the last sync is < 24 h old
 (01 UC-15); otherwise the device clock is used. `lastServerTime` is also shown in the device card.
 
-**Timezone and travel (01 DD-31, 02 UC-16, GAP-39):** `DayKey` is the **device** local day
-(`ts + tzOffsetMin`, 02 §2.1; implemented once in `packages/shared/dayKey.ts`, §6.4). Shabbat/holiday
-and quiet-day windows always use the **family city** (`family.prefs.city`, OPD-04) until a guardian
-sets `family_prefs.travelCity` ("עיר נסיעה", 10 SET-01; field-level LWW, cleared by the parent when
-back). When `deviceTz ≠ family.tz` for > 24 h the app writes `app.tz_mismatch{deviceTz, familyTz}`
-(telemetry, once per day) and the parent area shows the travel banner (10). The daily cap and the
-family-goal week follow `DayKey` of the device that created the event (02 UC-16); no event is ever
-re-dated.
+**Timezone and travel (00 C3 rev 3, 01 DD-31, 02 UC-16, GAP-39):** there is **one `DayKey`
+everywhere** = the calendar day in the **family city's timezone** (`family.tz`, OPD-04), or the
+travel city's while `family_prefs.travel = {city, until}` is set ("עיר נסיעה", 10 SET-01; field-level
+LWW; cleared by the parent or automatically at `until`). The device computes it at event time
+(`packages/shared/dayKey.ts`, §6.4): `tzOffsetMin` in the envelope is the **family/travel city's
+offset at `ts`** (from the bundled IANA data for the configured city), *not* the device's offset. Caps,
+surprises, the C11 spread rule and the family-goal week (Sunday 00:00 in that city) all read this
+one key; no second boundary exists. Shabbat/holiday and quiet-day windows use the same city. When
+`deviceTz ≠ family.tz` for > 24 h the app writes `app.tz_mismatch{deviceTz, familyTz}` (telemetry,
+once per day; 10 calls it `tz_mismatch`) and the parent area shows the travel banner with the
+"עיר נסיעה" setting. A device abroad therefore keeps counting Israel days until the parent switches
+the city — intended (01 DD-31); no event is ever re-dated afterwards.
 
 **First launch offline (E-01).** A freshly installed (or freshly re-signed) app with no network:
 - If `device_self` exists (re-sign/reinstall over an existing install): boot normally, everything in
@@ -1330,9 +1335,9 @@ polyfill if that fails.
   cap 3–5 min for K3 (C3).
 - **Caps** are per child per day, enforced on the device from local events plus a server-merged total
   (cross-device usage is merged at sync; offline overrun is tolerated and never punished).
-  - The cap and the "day" are **02 `DayKey`** (device local day, monotonic per device, §6.4; 00
-    OPD-26 names the cap values). `packages/shared/dayKey.ts` has one constant `DAY_START_HOUR`
-    (default 0); if 02/08 ever adopt a 04:00 boundary (15 GAP-44) it changes there only.
+  - The cap and the "day" are the one **`DayKey`** of 00 C3 (calendar day in the family/travel
+    city's timezone, monotonic per device, §4.8/§6.4; 00 OPD-26 names the cap values). 15 GAP-44's
+    "04:00 boundary" is rejected by 00 C3 rev 3 — midnight in the family city, nothing else.
   - **Device-local override (RBAC L, GAP-22):** a parent at the local gate without a guardian session
     writes `device_settings.childOverrides[childId].{dailyCapMin, quietHours}` (field-level LWW,
     this device only). Effective cap = `min(child_settings.dailyCapMin, override)`; effective quiet
@@ -1606,9 +1611,12 @@ The table lives in `packages/shared/rbac.ts` as data (`PERMS[role][perm]`), used
 Bedtime has two layers (GAP-04): a **per-child bedtime** (`child_settings.bedtime {start, end, days}`;
 defaults per 10 §6.13 / 00 OPD-26: K3 19:30, K2 20:00, K1 20:30) and an optional **per-device
 schedule** (doc `device_settings/<deviceId>`: `bedtime {start:'19:30', end:'07:00', days}`). Both are
-enforced locally and offline; the **effective lock is the earliest** of the two. A new session for a
-child starts only if `bedtime − now ≥ plannedEpisodeMin + 2 min`; otherwise the picker shows the
-sleeping avatar and writes `launch.blocked{reason:'bedtime'}` (§5.8). In bedtime, the app shows a
+enforced locally and offline; the **effective lock is the earliest** of the two. Semantics per 10
+§6.13 (a)–(e): **no new episode starts when `now ≥ bedtime − child_settings.preBedtimeMin`**
+(default 60, range 15–60) — the picker tile shows "הגיבור כבר מתכונן לשינה" (09 SCR-01) and writes
+`launch.blocked{reason:'bedtime'}` (§5.8); a running episode ends normally, and if
+`bedtime − now < plannedEpisodeMin + 2` it is planned as `mini` (08 §6.1); a bedtime change applies
+immediately but a running episode lands at a natural point. In bedtime, the app shows a
 calm "לילה טוב" screen (SCR-20) with no game access, and the parent gate unlocks it for 30 min
 (device-wide; at the end of the window a 2-min warning, then the current beat lands and the picker
 returns). A remote `bedtime_lock` command applies the lock immediately until a given time.
@@ -1647,7 +1655,7 @@ type EventEnvelope = {
   appVersion: string;    // e.g. "1.4.0+fp:7c1e…/ota:2026-11-02T10:11Z"
   seq: number;           // device-local monotonic
   ts: number;            // device epoch ms
-  tzOffsetMin: number;   // e.g. 120 / 180
+  tzOffsetMin: number;   // offset of the FAMILY (or travel) city at ts, e.g. 120 / 180 — not the device's (00 C3, §4.8)
   type: EventType;       // dotted, versioned in payload schema registry
   v: number;             // payload schema version
   cls: 'learn' | 'econ' | 'telemetry' | 'admin' | 'local_only';
@@ -1670,7 +1678,10 @@ type EventEnvelope = {
 
 | Type | cls | Payload (abridged) |
 |---|---|---|
-| `session.started` / `session.ended` | learn | started: `{mode: 08 Session.mode ('episode'\|'mini'\|'placement'\|'boss'\|'benchmark'\|'reentry'\|'playroom'\|'coop') \| 'safe_room', launchMode:'lap'\|'coplayFirst'\|'solo', coPlay:boolean, plannedMinutes}`; ended (`v:2`): `{reason: SessionEndReason, plannedMinutes, blocksCompleted, focusedMs}`. **`SessionEndReason` is 08 §1.10's enum, imported from `packages/shared/session.ts`:** `'completed' \| 'daily_cap' \| 'child_exit' \| 'parent_exit' \| 'frustration_break' \| 'disengaged' \| 'bedtime_lock' \| 'inactivity' \| 'app_killed'` (old wire values map: `switch`/`parent` → `parent_exit`, `cap` → `daily_cap`, `background` (E-16 > 10 min) → `app_killed`, `done` → `completed`; v1 rows are upcast by the reducer). `mode:'safe_room'` (SCR-16, GAP-19b) is wire-only: `toEngineEvent` drops it, it adds **0 minutes to any cap**, and 10 PA-LOG files it under "רוגע" |
+| `session.started` / `session.ended` | learn | started: `{mode: 08 Session.mode ('episode'\|'mini'\|'placement'\|'boss'\|'benchmark'\|'reentry'\|'playroom'\|'coop') \| 'safe_room', launchMode:'lap'\|'coplayFirst'\|'solo', coPlay:boolean, plannedMinutes}`; ended (`v:2`): `{reason: SessionEndReason, plannedMinutes, blocksCompleted, focusedMs}`. **`SessionEndReason` is 08 §1.10's enum, imported from `packages/shared/session.ts`:** `'completed' \| 'daily_cap' \| 'child_exit' \| 'parent_exit' \| 'frustration_break' \| 'disengaged' \| 'bedtime_lock' \| 'inactivity' \| 'backgrounded' \| 'coop_ended' \| 'app_killed'` (old wire values map in `packages/shared/events.ts` only: `switch`/`parent` → `parent_exit`, `cap` → `daily_cap`, `background` (E-16 > 10 min) → `backgrounded`, `done` → `completed`, `coopEnd` → `coop_ended`; v1 rows are upcast by the reducer; there is no `shabbat` reason, E-24). `child_exit` carries `secondsSinceLastError` (10 AL-04). `mode:'safe_room'` (SCR-16, GAP-19b) is wire-only: `toEngineEvent` drops it, it adds **0 minutes to any cap**, and 10 PA-LOG files it under "רוגע" |
+| `behavior.signal{kind:'nikud_lens'}` | learn | `{wordId, lexId, msShown}` — one per lens tap in MX-H06 "fog goggles" (01 AC-MX-11 `hint:lens`; 04 §6.4 rule 4 counts ≥ 8 per 100 words as a difficulty signal). Registered here with the other `BehaviorSignal` kinds; 08 §1.9 adds the kind to its union (forwarded) |
+| `turn.yielded` | learn | `{childId, sessionId, nextChildId, plannedShare}` — derived on the device (01 §12.5 / AC-CO-8): `session.ended{reason:'parent_exit'}` before 80 % of `plannedMinutes` followed by a different child's `session.started` on the same device within 120 s; ≤ 1 per child per `DayKey`; produces no grant |
+| `ftue.completed` / `k3.parentPromptTimeout` | learn | `{childId, ms}` (sets `child_resume.ftueCompletedAt`, §4.16) / `{childId, sessionId, segmentId}` (01 UC-07: a lap segment with no parent "עשינו!" within 60 s → playroom; 10 M-14 counts exactly these) |
 | `episode.completed` | learn | `{episodeId, coop:boolean, participants[], durationMs, celebrationMs}` (02 `episode_completed`; 09 UX-AC-08 budget uses `celebrationMs/durationMs`) |
 | `placement.step` / `placement.finished` | learn | `{probeId, skill, outcome, rtMs}` / `{subject, strand, theta, se, reason:'completed'\|'interrupted'\|'resumed_later'\|'lazy', quality}` (08 §3, §10.5.1; 10 W-ASM) |
 | `benchmark.result` | learn | `{window:'BOY'\|'MOY'\|'EOY', strand, theta, se, wordsCorrect45s?, wcpm?, errors?, pointed?}` (08 §8; 10 M-11) |
@@ -1686,7 +1697,7 @@ type EventEnvelope = {
 | `launch.blocked` | learn (device-level, `childId` optional) | `{reason:'quiet_hours'\|'bedtime'\|'shabbat_full'\|'cap'\|'lap_needs_parent'}` (10 M-14, AL-06; written once per child per minute at most) |
 | `parent.tonight_done` | admin | `{cardId, childId}` ("עשינו ✔" on the evening card, 10 §4.1) |
 | `parent.input` | admin | payload = 08 §1.9א `ParentInput` union (`questionnaire`, `session_reattribute{sessionId, to}`, `reset_profile_model`, `reset_progress{subjects}`, `skill_action`, `flag_action`, `class_topic`, `grade_rollover`, `interest_override`, `disposition_correction`, `external_evidence`); written only by guardian-scoped routes (§7.3, §7.10a), audit-logged, synced to all devices and folded in canonical order; `session_reattribute` / `reset_progress` trigger the engine's checkpoint replay (08 §10.5.4). The §7.10a admin events `econ.refund`, `sticker.granted`, `mission.confirmed` stay separate types |
-| `cap.bonus_granted` | admin | `{childId, minutes:10, guardianId}` (§4.16; ≤ 1 per child per `DayKey`) |
+| `cap.bonus_granted` | admin | `{childId, minutes:10, grantedBy, dayKey}` (§4.16, 10 API-29; ≤ 1 per child per `DayKey`; 08 folds it as `ParentInput.cap_bonus`) |
 | `asset.missing` | learn | `{assetId, kind:'vo'\|'image'\|'level_chunk'\|'rive'\|'glb'}` (01 DD-38; the player kept going) |
 | `picturepin.miss` / `app.tz_mismatch` / `pack.revoked` | telemetry | `{childId}` / `{deviceTz, familyTz}` / `{packId, version}` (§4.16, §4.8, §4.4) |
 | `fact.reported` | admin | `{packId, factCardId, note}` (06 §12.6 errata; `POST /content/fact-report`) |
@@ -1818,7 +1829,10 @@ CREATE TABLE child (
 CREATE TABLE doc (
   kind TEXT NOT NULL,                 -- 'child_settings'|'child_resume'|'child_resume_bak'|'device_settings'|'family_prefs'|'reward'
                                       -- |'skill_prefs'|'interests'|'class_topics'|'family_calendar'|'guardian_prefs'
-                                      -- |'neighborhood_layout' (02 §7.7, whole-doc LWW)|'flags' (ciphertext, §9.8)|'family_pubkey'
+                                      -- |'neighborhood_layout' (02 §7.7 / GAP-09: field-level LWW PER TILE, field = "x:y")
+                                      -- |'coop_letter' (01 CO-4, 00 C7a: {from, to, templateId, slots[], createdAt}; slots are
+                                      --    chip ids / numbers / pack item ids only — zod rejects any free string, AC-CO-8)
+                                      -- |'flags' (ciphertext, §9.8)|'family_pubkey'
   id TEXT NOT NULL,                   -- e.g. childId / deviceId / rewardId
   body_json TEXT NOT NULL, hlc TEXT NOT NULL, deleted INTEGER NOT NULL DEFAULT 0,
   dirty INTEGER NOT NULL DEFAULT 0,   -- 1 = needs push
@@ -1943,7 +1957,7 @@ CREATE TABLE families (
   id TEXT PRIMARY KEY, name TEXT NOT NULL, tz TEXT NOT NULL DEFAULT 'Asia/Jerusalem',
   prefs_json TEXT NOT NULL DEFAULT '{}', prefs_hlc TEXT NOT NULL,
   -- prefs_json fields (field-level LWW doc `family_prefs`, §6.5): shabbatMode 'soft'|'full'|'off', city,
-  -- travelCity?, quietHours, calmMode:boolean (00 B8b, default false), consent:{checkinNudge:boolean (T4b,
+  -- travel?:{city, until}, quietHours, calmMode:boolean (00 B8b, default false), consent:{checkinNudge:boolean (T4b,
   -- default false), …}, hasChildUnder36m:boolean (00 C13; SERVER-DERIVED nightly + on every birthdate
   -- edit, read-only for devices), smallPartsOverride:{until, by} (00 C13 audited override)
   ai_daily_cap_cents INTEGER NOT NULL DEFAULT 300,      -- 12 §1.9 / 00 OPD-08: $3/day, parent range 100–1000
@@ -2287,13 +2301,16 @@ payload); the nightly server run only re-derives the non-sensitive parts it can.
 - **HLC** for docs: `"<physical ms 13 digits>:<counter 4 digits>:<deviceId>"`, compared
   lexicographically, implemented in `packages/shared/hlc.ts`. The server clamps the physical part to
   `serverNow + 5 min` to defeat a far-future device clock.
-- **`DayKey` (02 §2.1, F2 #20):** `packages/shared/dayKey.ts` exports `dayKeyOf(ts, tzOffsetMin)`
-  (`YYYY-MM-DD` of the device-local day) and `nextDayKey(ev, deviceSelf)` =
+- **`DayKey` (00 C3 rev 3, 02 §2.1, F2 #20):** `packages/shared/dayKey.ts` exports
+  `cityOffsetMin(city, ts)` (IANA offset of the family or travel city at `ts`, bundled tz data),
+  `dayKeyOf(ts, tzOffsetMin)` (`YYYY-MM-DD` in that city) and `nextDayKey(ev, deviceSelf)` =
   `max(dayKeyOf(ev), device_self.last_day_key)`, written into the event in the same transaction that
-  bumps `device_self.last_day_key`. A clock moved backwards therefore never opens a new day and never
-  re-pays a daily grant; the server stores the event's `dayKey` as sent (it is part of the payload for
-  every learn/econ event) and never recomputes it (08 §10.5.5). Property test: for any sequence of
-  `ts` the sequence of `dayKey` is non-decreasing per device.
+  bumps `device_self.last_day_key`. The envelope's `tzOffsetMin` is therefore the **city's** offset,
+  the same on every device of the family (02 UC-16 and 01 DD-31 are updated to this reading). A clock
+  moved backwards never opens a new day and never re-pays a daily grant; the server stores the
+  event's `dayKey` as sent (part of the payload for every learn/econ event) and never recomputes it
+  (08 §10.5.5). Property tests: for any sequence of `ts` the `dayKey` sequence is non-decreasing per
+  device; two devices in different device timezones produce the same `dayKey` for the same `ts`.
 - **Clock skew (08 §10.5.5, 10 FAM-04 / AC-41, F5 #7):** each `/sync` response carries `serverTime`;
   the device stores `clock_skew_ms = localNow − serverTime` on `device_self` and reports it in the
   next request's `device` block, so `devices.clock_skew_ms` is visible in `GET /devices`
@@ -2358,10 +2375,12 @@ Response:
     When a pull delivers events whose `ts` is older than the projection checkpoint for that child,
     the device runs `rebuildProjections(childId)`.
   - **Docs:** last-writer-wins by HLC. Two granularities:
-    - **Whole-doc LWW** for `child_resume` (one writer: the device the child plays on),
-      `neighborhood_layout/<childId>` (02 §7.7 / GAP-09: the losing layout's displaced items return
-      to the inventory with a mailbox note, computed by the economy fold, nothing is lost) and the
-      encrypted `flags/<childId>` (§9.8).
+    - **Whole-doc LWW** for `child_resume` (one writer: the device the child plays on), `coop_letter`
+      (one writer, immutable after send) and the encrypted `flags/<childId>` (§9.8).
+    - `neighborhood_layout/<childId>` is **field-level LWW per tile** (field key `"x:y"`, 02 §7.7 /
+      GAP-09): two offline edits of different tiles both survive; the same tile goes to the later
+      writer and the displaced item returns to the inventory with a mailbox note (economy fold;
+      nothing is lost).
     - **Field-level LWW (E-11)** for `child_settings`, `family_prefs`, `device_settings`, `reward`,
       `class_topics`, `interests`: `body` is `{ [field]: { v, hlc } }`; the merge takes, per field,
       the entry with the higher HLC, so two parents changing different settings at the same time
@@ -2544,7 +2563,7 @@ The access JWT is signed with jose, HS256 using `SESSION_SIGNING_KEY`:
 | Method & path | Perm | Request → Response |
 |---|---|---|
 | GET `/family` | family.read | → `{family, guardians[], children[], devices[] (summary)}` |
-| PATCH `/family` | family.update | `{name?, tz?, prefs?{shabbatMode:'soft'\|'full'\|'off', city, travelCity?, holidays, quietHours, calmMode:boolean (00 B8b; parent gate + audit), consent:{checkinNudge:boolean (T4b, OPD-27)}, smallPartsOverride?:{on:true} (00 C13: step-up + audit; server sets `until` = next nightly recompute)}}` → `{family}`. `hasChildUnder36m` is **read-only** (server-derived nightly and on every child birthdate edit; 400 if sent). Field-level LWW doc `family_prefs` (§6.5) |
+| PATCH `/family` | family.update | `{name?, tz?, prefs?{shabbatMode:'soft'\|'full'\|'off', city, travel?:{city, until} \| null, holidays, quietHours, calmMode:boolean (00 B8b; parent gate + audit), consent:{checkinNudge:boolean (T4b, OPD-27)}, smallPartsOverride?:{on:true} (00 C13: step-up + audit; server sets `until` = next nightly recompute)}}` → `{family}`. `hasChildUnder36m` is **read-only** (server-derived nightly and on every child birthdate edit; 400 if sent). `travel` drives `DayKey`/calendar (§4.8) and is cleared at `until`. Field-level LWW doc `family_prefs` (§6.5) |
 | DELETE `/family` | family.delete (owner) | `{confirm:"<family name>"}` → 202, `families.deleted_at = now`, `purge_at = now + 7 d`. **During the grace (E-26, GAP-56):** every device/guardian call except `POST /family/undelete` answers **410 `family_deleting{purgeAt}`**; devices switch to offline-only with the parent-gate banner; the owner can cancel on the web dashboard (`POST /family/undelete`, audit). After `purge_at` the nightly cron deletes D1 rows, R2 prefixes (`photos/`, `voice/`, backups of this family), DO rooms; later calls → 401 → setup screen |
 | GET `/guardians/me` · PATCH `/guardians/me` | self | `{displayName?, gender?}` |
 | PUT `/guardians/me/pin` | self | `{pinHash, pinSalt}` (scrypt N=2^15,r=8,p=1 computed on client) → 204 |
@@ -2557,7 +2576,7 @@ The access JWT is signed with jose, HS256 using `SESSION_SIGNING_KEY`:
 | POST `/children` | child.create | `{name, nickname?, birthdate, grammaticalGender:'f'\|'m'\|'n', grade, dominantHand?:'left'\|'right', avatar}` → 201 `{child}` (server derives `tier` from birthdate+grade; `band` T/G/S is computed by `packages/shared/bands.ts` on read, A6) |
 | PATCH `/children/:id` | child.update | partial → `{child}` |
 | PUT `/children/:id/picture-pin` | child.settings | `{hash, salt}` or `{clear:true}` → 204 (`clear` triggers the one-time "בחרי 3 תמונות" step, §4.16) |
-| POST `/children/:id/cap-bonus` | child.settings (parent gate) | `{}` → 201 `{eventId}`; writes `cap.bonus_granted` (admin event); 422 `bonus_used` on a second grant for the same `DayKey`; audit (01 DD-09, §4.16) |
+| POST `/children/:id/cap-bonus` (10 API-29) | child.settings, or **L** (local gate) | `{minutes:10, dayKey}` → 201 `{eventId}`; writes `cap.bonus_granted{childId, minutes, grantedBy, dayKey}` (admin event); 422 `bonus_used` on a second grant for the same `DayKey`; audit. From mode L the device writes the event locally with `grantedBy:'device-local:<guardianId>'` and pushes it at the next sync; a duplicate arriving from another device for the same `DayKey` is accepted but ignored by the fold (01 DD-09, §4.16) |
 | DELETE `/children/:id` | child.delete (owner) | → 202 (soft delete; events purge after 30 d; queues `child_remove{childId}` to every device that lists the child, §5.1) |
 
 ### 7.4 Devices and pairing
@@ -2667,7 +2686,7 @@ There is **no live TTS for children** (E9). The device only ever downloads appro
 | Method & path | Auth | Request → Response |
 |---|---|---|
 | POST `/photo-jobs` | photo.capture | multipart: `meta` JSON `{clientJobId (ulid), childIds[], sourceKind, mode, handwritten?, pages:[{sha256, bytes}]}` + ≤ 4 JPEG parts (≤ 3 MB each, long edge 2,576 px, q0.88, already face/name-blurred and EXIF-stripped on device, §9.4) → 201 `{jobId, status:'uploaded', confirmBy}`; **idempotent by `(familyId, clientJobId)`** (a retry after a crash returns the same job). 409 `duplicate_page{jobId, date}` when a page's pHash is within distance ≤ 6 of a job from the last 30 days (12 §3.15 #9; the client offers "open the existing game"). 413 over 4 pages (the client splits, 12 §3.15 #8) |
-| GET `/photo-jobs/:id` | guardian | → `{status:'uploaded'\|'extracting'\|'needs_confirm'\|'building'\|'ready'\|'failed'\|'deferred', extraction?, proposedPack?, error?, confirmBy, costEstimateCents}` (poll 2 s while `extracting`/`building`; the parent also gets AL-08 when `needs_confirm`) |
+| GET `/photo-jobs/:id` (= 10 API-30 `GET /photos/jobs/:id`) | guardian | → `{status:'uploaded'\|'extracting'\|'needs_confirm'\|'building'\|'ready'\|'failed'\|'deferred', estimatedReadyAt, extraction?, proposedPack?, error?, confirmBy, costEstimateCents}` (poll 2 s while `extracting`/`building`; `estimatedReadyAt` = now + 15 s p50 for extract, 06:00 next day when `deferred`; the parent also gets AL-08 when `needs_confirm`) |
 | POST `/photo-jobs/:id/confirm` | photo.capture | `{items (edited), childIds, mode, notationUpdate?:{mulSign, divSign, carryRow, borrowMark} (03 §1.5, only on ✓)}` → 202 → `building` → `ready` `{packId, version}` (approved by this action; photos deleted now). Downgrading `exam_page` to another mode needs a fresh Face ID (`X-Olam-StepUp` token, 12 §3.10) |
 | DELETE `/photo-jobs/:id` | photo.capture | immediate delete (R2 pages + row) |
 | *(job runner)* `photo.rerender_variants` | Cron / on `PATCH /children/:id {grammaticalGender}` | renders the missing `m/f/pl` TTS lines of every photo pack of that child and bumps the pack version; devices download silently (10 AC-25 scope; GAP-52) |
@@ -2727,7 +2746,7 @@ internal step the job runner performs.
 |---|---|---|
 | GET `/audit?from&to&action&actor&cursor` | O/C | audit log page |
 | GET `/admin/costs?month=` | admin.ops | AI spend by route/model/day, plus D1/R2 usage snapshot |
-| PATCH `/admin/limits` | admin.ops | `{aiDailyCapCents?: 100–1000, aiMonthlyCapCents?: 1000–10000}` (12 §1.9 ranges; 10 PA-SET); a monthly cap above the console limit the parent recorded in setup (`families.prefs.consoleCapCents`, OPD-08) is refused with 422 `above_console_cap` |
+| PATCH `/admin/limits` (10 API-28 names it `PUT /admin/ai-caps {dailyUsd, monthlyUsd}`; same handler, dollars ×100) · PUT `/admin/ai-enabled {enabled}` (= `killSwitches.ai`, owner step-up) | admin.ops | `{aiDailyCapCents?: 100–1000, aiMonthlyCapCents?: 1000–10000}` (12 §1.9 ranges; 10 PA-SET); a monthly cap above the console limit the parent recorded in setup (`families.prefs.consoleCapCents`, OPD-08) is refused with 422 `above_console_cap` |
 | POST `/admin/export` | data.export | `{includeFlags?: boolean}` → 202; builds a ZIP in R2: NDJSON per table (events, docs, audit, approvals…), **`engine-state.v1/<childId>.json`** per child (08 §10.5.10: `EngineState.children[childId]` without `ItemCalibration`, plus the `levels.ts` mapping), `FlagState` only when `includeFlags` is ticked (decrypted client-side first — the server holds ciphertext, so the web dashboard uploads the plaintext part into the ZIP via `POST /admin/export/:id/flags`), **never `emotion_checkin`** or `fs_local_counters` (device-only), no photos, an audio file list; the 24 h link is emailed **and shown in-app/web** (10 GAP-49: no domain in phase 1) |
 | POST `/admin/backup/run` | admin.ops | run the backup now |
 | POST `/ops/notify` | `OPS_TOKEN` (Mac resign script, CI) | `{kind:'resign_overdue'\|'ci_failed'\|…, deviceId?, text}` → emails O/C, rate-limited 1/kind/12 h |
@@ -3772,8 +3791,9 @@ approval gates (E10, content approval, voice); naming the kids; approving `famil
     moment of §3.3 (unit test on `UpdateGate` with every moment).
 21. **Clock and travel:** with the device clock 3 h off, `GET /devices` shows `clockInaccurate`,
     the engine's `ctx.now` is the corrected time and `DayKey` stays monotonic; with
-    `deviceTz = America/New_York` the Shabbat window follows the family city until `travelCity` is
-    set (fake clock + `@hebcal/core`).
+    `deviceTz = America/New_York` both `DayKey` and the Shabbat window follow the family city until
+    `family_prefs.travel.city` is set, and two devices in different zones yield the same `dayKey`
+    (fake clock + `@hebcal/core`).
 
 ---
 
@@ -3967,7 +3987,7 @@ DD-34/DD-37/DD-38, 07 §2.7/§7.3, 06 §12.6. Disposition table: `docs/review/ro
   `pending_app_update` parent surface (GAP-27), closed `VoIntent` enum in `packages/shared`,
   `POST /content/fact-report`, `POST /fs/t2/request` chips-only (§4.4, §4.11, §7.6, §7.7).
 - **Identity/devices (F9 GAP-04/07/11b/22/36/51/56/57/57b, R1-6/7, 00 B8b/C13/H2):** `family_prefs`
-  fields `calmMode`, `consent.checkinNudge`, `travelCity`, server-derived `hasChildUnder36m` +
+  fields `calmMode`, `consent.checkinNudge`, `travel {city, until}`, server-derived `hasChildUnder36m` +
   audited `smallPartsOverride`; `bootstrap-guardian --role coadmin`; `child_remove` command and a
   defined `resync`; unpair = push-then-revoke (`force` for lost devices); family-delete grace (410
   `family_deleting`, E-26); pairing on a device with another family's data (E-27); per-child +
@@ -3985,6 +4005,15 @@ DD-34/DD-37/DD-38, 07 §2.7/§7.3, 06 §12.6. Disposition table: `docs/review/ro
   only from `coop.room_ended` (F2 #23, GAP-21); §9.9 data-at-rest table (GAP-41); parent voice clips
   §7.13 + `family.voice` pack (GAP-67); SCR-21 car-mode route stub (P2, GAP-19); VO loudness −18 LUFS
   ±1 (E9, R1-4); `UIRequiresFullScreen: true` in `app.config.ts` (A3, R1-1); §18 #8–11 marked accepted.
-- **Rejected / deferred:** GAP-44 04:00 cap boundary — 00 OPD-26 binds "cap day = `DayKey`" (02's
-  device-local day); `DAY_START_HOUR` constant kept at 0. F9's 4-job/48 h capture-queue numbers →
-  12 §3.16's 20 pages / 60 MB / 7 days (12 owns the pipeline).
+- **Round-2 forwards from R2/R4/R5 (10 §18.2):** one `DayKey` = calendar day in the **family/travel
+  city** timezone, `tzOffsetMin` = that city's offset at `ts` (00 C3 rev 3; §4.8, §5.7, §6.4);
+  `SessionEndReason` extended with `backgrounded`/`coop_ended`; events `turn.yielded`,
+  `ftue.completed`, `k3.parentPromptTimeout`; `family_prefs.travel {city, until}`;
+  `child_settings.preBedtimeMin` semantics (10 §6.13); `coop_letter` doc (chips-only) and
+  per-tile LWW for `neighborhood_layout`; `GET /photo-jobs/:id` `estimatedReadyAt` (= 10 API-30);
+  `PUT /admin/ai-caps` / `ai-enabled` aliases (API-28); API-29 payload `{minutes, dayKey}` incl.
+  mode L; `expo-print` module (GAP-50); `behavior.signal{kind:'nikud_lens'}` for MX-H06 (R3; 08 adds
+  the kind).
+- **Rejected / deferred:** GAP-44 04:00 cap boundary — rejected by 00 C3 rev 3 / OPD-26 (one `DayKey`,
+  midnight in the family city). F9's 4-job/48 h capture-queue numbers → 12 §3.16's 20 pages / 60 MB /
+  7 days (12 owns the pipeline).
