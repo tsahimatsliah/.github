@@ -2531,9 +2531,15 @@ reads at the model's cache price. It's computed from `usage` on each response an
 - Rate limits (Workers Rate Limiting binding, keyed by `ip` for unauthenticated routes and by
   `deviceId`/`guardianId` otherwise): auth 10/min, pairing claim 5/min, general 120/min, AI 20/min.
   D1-backed counters handle per-code attempts: pairing 5, email code 5.
-- **Brute-force math:** the 6-digit pairing code has 10⁶ space, a 10-min TTL, 5 attempts per pairing
-  and 5/min/IP. The success probability per pairing is ≤ 5×10⁻⁶. QR payloads also carry a 128-bit
-  nonce, so a scanned QR is not guessable at all.
+- **Brute-force math (E-07):** the 6-digit pairing code has 10⁶ space, a 10-min TTL, **5 attempts per
+  pairing after which the pairing is burned** (410 `pairing_expired`, `cancelled_at` set, audit
+  `pairing.burned`, the guardian's screen offers "קוד חדש"), 5/min/IP (RL_PAIR) and 5/10 min/IP in
+  D1, and ≤ 3 open pairings per family at once. The success probability per pairing is ≤ 5×10⁻⁶ and
+  an attacker cannot keep guessing the same code. An unauthenticated claim carries no family, so the
+  per-IP limit plus the per-pairing burn rule is the whole defence; a worker test sends 6 wrong codes
+  and asserts 410 + `cancelled_at`, then 20 claims from one IP and asserts 429 with `Retry-After`. QR payloads
+  also carry a 128-bit nonce, so a scanned QR is not guessable at all. Email codes: 5 attempts per
+  code, 5 starts/hour/email, 20/hour/IP (§5.2); PIN: 5 fails → doubling cooldown (S4).
 - All D1 queries use bound parameters (drizzle). No string-built SQL.
 - Every row access is **tenant-scoped**: middleware injects `familyId` from the principal, and
   repository functions require it. A test suite tries cross-family access for every route

@@ -1758,6 +1758,83 @@ export const DEFAULT_CONFIG: EngineConfig = {
 | U-CAD-5 | בוס: mean(x−P) = ‎−0.2 על 10 פריטים | u += 0.2 במיומנויות המעורבות |
 | U-CAD-6 | 32 פריטים, 96% ב-14 יום | הצעת אתגר דילוג |
 
+### 12.10א מיפוי רמות (`packages/shared/levels.ts`)
+
+| ID | קלט | צפוי |
+|---|---|---|
+| U-LVL-1 | `new`, `ready=false` | `locked` |
+| U-LVL-2 | `new`, `ready=true` | `ready` |
+| U-LVL-3 | `master`, rung ימים 14 | `mastered` |
+| U-LVL-4 | `master`, rung ימים 30 | `retained` |
+| U-LVL-5 | `master` → הורדה ל-`proficient` (§5.3) | `toEconomyState` = `proficient`; 02 שומר `maxStateEver='mastered'` (בדיקה ב-02) |
+| U-LVL-6 | כל `LevelId` | `fromEconomyState(toEconomyState(l, …))` מחזיר את l (עבור `new` שני המצבים חוזרים ל-`new`) |
+
+### 12.10ב שכבות-על ממקצוע, צירי המשך, משקלים
+
+| ID | קלט | צפוי |
+|---|---|---|
+| U-STEP-1 | `O.STEP`: steps {total 3, correct 2}, ניסיון ראשון בלי רמז | x = 0.667, w = 1, `firstTryCorrect=false`, לא נספר כנקי |
+| U-STEP-2 | אותו דבר, correct 3 | x = 1, נקי |
+| U-STEP-3 | θ=0, β=0, a=1.5, u=1, x=0.667 | Δθ = 0.5·(0.667−0.5) = +0.0833 |
+| U-STEP-4 | תיקון עצמי: ניסיון 2 עם 3/3 | x = 0.5 |
+| U-STEP-5 | `firstErrorTag='E.NO_CARRY'` ממופה ל-j | `j.checkSoon=true` |
+| U-REP-1 | `O.REP`: last8 = 7/8 נקיים, 2 ימים, P̂=0.86, ייצוגים: 6 pictorial + 2 concrete | נשאר `advancing`, reason `needs_abstract` |
+| U-REP-2 | אותו דבר + 2 abstract נקיים (במקום 2 pictorial) | `proficient` |
+| U-REP-3 | `pickItem` כשחסר abstract ויש מועמד abstract עם \|P−pTarget\| = 0.10 | נבחר abstract |
+| U-REP-4 | כנ"ל, המועמד הקרוב ביותר באבסטרקט ב-0.20 | הבחירה הרגילה (לא כופים קושי לא מתאים) |
+| U-REP-5 | חבילה עם `O.REP` ובלי תבניות abstract | הטעינה נדחית (`ContentIndex` validator) |
+| U-REP-6 | מיומנות בלי `extraGates` | §5.1 כרגיל (רגרסיה: U-MST-1 עובר) |
+| U-LAZY-1 | ציר `continuation`, מיומנות נבחרת לראשונה | 3 פריטי probe בתחילת בלוק new, K=0.50, משוב רגיל |
+| U-LAZY-2 | 3/3 נכונים | המיומנות `known`; הקדם-דרישות `known` (סגירה) |
+| U-LAZY-3 | 8 תצפיות, se=0.55 | `placedAt` נקבע |
+| U-WGT-1 | K1, ברירת מחדל | {math 30, hebrew 30, english 25, other 15} |
+| U-WGT-2 | K1 לפני פתיחת האי (2026-12-01) | english 5; השאר פרופורציונלי: math 37, hebrew 37, other 21 (עיגול largest remainder, סכום 100) |
+| U-WGT-3 | K2, אנגלית כבויה | {math 35.3→35, hebrew 41, other 24} (largest remainder) |
+| U-WGT-4 | הורה קובע hebrew 20, english 40 | נדחה בוולידציה של 10 (עברית ≥ אנגלית); המנוע מקבל רק config תקין (assert) |
+
+### 12.10ג מקרי קצה (§10.5)
+
+| ID | קלט | צפוי |
+|---|---|---|
+| U-PLR-1 | ציר נקטע אחרי 3 פריטים, חזרה אחרי 5 ימים | ממשיך מ-`resumable`, פריט חימום אחד, `obs.length` ממשיך מ-3 |
+| U-PLR-2 | נקטע, חזרה אחרי 15 יום | התחלה מחדש, prior = N(mean, max(sd, 0.7)) |
+| U-PLR-3 | נקטע אחרי `minItems`, חזרה | `finish('interrupted')`, לא נפתח שוב |
+| U-PLR-4 | מסע פתוח 22 יום | `done`, `quality:'low'`, צירים לא נבדקים = continuation |
+| U-PLR-5 | `resumable` נבנה מחדש מאירועי `placement.step` במכשיר אחר | זהה בתים-לבתים |
+| U-RAND-1 | ✓ ב-b=1.5, ✓ ב-b=1.0, ✗ ב-b=−0.5, ✗ ב-b=0 אחרי minItems | `finish('inconsistent')`, se ≥ 0.7, כל המיומנויות `uncertain`, u=0.8 |
+| U-RAND-2 | 60% מהפריטים מתחת לרצפת RT (לא ברצף) | `inconsistent` |
+| U-RAND-3 | מסע קצר חוזר אחרי יומיים גם `inconsistent` | `quality:'low'`, אין מסע שלישי |
+| U-ANM-1 | ילד עם ewma 0.80, מפגש 12 פריטים ב-0.33, חציון RT 0.4× | ציון 2+2+1=5 → `identity_suspect`; u לא יורד במיומנויות המפגש |
+| U-ANM-2 | מפגש ראשון אחרי מיקום, ציון 3 | אין anomaly |
+| U-ANM-3 | `session_reattribute` למפגש שהעלה מיומנות ל-`proficient` | אחרי חישוב מחדש: הרמה כפי שהייתה לפני המפגש; אירוע `skill.level_reverted`; θ זהה למצב "בלי המפגש" (בתים-לבתים מול fold ללא המפגש) |
+| U-ANM-4 | reattribute ל-K2, ואז "בעצם כן" אחרי 10 ימים | שני הקלטים ביומן; המצב הסופי שווה למצב בלי reattribute |
+| U-ANM-5 | מפגש reattributed | אותות עניין ודגלים לא סופרים אותו |
+| U-SYNC-1 | שני מכשירים, אותו ילד, מפגשים חופפים, אותה חזרה בשניהם | הראשון בסדר הקנוני מעדכן rung; השני קרדיט ×0.25 |
+| U-SYNC-2 | אירוע כפול (אותו id) | `reduce` מחזיר אותו מצב (אידמפוטנטי) |
+| U-SYNC-3 | אירוע באיחור באמצע פרק פעיל | חישוב מחדש; `EpisodeRuntime` לא משתנה עד סוף הפרק |
+| U-SKEW-1 | אירוע עם dayKey "אתמול" אחרי אירוע "היום" (שעון אחורה) | `elapsedActiveDays` = 0, אין עלייה ב-u |
+| U-SKEW-2 | `gapDays = 2000` | אין `onFirstAttemptAfterGap`; `clock_anomaly` |
+| U-SKEW-3 | `dueDay` מחושב ל-+200 יום | נחתך ל-+90 |
+| U-RST-1 | `reset_profile_model` | InterestMap ריק פרט לזרעים; θ ללא שינוי |
+| U-RST-2 | `reset_progress {subjects:['math']}` | SkillState של math ריק, placement math `not_started`; hebrew ללא שינוי; האירועים ביומן נשמרים; `modelEpoch`/`subjectEpoch.math` +1 |
+| U-RST-3 | אחרי reset, ניסיון ישן של math מגיע בסנכרון (epoch ישן) | לא נכנס לקיפול |
+| U-ROLL-1 | K2 `gan_chova → g1`, 1.9.2027 | `rtPolicy='fluency_only'`, ladder נשאר K2, `pos` = 1.0 (ספטמבר) |
+| U-ROLL-2 | K1 `g3 → g4`, ציר `math.number` עם θ_s − 4.0 = −1.0 | "מסע קצר" מתוזמן לציר |
+| U-ROLL-3 | ההורה דוחה את ההצעה | `grade` נשאר, `schoolYear` מתעדכן, `pos` נעצר על gradeStart+1.0 |
+| U-ROLL-4 | ClassTopic פעיל בזמן rollover | פג תוקף |
+| U-ABS-1 | 95 יום בלי פעילות | reentry + מסע קצר, u = 1.0, rung −2, אין הורדת רמה |
+| U-ABS-2 | `profile.paused` 40 יום | ימי ההשהיה לא נספרים; חזרה = כמו 10.4 (לא 10.5.8) אם ימי המשחק הפעילים שחלפו < 90 |
+| U-CEIL-1 | ציר שבו כל המיומנויות ≥ proficient | `contentExhausted[strand]` = today; חלק ה-new עובר לצירים אחרים |
+| U-CEIL-2 | מקצוע שלם מוצה | משקל מתחלק; בלוק fun = MP.X/פרויקט; אין פריט לא מאושר |
+| U-FLG-11 | `EMO_CHECKIN`: עצוב ב-3 מ-5 ימי צ'ק-אין, `checkinNudge=true` | `parent_note` מיד; payload = `{ruleId, status, dayKey}` בלבד |
+| U-FLG-12 | כנ"ל, `checkinNudge=false` | כלום. ה-mood לא יוצא מהמכשיר (בדיקת sync pusher) |
+| U-FLG-13 | `MATH_K1_FACT_PACE` מתקיים 10 שבועות, `maxStatus='watch'` | `watch` בלבד, `notify=false`; אחרי `flag_action` אישור → `parent_note` |
+| U-FLG-14 | `notRelevant` על `HEB_K1_LETTER_CONFUSION` | `dismissed` 8 שבועות; סף 25%→30%; `calibration[]` נרשם |
+| U-FLG-15 | שבוע עם 9 פריטים רלוונטיים (< 15) באמצע רצף של 3 | `persisting` לא עולה ולא מתאפס |
+| U-FLG-16 | כלל "או": סמן A בשבוע 1, סמן B בשבוע 2, A בשבוע 3 | `persisting` = 1 (לא 3) |
+| U-Q-1 | שני הורים: ש' G2 `yes` ו-`no` | `partly`; `questionnaire_mismatch` |
+| U-FW-1 | פרק מס' 2 של ילד | `itemBudget` × 0.8, closing ב-80% |
+
 ### 12.11 אינטגרציה וסימולציה (`test/sim`)
 
 * **S-1 (בקר):** ילד סינתטי עם θ אמיתי שעולה ב-0.5 לוגיט ב-200 פריטים, ו-priors שגויים ב-+0.4 לתבנית. ההצלחה הנצפית ב-50 הפריטים האחרונים: `targetP ± 0.05`.
