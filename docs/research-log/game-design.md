@@ -140,3 +140,39 @@
 - No study on multi-age (2.5/5.5/8.5) sibling co-op learning games. The handicapping formulas in spec §9 are design inference and must be tuned from telemetry (time-on-task balance, help-request counts).
 - The official תשפ"ז school vacation calendar could not be retrieved. It is parent-configurable.
 - I could not retrieve 99 Nights primary or developer sources. Fan wikis were used only for texture.
+
+## R12. Parent input (00 §G): Astro Bot, rescue hubs, learning through movement
+
+These findings come from the in-progress notes `astrobot_joy_gamification_psychology.md` and `learning_through_movement.md` (read on 2026-11-02). `tech_3d_world.md` did not exist yet when this was written. The camera and rendering choice is still **pending**, so spec 01 stays camera-agnostic (tile grid plus elevation) and is marked for revision.
+
+**Astro Bot (Team Asobi)**
+- It was designed as a "toy-like" game. It has many short levels, and each level is built around one fresh power-up. The power-ups came from prototyping the feel first.
+- An idea was cut when it overlapped another (the bird level overlapped the monkey power-up). The rule: if a power-up returns on a third planet, it must add something new. ([MP1st](https://mp1st.com/news/astro-bot-power-ups-were-inspired-by-dualsense-functionality); [Game Rant](https://gamerant.com/astro-bot-ps5-cut-content-team-asobi/); [CGMagazine](https://www.cgmagonline.com/interviews/team-asobi-nicolas-doucet-astro-bot/), all via the note.) **Grade B/C.**
+- Collectibles: 300 bots, 120 puzzle pieces and 10 secret exits. Pieces unlock hub buildings at fixed thresholds of 16/32/48/64/120 ([PowerPyx](https://powerpyx.com/astro-bot-trophy-guide-roadmap)). Gacha Lab is randomness that is cosmetic only and paid for with earned currency. **Grade C.**
+- Decisions:
+  - Our hub buildings unlock at fixed thresholds of rescued friends.
+  - Our "surprise" stays **deterministic** per 00 D2. This is stricter than Gacha Lab, and that is intentional.
+
+**Nintendo level design**
+- **Kishōtenketsu** (introduce → develop → twist → conclude) and "decide one core concept per level" (Hayashida, via [Game Developer](https://www.gamedeveloper.com/design/the-secret-to-i-mario-i-level-design)).
+- Odyssey: "anything that catches the eye" may hold a reward, and collecting does not eject you from the level ([TIME](https://time.com/4816417/super-mario-odyssey-interview-e3/)). Kirby's Waddle Dee Town is rebuilt by the friends you rescue ([Kirby Wiki](https://kirby.fandom.com/wiki/Waddle_Dee_Town)). **Grade B/C.**
+- Decision: every level template has 4 beats plus "no eject on rescue".
+
+**99 Nights**
+- The Missing Kids Board unlocks rescue quests one by one as the campfire is upgraded ([Deltia's](https://deltiasgaming.com/?p=293857); [PC Gamer](https://www.pcgamer.com/games/roblox/99-nights-in-the-forest-missing-kid-locations)). **Grade C/D.**
+- Decision: our "לוח החברים האבודים" works the same way. The family fire level reveals new regions and rescue quests. The fire never goes down.
+
+**Goal-gradient and endowed progress**
+- Kivetz et al. 2006 ([PDF](https://business.columbia.edu/sites/default/files-efs/pubfiles/1200/goalgradient.pdf)). **Grade A/B** (adult consumer studies).
+- Decisions:
+  - Collection meters start partly filled.
+  - The last items in a set are easier to find.
+  - The silhouettes of missing items are always visible.
+
+**Learning through movement**
+- The strongest pattern is *task-relevant* movement, where the body action encodes the answer (magnitude → left/right; word → enactment). Exercise used only as a break adds little learning.
+- Moderate movement fits easy retrieval. Vigorous bursts should be followed by a calm task.
+- Every mechanic needs a seated alternative.
+- Technology: `expo-sensors` (tilt/shake, works in Expo Go) and front-camera Apple Vision pose (via a custom Expo module, dev build only). Frames are kept in memory only.
+- Safety: about 2×2 m of clear space, the device on a stand 2–3 m away, never hand-held while jumping, a quiet/no-jump mode, one active player in the camera zone at a time. (See the note for citations, e.g. Novack 2014 and Egger 2018 as cited there.) **Grade A–C mixed.**
+- Decision: spec 01 §8 defines movement moments. Each one has a seated fallback and a tap fallback. Camera pose is Phase 2.
