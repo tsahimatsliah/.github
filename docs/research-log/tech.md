@@ -178,6 +178,21 @@ fast-check 4.10.2 · @noble/hashes 2.4.0 · uuidv7 1.2.1 · aws4fetch 1.0.20 · 
 serve 14.2.6 · lefthook 2.2.2 · react-native-audio-api 0.13.6 (optional) ·
 react-native-vision-camera 5.2.3 (later phase).
 
+### Late inputs merged (coordinator updates during writing)
+- E1a update: the App Store Expo Go supports only up to SDK 54 (per `tech_3d_world.md`, citing
+  https://docs.expo.dev/troubleshooting/expo-go-version-mismatch/ ). Expo Go was dropped as an install
+  path. The primary path is a dev/release build from the Mac with free signing.
+- E1b and `tech_3d_world.md`: R3F v9 native + expo-gl, custom kinematics + three-mesh-bvh, WebView and
+  Skia fallbacks, Filament plan B, a 4-gate spike, and budgets.
+- `performance_reliability_playbook.md`: InteractionManager and Touchable were removed in RN 0.88 /
+  SDK 58. KTX2 is unreliable in Expo three.js. Call setAudioModeAsync once at startup and pool players.
+  Memory ≤400 MB steady / ≤650 MB peak. Hermes V1 + worklets memory smoke on every bump. 25 rules and a
+  device protocol.
+- `quality_bug_prevention_playbook.md`: Maestro on the Mac iOS Simulator, Playwright baselines only in
+  a pinned Docker image, and fast-check property tests.
+- Section H (identity/admin) is incorporated as spec 11 §5. SIWA is deferred to the paid program
+  (Proposed change to 00, #2).
+
 ## Open items to verify (on first chance)
 1. SIWA/App Attest/Push on a free personal team (expected: unavailable).
 2. Face ID via expo-local-authentication inside Expo Go (expected: may be unavailable; passcode fallback).

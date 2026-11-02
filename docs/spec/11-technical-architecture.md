@@ -225,6 +225,7 @@ Rules:
 | zod | 4.6.7 | |
 | uuidv7 | 1.2.1 | event and entity ids |
 | @noble/hashes | 2.4.0 | sha256 of files, scrypt for PINs |
+| @noble/curves | 2.4.0 | Ed25519 verification of pack manifests |
 | react-native-audio-api | 0.13.6 | **optional**, adopted only if the expo-audio latency gate fails (§4.5) |
 | @sentry/react-native | 8.28.0 | **optional**, dev build only, behind flag (§13) |
 | react-native-vision-camera | 5.2.3 | **later phase** (camera pose, G6) |
@@ -235,7 +236,7 @@ Rules:
 
 **workers/api:** hono 4.13.14, @hono/zod-validator 0.9.1, zod 4.6.7, drizzle-orm 0.45.4
 (`drizzle-orm/d1`), jose 6.2.13, @anthropic-ai/sdk 1.3.0, aws4fetch 1.0.20 (R2 presigned URLs),
-uuidv7 1.2.1. Dev: wrangler 4.152.0, @cloudflare/workers-types 5.20261025.1, vitest 4.1.12,
+uuidv7 1.2.1, @noble/curves 2.4.0 (manifest signing). Dev: wrangler 4.152.0, @cloudflare/workers-types 5.20261025.1, vitest 4.1.12,
 @cloudflare/vitest-pool-workers 0.23.0, drizzle-kit 0.31.11.
 
 **apps/parent-web:** react 19.3.0, react-dom 19.3.0, react-router 7.x (latest ≥7 days at scaffold),
@@ -2167,6 +2168,7 @@ dashboard).
 |---|---|
 | A sibling plays as another | picture-PIN (UX, not security) |
 | A kid reaches parent settings | Face ID / PIN gate; no arithmetic gate; 2 s hidden hold |
+| Offline PIN brute force from a stolen device (PIN hashes are synced so the gate works offline) | PIN is a convenience gate only; scrypt N=2^15 slows it; admin power needs the guardian session, whose refresh token is Keychain-bound to Face ID/passcode; remote unpair revokes the device |
 | A stolen or lost iPad | remote unpair/wipe; tokens in Keychain (device passcode); guardian refresh needs Face ID |
 | Leaked device token | per-device revoke; scope limited to the family's sync/content/companion; rate limits |
 | AI cost runaway (bug loop) | hard daily cap + workspace cap + kill switch |
