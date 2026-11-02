@@ -134,7 +134,8 @@
 
 **Metro ו-OTA בלי כבל.** בין חתימה לחתימה, שינויים ב-JS מגיעים כך:
 - ל-`family` דרך EAS Update.
-- ל-`dev` מ-Metro על ה-Mac. אפשר גם להריץ `npx expo start --tunnel` מהקונטיינר ולפתוח אותו מתוך ה-dev-client.
+- ל-`dev` מ-Metro **על ה-Mac** (LAN, דרך Remote Control). הקונטיינר **לא** יכול לארח tunnel (`exp.host`/ngrok חסומים, research-log tech.md); tunnel מהקונטיינר רק אם 00 E13 יושם ויאומת.
+- OTA ל-`family` עובר את `tools/ci/calendar-guard.mjs` (11 §11.5): אין OTA שישי אחה"צ, שבת, חג או יום שקט (B7a) אלא עם התווית `s0-hotfix`.
 
 כבל, או Wi-Fi אחרי צימוד ראשון, נדרש רק לשינוי נייטיב ולחתימה השבועית.
 
@@ -166,6 +167,11 @@
 9. אחרי ההתקנה הראשונה: ‏Settings → General → VPN & Device Management → "Apple Development: <Apple ID>" → Trust.
 10. באייפד המשותף: ‏Settings → Accessibility → **Guided Access** → On + קוד (ל-K3 ו-K2).
 11. הסוכן רושם את המכשיר ב-`tools/mac/devices.json` (שם, UDID ב-`private/`, תפקיד, אילו builds). עד 3 מכשירים (לאמת) ו-2 אפליקציות (`olam`, `olam-dev`) בלבד.
+
+**שני כללים שההורה צריך לדעת בעל-פה (11 §3.3 "7-day expiry walk"):**
+12. **לעולם לא מוחקים את האפליקציה כדי "לתקן" תוקף שפג.** מחיקה מוחקת את ה-SQLite המקומי; אם זה קרה — "שחזור מהענן" (מה-MVP) או ייבוא ה-JSON האחרון (VS-E11-S4).
+13. ההודעה **"Unable to Verify App" / "לא ניתן לאמת את האפליקציה"** על האייפד פירושה שהחתימה פגה או שה-developer לא מאושר: Settings → General → VPN & Device Management → Trust, או לחכות לריצת ה-18:40 / לחבר כבל. זה לא באג ולא וירוס; הילדים רואים "המשחק ישן".
+14. ⟂VERIFY (01 DD-37, 02 UC-21, F2 #22): האם התקנה מחדש עם `devicectl` על אותו bundle ID + team משמרת את מיכל הנתונים. נבדק ב-P0-E2-S5 **ובמחזור החתימה הראשון**; אם לא — `resign.sh` מקבל צעד `preInstallSync` (סנכרון/יצוא לפני ההתקנה) ואין התקנה בלי גיבוי טרי.
 
 ### 3.4 מתי לשדרג (החלטה של ההורה, Q-15)
 
