@@ -1,6 +1,6 @@
 # 15 — Use Cases, Journeys & Edge Cases (end-to-end catalog for E2E tests and acceptance)
 
-> **Status:** v1.0, 2026-11-02 (Fable reviewer F9). **Subordinate to** `00-foundation-decisions.md`; where this file and an owning spec disagree, the owning spec wins and the disagreement is listed in §3 (gap list) and in `docs/review/fable-issues-F9.md`.
+> **Status:** v1.1, 2026-11-02 (Fable reviewer F9; round-2 pass by R7 against the current owner specs — see §3.1 and the changelog). **Subordinate to** `00-foundation-decisions.md`; where this file and an owning spec disagree, the owning spec wins and the disagreement is listed in §3 (gap list) and in `docs/review/fable-issues-F9.md`.
 > **Purpose:** one place where a developer (or the agent) can read every journey a real person or the system goes through, step by step, with the edge cases, the expected behavior, the spec section that defines it, and a test sketch that can be turned directly into a Playwright (web export), Maestro (device) or Jest/sim test.
 > **Language:** English prose; Hebrew UI strings, IDs, routes and spec IDs as they appear in the owning specs.
 
@@ -19,12 +19,12 @@
 | Tag | Layer | Tool | Harness it relies on |
 |---|---|---|---|
 | `[PW]` | Web export of `apps/mobile`, deterministic mode | Playwright (11 §12.2) | `EXPO_PUBLIC_TEST=1`: frozen clock `2026-11-08T16:00:00+02:00`, seeded RNG, animations off, `window.__olam.ready`, `window.__olam.world.moveTo()`, `window.__olam.motion.feed()`, `window.__perf`; route interception for offline; fixture families (§0.3) |
-| `[MAE]` | Dev/family build on a real iPad/iPhone or simulator via the parent's Mac (Remote Control) | Maestro flows (`tools/e2e/maestro/*.yaml`) — **proposed, see GAP-48** | `testID`s on every interactive element (09 §12 polish checklist), a debug deep link `olam://test/fixture?id=FX-..` (dev builds only) that loads a fixture and sets the injected clock |
+| `[MAE]` | Dev/family build on a real iPad/iPhone or simulator via the parent's Mac (Remote Control) | Maestro flows (`apps/mobile/e2e-maestro/*.yaml`; 11 §12.1, 13 §10.1, 14 `PQ-T-06` — adopted, GAP-48) | `testID`s on every interactive element (09 §7, §12 #17), dev-build-only deep links `olam://dev/fixture?id=FX-..` (loads a fixture from `apps/mobile/e2e-maestro/fixtures/`, resets the local DB) and `olam://dev/setNow?ts=` (injected clock) — 11 §4.1 |
 | `[API]` | Worker `olam-api` against a scratch D1 | Vitest + `wrangler dev` / miniflare (11 §12.1) | seeded family; `Idempotency-Key`; cron handlers invoked directly with a fake `now` |
 | `[SIM]` | Pure engine/economy/alerts logic | Jest + fast-check (08 §12, 02 §14.1, 10 §16) | `packages/engine`, `packages/engine/economy`, `packages/engine/alerts`, `packages/engine/metrics` |
 | `[📱]` | Needs a human eye/hand (parent) | 11 §12.4 / 13 §10.3 checklist | — |
 
-Every sketch lists: **Given** (fixture + clock), **When** (steps), **Then** (asserts). A sketch marked `⟂VERIFY` depends on a harness hook that is proposed here and not yet in a spec.
+Every sketch lists: **Given** (fixture + clock), **When** (steps), **Then** (asserts). A sketch marked `⟂VERIFY` depends on a harness hook that is proposed here and not yet in a spec. **Round 2:** `GAP-nn` references inside the journeys are kept as written in round 1 (they are the audit trail); the current status of every gap, with the owning section that now carries the rule, is in §3.1. Where a journey sentence stated a rule that round 2 rejected or changed, the sentence itself was corrected (UC-011, UC-016, UC-034–036, UC-040, UC-045, UC-054, UC-057, UC-059, UC-069, UC-072, UC-077–079, UC-082–083, UC-090–091).
 
 ### 0.3 Fixture catalogue (proposed names, used by sketches)
 
@@ -232,7 +232,7 @@ Each journey: **Actors · Preconditions · Happy path · Alternative paths · Ed
 - **Edge cases:**
   - E1: Multi-touch / palm → ignored; 12 mm edge margin has no actions; no swipe-to-exit; Guided Access recommended (01 §15.3, 13 §10.3).
   - E2: Volume: max −6 dB; no flashing >2 Hz; no shake; no dark scenes; no Muddler/approaching shadowlings (AC-K3-2).
-  - E3: Second K3 episode in the day → cap: 2 episodes / 10 min (01 §15.1) vs 15 min (10 §6.13) → **GAP-03**.
+  - E3: Second K3 episode in the day → cap: **15 min / 2 lap episodes** (10 §6.13 = 00 OPD-26 rev 3; parent range 5–15; "2 episodes/day" binds first; the 5-min solo playroom counts inside the 15). GAP-03's 10-min proposal was rejected.
   - E4: K3 solo minutes in learning episodes (not playroom) on 3 days → AL-06 (10 §10.1); M-14 target 0.
   - E5: Gender `n` → neutral VO; where impossible, alternate f/m per session (DD-05).
   - E6: Parent recorded no name → "אור בוקר" without a name (01 §19 item 3).
@@ -310,7 +310,7 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
   - E2: K1 in Stretch: 2 errors → hint only; 3 → choice "לנסות שוב / לעבור".
   - E3: Error sound: soft 150 ms "בופ", never buzzer/red X for K2/K3.
   - E4: After a switch, the skill doesn't return in the same episode unless in a review block.
-  - E5: ≥3 sessions in 7 days ending `childQuit` ≤120 s after ≥2 errors → AL-04 (UC-061); `EMO_DISTRESS` after 3 weeks (UC-062).
+  - E5: ≥3 sessions in 7 days ending `child_exit` (08 §1.10 canonical enum; = 10's former `childQuit`) ≤120 s after ≥2 errors → AL-04 (UC-061); `EMO_DISTRESS` after 3 weeks (UC-062).
   - E6: Rapid guess (K1, rt<800 ms wrong) → item pays 0, never shown as punishment (02 §2.6).
 - **Spec refs:** 01 §6.5, §16.1 (error sound), AC-LV-6; 08 §6.7; 02 §2.6; 10 §10.1 AL-04.
 - **E2E sketch:** `E2E-UC-016-a [SIM]` fast-check: for K2, no sequence of engine outputs yields 4 consecutive first-try misses on the same item. `E2E-UC-016-b [PW]` feed rage taps (6 taps in 1.5 s on background) → `offer_break` sheet with 3 options, no coin change.
@@ -493,7 +493,7 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 - **Happy path:** Turn ring by last use; instant save on switch; an episode stopped mid-way "for a sibling" gives the yielder a Patience heart and a VIP friend surprise next episode (unexpected, never pre-announced).
 - **Edge cases:** E1: Detection rule for a yield missing → GAP-33. E2: Time visible to parents only, never to children (01 §12.5).
 - **Spec refs:** 01 §12.5, DD-08; 11 §4.16.
-- **E2E sketch:** `E2E-UC-034-a [SIM]` after rule from GAP-33 is adopted: `session.ended{reason:'switch'}` at 40 % + different child starts within 120 s → `turn.yielded` event; next session for the yielder contains `vipFriend` surprise.
+- **E2E sketch:** `E2E-UC-034-a [SIM]` (rule adopted in 01 §12.5, GAP-33): `session.ended{reason:'parent_exit'}` at 40 % of the planned episode + different child starts within 120 s → `turn.yielded` event; next session for the yielder contains `vipFriend` surprise.
 
 #### UC-035 Emotional check-in (RIT-OPEN) and what is (not) stored
 
@@ -502,8 +502,8 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 - **Edge cases:**
   - E1: Intensity 3 → calming first, "detective" (SE.THINK) deferred (07 §5 timing rule).
   - E2: 😠/😢 adds +2 to the frustration score (08 §6.7).
-  - E3: Storm/rain ≥5 of last 7 check-ins on ≥5 days within 14 days → RF-01 `consider` card to the parent (07 §10) — duplicate with 10's proposed `EMO_CHECKIN` (3 of 5 days) → GAP-32.
-  - E4: Frequency: 01 says "every other day" for K2; 07 says every episode → GAP-31.
+  - E3: Storm/rain ≥5 of last 7 check-ins on ≥5 days within 14 days (or ≥4 fear words on ≥3 days) → one rule `EMO_CHECKIN` in 08 §9.2 (07 §10 wording, 10 §6.9 reference), consent T4b, computed on device, boolean out — GAP-32 resolved.
+  - E4: Frequency — 07 §2.4 is canonical and 01 §5.3 mirrors it: S every episode, G (K2) every other day (first episode of the day), T optional/parent-led; ≤20 s, skippable. Round 1's reading "07 = every episode for everyone" was stale; GAP-31 closed as rejected.
   - E5: No coins ever for check-in (07 AC-13).
   - E6: Check-in label never appears in share cards, reports, Push (07 §8; 10 AC-14/32).
 - **Spec refs:** 00 C8; 07 §2.4, §5 SE.VOCAB.2/3, §10 RF-01/02; 01 §5.3; 08 §6.7; 10 §8 PRIV-01, AC-32; 11 §5.7.
@@ -512,7 +512,7 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 #### UC-036 AI helper גלגלון/גלגלי: brain token, scripted ladders, K1 live turns, refusals
 
 - **Actors:** K1 (live turns), K2 (scripted trees only), K3 (none), Worker (Haiku 5.5), parent (log).
-- **Happy path (K1):** Item error → classified in code → scripted hint ladder; `llm_turn` node opens **only after ≥1 child attempt** ("brain token" lights the robot's bulb) → chips + ≤60-char text → `piiScrub` + `riskLexicon` → `socratic.turn` (numbers masked; ≤20 words; move ∈ allowed) → validators (answerLeak with all numeral forms, genderCheck, bannedContent, praiseLint, live nikud ≤1.5 s) → text + fixed beep (no live TTS) → any failure → scripted `fallback` node, no retry; quotas 12 turns/day, 4/exercise; fixed opener "אני גלגלי. אני מכונה…".
+- **Happy path (K1):** Item error → classified in code → scripted hint ladder; `llm_turn` node opens **only after ≥1 child attempt** ("brain token" lights the robot's bulb) → **chips only** (00 C7a: no free text from any child, not even K1; `CHILD_CHIPS` from the closed `chipSets`, 12 §4.4; distress via the fixed chip "משהו מציק לי") → `socratic.turn` (numbers masked; ≤20 words; move ∈ allowed) → validators (answerLeak with all numeral forms, genderCheck, bannedContent, praiseLint, live nikud ≤1.5 s) → text + fixed beep (no live TTS) → any failure → scripted `fallback` node, no retry; quotas 12 turns/day, 4/exercise; fixed opener "אני גלגלי. אני מכונה…".
 - **Refusals (code before LLM):** answer begging → next hint; off-topic → redirect; personal details → not sent + privacy line + parent flag (no content); distress → not sent + "כדאי לספר לאמא או לאבא עכשיו" + "לקרוא להורה" button + gentle parent flag; security/news → redirect; insults → neutral (flag at 3); "are you alive?" → literacy line.
 - **Edge cases:**
   - E1: Offline → scripted hints only, UI "צריך אינטרנט" for the robot (11 §4.8).
@@ -548,14 +548,14 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 
 #### UC-040 Daily cap reached mid-level, parent +10 bonus, bedtime approaching
 
-- **Happy path:** Cap (K3 10/15 ⟂, K2 25, K1 40 min; weekday vs Fri–Sat separately) → never cut mid-beat: finish the beat (≤1:30 overtime) and "land" in Ketsu; if >1:30 remains, level state saved to the checkpoint for tomorrow; then goodnight ritual; `session.ended{reason:'cap'}`.
-- **Alternative paths:** Parent grants +10 min through the gate ("bonus" button not shown to the child, DD-09) → GAP-02 (no event/API).
+- **Happy path:** Cap (K3 15, K2 25, K1 40 min — 10 §6.13 / 00 OPD-26; weekday vs Fri–Sat separately; cap day = `DayKey`, 00 C3 rev 3) → never cut mid-beat: finish the beat (≤1:30 overtime) and "land" in Ketsu; if >1:30 remains, level state saved to the checkpoint for tomorrow; then goodnight ritual; `session.ended{reason:'cap'}`.
+- **Alternative paths:** Parent grants +10 min through the gate ("bonus" button not shown to the child, DD-09) → `cap.bonus_granted {minutes:10, dayKey}` (cls `admin`, audited, ≤1/child/day; 11 §7.3 `POST /children/:id/cap-bonus` = 10 API-29; 08 §1.9א `ParentInput.cap_bonus`; never adds an episode) — GAP-02 resolved.
 - **Edge cases:**
   - E1: Cross-device cap: local events + server-merged total; offline overrun tolerated, never punished (11 §4.16).
   - E2: Cap hit on 5 of 7 days → AL-06 report-only.
-  - E3: 60-min pre-bedtime rule (10 §6.13) → GAP-04 precise semantics.
+  - E3: Pre-bedtime rule (10 §6.13 (a)–(e), 11 §5.5): no new episode once `now ≥ bedtime − preBedtimeMin` (default 60, range 15–60); a `mini` episode when `bedtime − now < plannedEpisodeMin + 2`; effective lock = earliest(child bedtime, device schedule) — GAP-04 resolved.
   - E4: Bedtime schedule hits mid-level → 2-min warning "הגיבור הולך לישון", ends at a natural point, soft animation, nothing startling; `reason:'bedtime'` (10 FAM-04; AC-21).
-  - E5: Day boundary for the cap (midnight vs. 04:00) undefined → GAP-44.
+  - E5: Cap day = `DayKey` = calendar day at midnight **in the family's city** (00 C3 rev 3; 08 §1.1/§6.10, 02 §2.1, 11 §4.16) — the 04:00 boundary proposed as GAP-44 was rejected; the bedtime lock makes the night gap moot.
 - **Spec refs:** 00 C3; 01 §15.1, DD-09; 08 §6.10; 10 §6.13, §7.2 FAM-04, AC-21; 11 §4.16, §5.5.
 - **E2E sketch:** `E2E-UC-040-a [PW]` clock so that cap ends 40 s into Shō → beat completes, Ketsu shortcut, ritual; overtime ≤90 s; `session.ended.reason='cap'`. `E2E-UC-040-b [PW]` cap ends with 3:00 of level left → level saved; next day resumes at the checkpoint.
 
@@ -594,7 +594,7 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 
 #### UC-045 Shabbat (soft / full / off), holidays and quiet days
 
-- **Happy path (`shabbat.soft`, default):** From candle lighting (city-based: Tel Aviv 18/20 min, Jerusalem 40 — 01 §15.4 vs 10 SET-01: 18 vs 20 → GAP-14c) to havdalah (+40 min configurable): app usable as free practice; all counters stop; no coins/gems earned; no events open/close; no notifications; Shabbat scenery; SCR-20 for locked parts.
+- **Happy path (`shabbat.soft`, default):** From candle lighting (city-based `@hebcal/core` defaults: Jerusalem 40, Haifa 30, others 18, manual override — 00 B7, 01 §15.4, 10 SET-01; GAP-14c resolved) to havdalah (+40 min configurable): app usable as free practice; all counters stop; no coins/gems earned; no events open/close; no notifications; Shabbat scenery; SCR-20 for locked parts.
 - **`shabbat.full`:** app sleeps (Shabbat-shalom picture), parent can open via the gate as an exception. **`shabbat.off`:** regular.
 - **Quiet days (QD-1…4):** no events/boss; T0/T1 only; calm music; no siren-like SFX; chests shelved; alerts sent without celebratory emoji/"!"; AL-01 moved to the next day.
 - **Edge cases:** E1: Weekly goal `availableDays` excludes Shabbat/Yom Tov/parent rest days; a week with 0 available days = "שבוע מנוחה" (02 §10.1). E2: Review ladder ignores rest days (`elapsedActiveDays`, 08 §5.3). E3: Playing on Shabbat when allowed counts as bonus, not required (02 §10.1). E4: Shabbat starts mid-episode → episode finishes normally, receipts 0 coins afterward ⟂VERIFY (GAP-14d). E5: Device clock/timezone abroad → GAP-39.
@@ -665,7 +665,7 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 #### UC-054 Photo-to-game: printed worksheet (happy path)
 
 - **Actors:** Parent (gate), Worker (Sonnet 5.5 vision; Opus in parallel for handwriting), child.
-- **Happy path:** SCR-14 capture (doc scanner, ≤4 pages) → crop (+ up to 3 exclusion rectangles) → on-device face blur (VisionKit) + optional name blur + orientation bake + EXIF strip + resize 2,576 px (12 §3.3; 11 says 1,600 → GAP-15) → tag source kind / mode / children → `POST /v1/photo-jobs` → R2 private (TTL ≤30 d) → extraction streamed to the confirm screen (≤15 s p50 to review) → parent fixes words, marks the answer key (parent-only), picks mode (UC-055) and children → confirm → template selection (code), distractors (code), Haiku enrichment per child (skip on failure), validators, TTS (server) → pack + sha256 → R2 → devices notified → child's map shows a glowing `secret` node "הפתעה מ{{parent}}" (09 F4) / "משחק חדש מהמחברת!" (12 §3.1) → GAP-16; items enter SRS (+1/+3/+7); raw photo **deleted immediately after approval/rejection** (AC-16: ≤5 min).
+- **Happy path:** SCR-14 capture (doc scanner, ≤4 pages) → crop (+ up to 3 exclusion rectangles) → on-device face blur (VisionKit) + optional name blur + orientation bake + EXIF strip + resize 2,576 px q0.88 (12 §3.3 = 11 §8.3/§9.4, `modules/vision-privacy`; GAP-15 resolved) → tag source kind / mode / children → `POST /v1/photo-jobs` → R2 private (TTL ≤30 d) → extraction streamed to the confirm screen (≤15 s p50 to review) → parent fixes words, marks the answer key (parent-only), picks mode (UC-055) and children → confirm → template selection (code), distractors (code), Haiku enrichment per child (skip on failure), validators, TTS (server) → pack + sha256 → R2 → devices notified → child's map shows a glowing `secret` node labelled "משחק חדש מהמחברת!" (09 §8.3 F4 = 12 §3.1 #13; for K2 it is also the next episode's review slot; GAP-16 resolved); items enter SRS (+1/+3/+7); raw photo **deleted immediately after approval/rejection** (AC-16: ≤5 min).
 - **Edge cases:** E1: Child cannot start a photo flow (11 §9.4). E2: Names of other children replaced with placeholders ("הוחלפו 2 שמות"). E3: First round playable at 4 items with audio while the rest loads (12 §3.14). E4: Same source → different fill per child (K1 spell_builder, K2 first_sound, K3 tap_heard_picture). E5: Push unavailable on free signing → AL-08a via local notification/in-app (GAP-62). E6: "Keep photo for reference" toggle off by default.
 - **Spec refs:** 00 E8 E5; 12 §3.1–3.9, §3.12–3.14; 11 §8.3, §9.4; 10 §6.10 A1, U4, AC-16; 09 SCR-14, F4.
 - **E2E sketch:** `E2E-UC-054-a [API]` `FX-PHOTO-PRINTED` with mocked vision → job statuses `uploaded→extracting→needs_confirm→building→ready`; after confirm the R2 object is gone within 5 min (lifecycle + worker). `E2E-UC-054-b [PW]` parent review screen: low-confidence items highlighted; "לאשר הכול" enabled only after scrolling the sample to the end (12 §1.8). `E2E-UC-054-c [PW]` child map shows the new node only after approval (never before).
@@ -698,7 +698,7 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 | Haiku enrichment fails/timeout 8 s | game built with generic scripted intro/hints and templates without lexical distractors | 12 §3.12 |
 | TTS unavailable | K1 plays text-only templates; K2/K3 wait: "הקול יהיה מוכן בעוד כמה דקות" | 12 §3.13 |
 | Nakdan unavailable | Phonikud fallback job | 12 §3.1, §8 |
-| Offline parent device | UI "צריך אינטרנט"; capture allowed? → queue upload ⟂VERIFY (GAP-15b) | 11 §4.8 |
+| Offline parent device | capture + crop + blur allowed offline; upload queued in `capture_queue` (≤20 pages / 60 MB, 7-day expiry, `clientJobId` idempotency — 12 §3.16, 11 §7.9; GAP-15b resolved with 12's limits) | 11 §4.8, §7.9; 12 §3.16 |
 | Kill switch `photo` | camera hidden in the parent area (T7 off behaves the same) | 11 §4.12; 10 PRIV-02 |
 | Time-to-game P95 > 60 s | telemetry `photo.ttg` alarm; not user-visible | 12 §3.14 |
 
@@ -713,7 +713,7 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 
 #### UC-059 Weekly report (Friday)
 
-- **Happy path:** Cron `*/15 6-12 * * *` UTC; per family `send_at = clamp(candleLighting − 3h, 12:00, 14:00)` Israel time; prepared 09:00; rolling window since the previous snapshot; idempotent `reportId = family + isoWeek`; structure: campfire line, per child (rotating order) 🏆 one win, 🧭 one "working on" incl. what the game does, 🌙 one 5-min tonight activity in a Friday context, 💬 one conversation question, quiet numbers in grey, ≤70 words/child; optional lines (approvals, monthly view link, reward suggestion, share card, overflow alerts); channels: in-app inbox (always), email (RTL HTML with inline `dir`, ≤600 px, `<bdi>` numbers, no tracking pixel, signed 👍/👎 links valid 14 days, deep link), Push "הסיכום השבועי מוכן…" (P1), Telegram (P2), viewer version without numbers.
+- **Happy path:** The 15-minute Worker job (`*/15 * * * *`, step 2 of 00 E5 rev 3 / 11 §7.1 with a window filter in code); per family `send_at = clamp(candleLighting − 3h, 12:00, 14:00)` Israel time; prepared 09:00; **template-only, no LLM** (10 §11.7, 12 §5 — Haiku is used only for the monthly strengths narrative, UC-060); rolling window since the previous snapshot; idempotent `reportId = family + isoWeek`; structure: campfire line, per child (rotating order) 🏆 one win, 🧭 one "working on" incl. what the game does, 🌙 one 5-min tonight activity in a Friday context, 💬 one conversation question, quiet numbers in grey, ≤70 words/child; optional lines (approvals, monthly view link, reward suggestion, share card, overflow alerts); channels: in-app inbox (always), email (RTL HTML with inline `dir`, ≤600 px, `<bdi>` numbers, no tracking pixel, signed 👍/👎 links valid 14 days, deep link), Push "הסיכום השבועי מוכן…" (P1), Telegram (P2), viewer version without numbers.
 - **Edge cases:** E1: Friday is Yom Tov → report on the first holiday eve of that week (AC-12). E2: Shabbat mode off → fixed Friday 12:00. E3: No domain → inbox only (10 Q-05). E4: Quiet week → ES-2 template. E5: K3 "beautiful moment" picked from parent-marked observation or telemetry. E6: Never includes flags (AC-14); payload excludes `flags[]`. E7: Activity repeated in the last 4 reports → excluded. E8: Deep-link scheme `familygame://` vs `olam://` → GAP-68.
 - **Spec refs:** 10 §11.1–11.9, AC-12, AC-13, AC-14, AC-29, §15.3; 11 §7.1 (cron, to be replaced), §7.10; 12 §5.
 - **E2E sketch:** `E2E-UC-059-a [API]` run the cron handler every 15 min across Friday 2026-12-04 (candle lighting 16:07 Tel Aviv) → exactly one send at the first slot ≥12:00 and ≤13:07; re-run → no duplicate. `E2E-UC-059-b [PW]` email HTML snapshot RTL in Playwright; lint: ≤70 words per child block, exactly one of each section (AC-13).
@@ -784,7 +784,7 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 #### UC-069 Unpair and wipe
 
 - **Happy path (unpair):** step-up → `unpair` → token revoked immediately → next call 401 → device shows "המכשיר נותק מהמשפחה" → `(setup)/welcome`; local data kept until wipe/reinstall. **Wipe:** command delivered on next contact (token valid only for `/commands` + `/ack`) → device pushes unsynced events first → deletes SQLite + packs + Keychain → ack → token revoked; never online → `wipe_pending`, revoked after 7 days.
-- **Edge cases:** E1: Child mid-session when unpair arrives → session ends gracefully, events pushed before the 401? (unpair revokes immediately → unsynced events of that device are lost unless wipe is used) → GAP-57b (recommend "unpair = wipe-lite": push then revoke). E2: Re-pair same device to the same family → restore (UC-081). E3: Lost device → UC-083.
+- **Edge cases:** E1: Child mid-session when unpair arrives → session ends gracefully, events pushed before the 401? (unpair revokes immediately → unsynced events of that device are lost unless wipe is used) → resolved (11 S5/§7.4, GAP-57b): `unpair` = push unsynced events, then revoke; immediate revoke only with `unpair {force:true}` for lost devices. E2: Re-pair same device to the same family → restore (UC-081). E3: Lost device → UC-083.
 - **Spec refs:** 11 §5.3 S5, §5.4, §7.4; 10 §7.2 FAM-04, AC-20, SEC-06.
 - **E2E sketch:** `E2E-UC-069-a [API]` unpair → `/v1/sync` 401; wipe with 12 unsynced events → events present in D1 before `device_commands.status='acked'`; offline device → status `wipe_pending`, token invalid after +7 days.
 
@@ -804,7 +804,7 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 
 #### UC-072 Deleting a child (soft) and deleting the family
 
-- **Happy path:** Child delete (owner only, step-up): soft delete; events purged after 30 days; "ביטול" possible meanwhile; devices get a command to remove the child locally (type missing → GAP-51). Family delete: `DELETE /v1/family {confirm:'<family name>'}` + 7-day grace; backups follow the backup cycle (disclosed).
+- **Happy path:** Child delete (owner only, step-up): soft delete; events purged after 30 days; "ביטול" possible meanwhile; devices get the `child_remove {childId}` command (11 §5.1/§7.3; `resync` = drop projections + full pull — GAP-51 resolved). Family delete: `DELETE /v1/family {confirm:'<family name>'}` + 7-day grace; backups follow the backup cycle (disclosed).
 - **Edge cases:** E1: Co-admin tries → 403 (AC-27). E2: During grace → what devices show → GAP-56. E3: Deleted child's neighborhood/friends in the hub → removed locally on command ⟂VERIFY.
 - **Spec refs:** 10 §8 PRIV-04, AC-27; 11 §7.3, §5.9.
 - **E2E sketch:** `E2E-UC-072-a [API]` delete child → `children.deleted_at` set, events still present day 29, gone day 31; undo day 10 → restored.
@@ -860,9 +860,9 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 - **Happy path:** PR `ota-safe` → `ota.yml` publishes to `main` → `preview` channel (parent iPhone canary) → `promote.yml` manual (parent clicks "Run workflow") or automatic after 24 h without S0/S1 → `family` branch; app `checkAutomatically: ON_LOAD`, `fallbackToCacheTimeout: 0`; update **applies at the next cold start only**; `Updates.reloadAsync()` only from the parent area ("עדכון זמין — להפעיל מחדש?"); release checklist: CI green + screenshot diff approved, Hebrew changelog, content validators/judge passed + sample approved, canary first, backup before migration, **no OTA Friday afternoon/Shabbat/holiday except S0**.
 - **Edge cases:**
   - E1: S0 (child safety/privacy/data loss/offensive content) → roll back within 1 h (`eas update:roll-back-to-embedded` or republish previous group) (13 §10.1).
-  - E2: Shared iPad never cold-starts (kids don't kill apps) → update never applies → GAP-26 (proposed reload boundary).
+  - E2: Shared iPad never cold-starts (kids don't kill apps) → `UpdateGate` applies a downloaded update at the next safe moment: episode boundary / profile switch, or foreground after ≥30 min in background with no active session (11 §3.3 — GAP-26 resolved).
   - E3: Fingerprint mismatch → CI does not publish to `family`; JS waits for the new binary (11 §11.3).
-  - E4: `minRuntime` in config newer than the device → pack `pending_app_update`; app shows parent-only notice ⟂VERIFY (GAP-27).
+  - E4: `minRuntime` in config newer than the device → pack `pending_app_update`; parent-only notice in FAM-04 health + AL-11 `app_update_needed` (≤1/7 days) — 10 FAM-04, 11 §4.4 #6 (GAP-27 resolved).
   - E5: Gender bug → S2 always (13 §10.1).
 - **Spec refs:** 11 §3.3 (OTA), §11.3–11.5; 13 §10.1–10.2; 00 E1.
 - **E2E sketch:** `E2E-UC-077-a [API/CI]` workflow test: PR with a changed native dependency → label `needs-native-build`, no `eas update` step. `E2E-UC-077-b [MAE]` 13 §10.3 "עדכון OTA מגיע ומוחל באתחול".
@@ -871,7 +871,7 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 
 - **Happy path:** Cron 02:10 Israel: rollups, alerts evaluation, `evaluateFlags`, backups, cleanup, **and** the night's content packs: Opus 5.5 Batch (K1/K2/K3 labels only, never names — 29-day retention) → schema validation (two layers) → validators (nikud, gender, line length per age, banned words, numbers by lookup) → judge (Sonnet, `safety` hard-fail) → review queue (UC-058) → TTS bake (cache by hash, LUFS normalize) → signed pack → catalog.
 - **Edge cases:**
-  - E1: Daily `DAILY_USD_CAP` ($3; 11 says $1.00 → GAP-14e) >80 % → Batch deferred to the next day; >100 % → P2 "tomorrow morning", P3 scripted only; AL-11 at 80 %; workspace monthly limit $30/$40 (11 §8.4 vs 12 §1.9 → same GAP).
+  - E1: Daily `DAILY_USD_CAP` ($3 = 11 §8.4 `ai_daily_cap_cents = 300`, monthly $40, console limit ≥ soft cap default $50 — 00 OPD-08 rev 3; GAP-14e resolved) >80 % → Batch deferred to the next day; >100 % → P2 "tomorrow morning", P3 scripted only; AL-11 at 80 %; workspace monthly limit $30/$40 (11 §8.4 vs 12 §1.9 → same GAP).
   - E2: Batch failures/refusals → retries per 12 §2.7; family keeps existing packs (nothing visible to the child).
   - E3: Prompt prefix hash check in CI per `prompt_version` (12 §1.9).
   - E4: Vendor terms check >180 days → CI fails (12 §8).
@@ -889,9 +889,9 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 | TTS vendor down | new P2 lines: K1 text-only, K2/K3 wait; baked VO unaffected | "הקול יהיה מוכן בעוד כמה דקות" | 12 §3.13 |
 | R2 unavailable | packs already on device play; new downloads retry with backoff (0.5→30 s, jitter) | health dot | 11 §4.11 |
 | D1/Worker down | fully offline play; sync queue grows; backoff cap 15 min | banner "עודכן לפני {t}" | 11 §4.8, §6.5; 10 §14.4 |
-| Resend down | report stays in inbox; email retried ⟂VERIFY retry policy (GAP-49b) | SET-07 | 10 §11.2 |
+| Resend down | report stays in inbox; email retried 3× over 2 h (+10/+30/+80 min), then inbox-only + SET-07 "לשלוח שוב" (10 §11.2; GAP-49b) | SET-07 | 10 §11.2 |
 | Config endpoint down | bundled defaults + cached `remote_config` | — | 11 §4.12 |
-| Cloudflare cron skipped | idempotent reports/alerts catch up next run; report window closes at 14:00 → report sent late? → rule: send at next run even after 14:00 same day ⟂VERIFY (GAP-23b) | — | 10 §11.1 |
+| Cloudflare cron skipped | idempotent reports/alerts catch up next run; report window closes at 14:00 → report sent late? → 00 B7 rev 3: send at the next 15-min run the same day if still ≥3 h before candle lighting, otherwise Sunday 07:30 with "(באיחור)"; never inside the pause window (GAP-23b resolved) | — | 10 §11.1 |
 
 - **E2E sketch:** `E2E-UC-079-a [PW]` intercept `/v1/ai/*` with 503 → K1 hint ladder shows scripted node ids; no spinner longer than 6 s. `E2E-UC-079-b [API]` set `killSwitches.ai=true` → `/v1/ai/companion` returns `{code:'ai_disabled'}` before any vendor call.
 
@@ -920,14 +920,14 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 #### UC-082 Storage pressure, pack integrity failures, missing content
 
 - **Happy path:** Old pack versions deleted after 7 days or immediately when storage is low; sha256 mismatch → delete + refetch ×3 → `failed`, previous good version kept; `minAppRuntime/minEngine` → `pending_app_update`; bundled core content guarantees a fully working fresh install offline.
-- **Edge cases:** E1: No space for a new region pack → gate "בקרוב"? and parent alert → GAP-40 (no `storage_low` alert, no child copy). E2: Audio cache eviction policy for TTS (R2 cache mirrored on device) ⟂VERIFY LRU size (GAP-40). E3: `expo-image` disk cache growth bounded ⟂VERIFY. E4: Parent "storage & health" card shows pack volume and audio cache (FAM-04).
+- **Edge cases:** E1: No space for a new region pack → gate "בקרוב"? and parent alert → AL-11 `storage_low` (<500 MB free, ≤1/7 d) + region gate copy "האזור עוד נטען" (10 AL-11, 11 §4.4/§4.7 — GAP-40 resolved). E2: TTS audio cache = LRU ≤400 MB (11 §4.7). E3: `expo-image` disk cache growth bounded ⟂VERIFY. E4: Parent "storage & health" card shows pack volume and audio cache (FAM-04).
 - **Spec refs:** 11 §4.4, §4.7, §4.11; 10 §7.2 FAM-04.
 - **E2E sketch:** `E2E-UC-082-a [PW]` serve a manifest with a wrong sha256 → pack stays on the previous version; 3 retries logged; no child-visible error.
 
 #### UC-083 Lost or stolen device
 
 - **Happy path:** Parent (any device/web) → FAM-04 → `unpair` (immediate token revoke) or `wipe` (on next contact; `wipe_pending` → token revoked after 7 days); guardian refresh tokens are Keychain-bound to Face ID/passcode; PIN is a convenience gate only (scrypt slows offline brute force); admin actions need the guardian session.
-- **Edge cases:** E1: Device never reconnects → local SQLite (learning events, hashed PINs, resume docs) stays on the device under iOS passcode protection → GAP-41 (specify `NSFileProtectionComplete` and what PII is at rest). E2: Unsynced events lost → parent sees a gap in PA-LOG; nothing else breaks. E3: Device found again after wipe → re-pair as new (UC-081).
+- **Edge cases:** E1: Device never reconnects → local SQLite (learning events, hashed PINs, resume docs) stays on the device under iOS passcode protection → `NSFileProtectionCompleteUntilFirstUserAuthentication` on `olam.db` and packs; Keychain `WHEN_UNLOCKED_THIS_DEVICE_ONLY`; PII at rest documented (11 §9.9 — GAP-41 resolved). E2: Unsynced events lost → parent sees a gap in PA-LOG; nothing else breaks. E3: Device found again after wipe → re-pair as new (UC-081).
 - **Spec refs:** 11 §9.7 (threat model rows), §5.3 S5, §5.1; 10 AC-20.
 - **E2E sketch:** `E2E-UC-083-a [API]` revoked device token → every route 401 incl. `/v1/content/*`; `wipe_pending` device → only `/commands` + `/ack` succeed.
 
@@ -987,14 +987,14 @@ See UC-011. Additional acceptance: every K3 episode counts as an "adventure day"
 #### UC-090 Clock, timezone and calendar edge cases
 
 - **Expected behavior:** All calendar logic (Shabbat, holidays, report send time, week boundaries, cap day) uses **the family's city/timezone (`Asia/Jerusalem`)**, not the device's; device skew >2 min → telemetry; HLC clamp; DST transitions (Israel: late March / late October) do not double-count or skip a day; events carry `tzOffsetMin` for display.
-- **Edge cases:** E1: Family travels abroad with the iPad → Shabbat per home city vs. local → GAP-39 (decision needed). E2: Device clock set far in the future by a child → server clamp; local cap day computed from `max(local, server)` ⟂VERIFY. E3: Cap "day" boundary → GAP-44.
+- **Edge cases:** E1: Family travels abroad with the iPad → Shabbat per home city vs. local → all calendar logic uses the family city (`DayKey`, 00 C3 rev 3); `family_prefs.travel {city, until}` switches the Shabbat city while set (10 SET-01 "עיר נסיעה", 01 DD-31, 11 §4.8 `app.tz_mismatch`) — GAP-39 resolved. E2: Device clock set far in the future by a child → server clamp; local cap day computed from `max(local, server)` ⟂VERIFY. E3: Cap "day" boundary → GAP-44.
 - **Spec refs:** 11 §6.4–6.5; 10 §4 (Asia/Jerusalem), §11.1; 02 §10.1; 01 §15.4.
 - **E2E sketch:** `E2E-UC-090-a [SIM]` week/day boundary tests across the 2027-03-26 and 2027-10-31 DST switches; `adventureDay` counted once.
 
 #### UC-091 Parent voice recording (name ×3, 3 lines) and its use
 
 - **Happy path:** Parent area → guided in-app recording (12 §6.11; 01 §14.1 step 3; 13 §16.5 script): child's name ×3 children + opening/goodnight/milestone lines → used by FTUE ("אור בוקר, [name]"), K3 "קוקו", story cover, milestone T3 moments; no clone unless consented later (00 E9).
-- **Edge cases:** E1: No recording → lines play without the name (01 §19). E2: Re-record → replaces; old file deleted. E3: Where stored (device + R2 private?), download to other devices, size → GAP-67.
+- **Edge cases:** E1: No recording → lines play without the name (01 §19). E2: Re-record → replaces; old file deleted. E3: Storage/distribution (GAP-67 resolved): `POST /voice-clips` (m4a ≤10 s / ≤200 KB) → R2 `olam-private/voice/<familyId>/<guardianId>/<clipId>.m4a` → family pack `family.voice` through the normal catalog; re-record replaces (`replaced_by`); never to an AI vendor; in the export ZIP; deleted with the family (11 §7.13, 12 §6.11).
 - **Spec refs:** 00 E9; 01 §14.1, §19; 12 §6.11; 13 §16.5.
 - **E2E sketch:** `E2E-UC-091-a [MAE]` record on the parent iPhone → K2 FTUE on the iPad plays the name clip after sync (📱 11 §12.4 row 4 extension).
 
@@ -1045,8 +1045,8 @@ Each row: the owning spec that should carry the rule, the journey that exposed i
 |---|---|---|---|---|
 | GAP-01 | 01 §14.2 / 11 §4.16 | UC-012, UC-081 | FTUE is described per child but no state says it already ran; a restored/second device would replay the 60-second opening. | Add `ftueCompletedAt` to the `child_resume` doc (LWW). FTUE runs only when null; the onboarding rescues are the endowed 3 friends. |
 | GAP-02 | 08 §6.10 / 01 §15.1 / 11 §7 | UC-040 | Cap overtime: 01 says finish the beat ≤1:30; 08 says 60 s grace at closing. DD-09 "+10 min bonus" has no event, API or audit entry. | Rule: at 85 % → `closing`; if the cap ends inside a beat, finish it (≤90 s) then land; 08's 60 s grace applies only inside `closing`. Add event `cap.bonus_granted {minutes:10, guardianId or 'device-local'}` (cls `admin`), gate-only button, audit row, max 1/child/day. |
-| GAP-03 | 01 §15.1 vs 10 §6.13 | UC-011, UC-040 | K3 daily cap: 01 = 2 episodes / 10 min; 10 = 15 min. | Default 10 min / 2 episodes (00 C3: 3–5 min × 2); parent range 5–15. 10 updates the table. |
-| GAP-04 | 10 §6.13 / 11 §5.5 / 01 §15.1 | UC-040, UC-068 | Bedtime is per child (10 PA-CSET, 01 defaults differ: K2 19:30 vs 20:00) and per device (11 schedule). The "no new session 60 min before bedtime" rule has no exact semantics. | Both exist: `child_settings.bedtime` and `device_settings.bedtime`; effective lock = earliest. Defaults K3 19:30, K2 20:00, K1 20:30 (10 wins). Pre-bedtime rule: a new episode may start only if `bedtime − now ≥ plannedEpisodeMin + 2`; otherwise the picker tile shows "הגיבור כבר מתכונן לשינה" and SCR-20 at bedtime. |
+| GAP-03 | 01 §15.1 vs 10 §6.13 | UC-011, UC-040 | K3 daily cap: 01 = 2 episodes / 10 min; 10 = 15 min. | Default 10 min / 2 episodes (00 C3: 3–5 min × 2); parent range 5–15. 10 updates the table. **Round 2: rejected** — 00 OPD-26 rev 3 keeps 10's 15 min (range 5–15; 2 episodes/day binds first); 01 §15.1 mirrors 10. |
+| GAP-04 | 10 §6.13 / 11 §5.5 / 01 §15.1 | UC-040, UC-068 | Bedtime is per child (10 PA-CSET, 01 defaults differ: K2 19:30 vs 20:00) and per device (11 schedule). The "no new session 60 min before bedtime" rule has no exact semantics. | Both exist: `child_settings.bedtime` and `device_settings.bedtime`; effective lock = earliest. Defaults K3 19:30, K2 20:00, K1 20:30 (10 wins). Pre-bedtime rule: a new episode may start only if `bedtime − now ≥ plannedEpisodeMin + 2`; otherwise the picker tile shows "הגיבור כבר מתכונן לשינה" and SCR-20 at bedtime. **Round 2:** resolved-modified — 10 §6.13 `preBedtimeMin` (default 60, 15–60) blocks new episodes, `mini` episode when `< plannedEpisodeMin + 2`; 11 §5.5, 01 §15.1. |
 | GAP-05 | 11 §5.5 / 10 FAM-04 | UC-068 | After the gate unlocks bedtime for 30 min, where does the device go? | To the picker; the 30-min window is device-wide; at its end the running episode gets the 2-min warning and lands; `session.ended{reason:'bedtime'}`. |
 | GAP-06 | 11 §4.16 / 08 §6.10 | UC-010, UC-012 | Inactivity 5 min → picker, but session accounting (cap, `session.ended` reason, checkpoint) is unspecified. | Idle ≥60 s is already excluded from M-01; at 5 min: save resume, `session.ended{reason:'idle'}`, the level resumes from its checkpoint next time; idle minutes do not count toward the cap. |
 | GAP-07 | 11 §4.16 / 10 §6.13 | UC-010 | Picture-PIN: after 3 misses the hint text appears, but the 4th tap, attempt counting and the reset flow are undefined. | After 3 misses: grid hidden for 60 s (no countdown shown), tile shows the parent icon; misses emit `picturepin.miss` (telemetry) and feed M-14 "sibling access attempts"; parent reset → next entry runs "בחרי 3 תמונות" once, then verify. |
@@ -1059,38 +1059,38 @@ Each row: the owning spec that should carry the rule, the journey that exposed i
 | GAP-14b | 01 §9.3 vs 02 §6.2 | UC-029 | Weekly boss reward: 01 "K1: 2 gems"; 02 "בוס שבועי: silver + 1 gem". | 02 wins on numbers (brief item 1): silver + 1 gem; 01 §9.3 updates. |
 | GAP-14c | 01 §15.4 vs 10 SET-01 | UC-045 | Candle-lighting offset: 01 "Tel Aviv 20 min"; 10 "18 min (other cities), 30 Haifa, 40 Jerusalem". | Use `@hebcal/core` city defaults (Jerusalem 40, Haifa 30, others 18) with manual override; 01 updates. |
 | GAP-14d | 01 §15.4 / 02 §10.3 | UC-045 | Shabbat (soft) starting mid-episode: are the episode's receipts paid? | The episode that started before candle lighting is paid in full at its receipt; counters freeze only for sessions started after lighting. |
-| GAP-14e | 11 §8.4 vs 12 §1.9 | UC-078 | AI daily cap: 11 "$1.00 per family-day" + $30/month; 12 "$3/day" + $40/month. | 12 wins (owning pipeline spec): `DAILY_USD_CAP=3`, `MONTHLY_USD_CAP=40`; 11 updates `ai_daily_cap_cents` default to 300. |
+| GAP-14e | 11 §8.4 vs 12 §1.9 | UC-078 | AI daily cap: 11 "$1.00 per family-day" + $30/month; 12 "$3/day" + $40/month. | 12 wins (owning pipeline spec): `DAILY_USD_CAP=3`, `MONTHLY_USD_CAP=40`; 11 updates `ai_daily_cap_cents` default to 300. **Round 2:** resolved (00 OPD-08 rev 3; 11 §8.4 `300`/`4000`, console ≥ soft cap default $50). |
 | GAP-15 | 11 §8.3 vs 12 §3.3 | UC-054 | Photo resize: 11 "1600 px long edge"; 12 "2576 px, q0.88"; 11 "face check later" vs 12 on-device face blur module. | 12 wins; 11 §8.3 and §9.4 update. |
-| GAP-15b | 11 §4.8 / 12 §3 | UC-057 | Photo capture while offline: allowed and queued, or blocked? | Capture + crop + blur allowed offline; upload queued; the parent sees "יישלח כשיהיה חיבור"; queue max 4 jobs; job expires after 48 h unsent (photo deleted locally). |
+| GAP-15b | 11 §4.8 / 12 §3 | UC-057 | Photo capture while offline: allowed and queued, or blocked? | Capture + crop + blur allowed offline; upload queued; the parent sees "יישלח כשיהיה חיבור"; queue max 4 jobs; job expires after 48 h unsent (photo deleted locally). **Round 2:** resolved with 12's limits (`capture_queue` ≤20 pages / 60 MB, 7-day expiry, `clientJobId`; 12 §3.16, 11 §7.9). |
 | GAP-16 | 09 F4 vs 12 §3.1 | UC-054 | Child-side surfacing of a photo game: 09 "glowing `secret` node on the map 'הפתעה מ{{parent}}'"; 12 "appears in the child's island 'משחק חדש מהמחברת!'". | Both: map node (09) labelled per 12; for K2 the node is the "review" slot of the next episode's plan so it is reachable without map browsing. |
 | GAP-19 | 01 §15.1 / 09 / 11 | UC-039 | "Audio-only car mode" exists in 01 only (no screen, launch path, cap accounting). | P2 feature: parent-gate toggle "מצב רכב" → playlist (music hut songs, riddles); no econ events; counts 0 toward caps; screen dimmed with one "עצור" button. |
 | GAP-19b | 09 SCR-16 / 11 §4.16 | UC-041 | Safe-room time and cap accounting. | Safe room time never counts toward caps; `session.started{mode:'safeRoom'}` for PA-LOG category "סיפור/רוגע". |
 | GAP-21 | 11 §10.2 / 02 §7.6 | UC-031 | Multi-device "solo co-op" after a socket drop merges contributions as events, but the DO summary is authoritative for campfire level-ups. | Level-ups come only from the DO summary; offline contributions add "logs" and light to the next session's meter; never a retroactive level. |
 | GAP-22 | 11 §5.4 (L) / 10 RB-0 | UC-050, UC-066 | L-mode edits caps "on this device only" while caps are per child across devices. | `device_settings.childOverrides[childId].dailyCapMin`; effective cap on that device = `min(childCap, override)`; audit actor `device-local parent`. |
 | GAP-23b | 10 §11.1 | UC-079 | Cron missed the 12:00–14:00 window (platform outage). | Send at the next run the same day even after 14:00 but ≥3 h before lighting; otherwise Sunday 07:30 with subject "השבוע שלנו (באיחור)". |
-| GAP-24 | 11 §5.8 / 10 §6.5 / 08 | UC-039, UC-040, UC-061 | `session.ended.reason` is untyped; specs use natural/cap/exit/bedtime/switch/childQuit. | Enum in `packages/shared/events.ts`: {natural, cap, childQuit, switch, idle, bedtime, parentStop, crash, coopEnd, shabbat}; AL-04 uses `childQuit`. |
-| GAP-25 | 01 §15.1 / 10 AL-04 | UC-016 | "Back to camp" from the pause menu: does it count as `childQuit`? | Yes, `reason:'childQuit'` with `secondsSinceLastError` in payload; AL-04 applies its 120-s rule. |
+| GAP-24 | 11 §5.8 / 10 §6.5 / 08 | UC-039, UC-040, UC-061 | `session.ended.reason` is untyped; specs use natural/cap/exit/bedtime/switch/childQuit. | Enum in `packages/shared/events.ts`: {natural, cap, childQuit, switch, idle, bedtime, parentStop, crash, coopEnd, shabbat}; AL-04 uses `childQuit`. **Round 2: resolved with 08's enum** (`SessionEndReason`, 08 §1.10: `completed · daily_cap · child_exit · parent_exit · frustration_break · disengaged · bedtime_lock · inactivity · app_killed · backgrounded · coop_ended`; alias table maps round 1's names; no `shabbat`, 11 E-24 ends the episode `completed`). |
+| GAP-25 | 01 §15.1 / 10 AL-04 | UC-016 | "Back to camp" from the pause menu: does it count as `childQuit`? | Yes, `reason:'childQuit'` with `secondsSinceLastError` in payload; AL-04 applies its 120-s rule. **Round 2:** resolved as `child_exit` (01 §15.1, 10 AL-04). |
 | GAP-26 | 11 §3.3, §11.3 | UC-077 | Updates apply only at cold start; a shared iPad is rarely cold-started. | Reload boundary: if an update is downloaded, the app was backgrounded ≥30 min and no child session is active → `reloadAsync()` on next foreground before the picker. |
 | GAP-27 | 11 §4.4 / 10 | UC-077, UC-082 | Pack `pending_app_update` and expired signing have no parent-facing copy. | FAM-04 health: "חבילת {name} מחכה לעדכון אפליקציה"; AL-11 variant `app_update_needed` once per 7 days. |
 | GAP-28 | 10 W-ECO-06 / 02 §2.4 | UC-064 | "תן מדבקה" without limit — for which children? | K3 only (D5). For K2/K1 the parent uses the appreciation letter (W-RWD-04). |
 | GAP-29 | 01 DD-20 vs 09 §8.1 | UC-013 | iPhone hub orientation: 01 landscape; 09 portrait (landscape supported). | 09 wins (UX owner): hub portrait-first on iPhone, landscape allowed; 01 DD-20 updates. |
 | GAP-30 | 05 §10.4 / 01 §15.1 / 01 AC-MX-3 | UC-025 | Cap warning (ניצי, Hebrew) would fire inside an English island. | Defer the warning to island exit; if the cap/bedtime ends inside the island, Sunny's "Bye-bye" + exit jingle first, then the Hebrew wind-down. |
-| GAP-31 | 01 §5.3 vs 07 §2.4 | UC-035 | Check-in frequency: 01 "every other day" (K2); 07 every episode. | 07 wins: every episode, ≤20 s, skippable ("לא רוצה להגיד"); 01 §5.3 updates. |
+| GAP-31 | 01 §5.3 vs 07 §2.4 | UC-035 | Check-in frequency: 01 "every other day" (K2); 07 every episode. | 07 wins: every episode, ≤20 s, skippable ("לא רוצה להגיד"); 01 §5.3 updates. **Round 2: rejected (stale reading)** — 07 §2.4 is canonical: S every episode, G every other day, T optional; 01 §5.3 already matched. |
 | GAP-32 | 08 §9.2 / 07 §10 / 10 §6.9 | UC-035, UC-062 | Three overlapping emotional rules: 07 RF-01 (≥5/7 in 14 d), 10's proposed `EMO_CHECKIN` (3 of 5 days), 08 `EMO_DISTRESS`. | One rule in 08 §9.2 `EMO_CHECKIN` with 07's thresholds, consent T4b, computed on device, boolean out; 10 and 07 reference it. |
 | GAP-33 | 01 §12.5 / 11 §5.8 | UC-034 | "Patience heart" needs a detection rule and an event. | `turn.yielded` when `session.ended{reason:'switch'}` at <80 % of the planned episode and a different child starts within 120 s on the same device; ≤1 per child per day; next episode includes the VIP surprise. |
 | GAP-35 | 10 §7.1 / 11 §3 | UC-008 | Viewer "in the app in Viewer mode" is impossible on free signing (3 devices, cable). | Phase 1: viewers are web-only; app mode after the paid program. |
 | GAP-36 | 11 §5.2 / 10 ON-02 | UC-007 | Without a sending domain, the co-admin cannot receive an email code. | Add `bootstrap` support for a second guardian: `pnpm ops bootstrap-guardian --email <coadmin> --role coadmin` → one-time code; documented in 11 §5.2. |
 | GAP-37 | 02 §6.2 / 10 W-HOME-09 | UC-039 | Mission confirmation → wood chest: no cap, no child-side surfacing. | ≤1 mission chest per child per day; surfaced next episode as a mailbox letter + chest on the shelf. |
 | GAP-38 | 02 §7.3 / 10 W-ECO-06 | UC-018, UC-064 | Parent refund of an equipped/placed item. | Unequip to the previous outfit / remove from the grid, coins returned, item back in the catalog; child sees a neutral mailbox note; never a "taken away" animation. |
-| GAP-39 | 01 §15.4 / 10 §4 / 11 §6.4 | UC-045, UC-090 | Travel abroad / device timezone ≠ family city. | All calendar logic uses the family city; add `family_prefs.travelMode` (parent toggle) that switches to device-local sunset for Shabbat while on; telemetry `tz_mismatch`. |
+| GAP-39 | 01 §15.4 / 10 §4 / 11 §6.4 | UC-045, UC-090 | Travel abroad / device timezone ≠ family city. | All calendar logic uses the family city; add `family_prefs.travelMode` (parent toggle) that switches to device-local sunset for Shabbat while on; telemetry `tz_mismatch`. **Round 2:** resolved-modified — `family_prefs.travel {city, until}` (a travel *city*, never the device offset; 00 C3 rev 3, 01 DD-31, 10 SET-01, 11 §4.8 `app.tz_mismatch`). |
 | GAP-40 | 11 §4.4 / 10 AL-11 | UC-082 | No `storage_low` alert, no child-facing copy for a region whose pack is missing, no audio-cache bound. | AL-11 variant `storage_low` (<500 MB free); region gate shows "האזור עוד נטען" (no error); TTS cache LRU ≤400 MB. |
 | GAP-41 | 11 §9.7 | UC-083 | Data at rest on a lost offline device. | `olam.db` and packs under `NSFileProtectionCompleteUntilFirstUserAuthentication`; Keychain items `WHEN_UNLOCKED_THIS_DEVICE_ONLY` (already); document PII at rest = names, events, PIN hashes. |
 | GAP-42 | 10 W-ECO-06 / 02 §7 | UC-018 | "Shop closed in quiet hours" — parent Push quiet hours or child windows? | Child "app sleeps" windows and bedtime only. |
 | GAP-43 | 01 §15.1 vs 09 SCR-07 | UC-039 | K1 after goodnight: 01 allows collection room + music hut; 09 sends everyone to the picker. | Picker tile for K1 after wind-down opens "camp asleep" view with collection room and music hut only (no session, no econ); K2/K3 tiles require the gate. |
-| GAP-44 | 08 §6.10 / 11 §4.16 / 02 §10.1 | UC-040, UC-090 | Daily cap day boundary undefined. | Day = 04:00–04:00 family timezone for caps and surprises; the family-goal week stays Sunday 00:00. |
+| GAP-44 | 08 §6.10 / 11 §4.16 / 02 §10.1 | UC-040, UC-090 | Daily cap day boundary undefined. | Day = 04:00–04:00 family timezone for caps and surprises; the family-goal week stays Sunday 00:00. **Round 2: rejected** — 00 C3 rev 3: one `DayKey` everywhere = calendar day at midnight in the family city; week Sunday 00:00 → Saturday 23:59 (08 §1.1/§6.10, 02 §2.1, 11 §4.16). |
 | GAP-46 | 01 §12.1 CO-4 / 00 C7 | UC-033 | Async sibling letter authored by K1 — moderation. | Structured authoring only (chips, numbers, pictures from the pack); no free text; stored as a `coop_letter` doc. |
 | GAP-47 | 10 §6.10 / 12 §1.8 | UC-038, UC-058 | `kid_flag` quarantine items are not in PA-APPR's type list. | Add **A7 "סימון של ילד"**: manual, shows the item + replacement; decision codes as A2. |
-| GAP-48 | 13 §10.1 / 11 §12 | all `[MAE]` sketches | No on-device E2E layer (Maestro) in the QA strategy; only Playwright web + manual device checklist. | Add Maestro flows (`tools/e2e/maestro/*.yaml`) run by the agent on the Mac against the `dev` build (simulator + one real iPad), triggered per native build and weekly; dev-build-only deep link `olam://test/fixture?id=` + injected clock; `testID` on all interactive elements (09 §12). |
+| GAP-48 | 13 §10.1 / 11 §12 | all `[MAE]` sketches | No on-device E2E layer (Maestro) in the QA strategy; only Playwright web + manual device checklist. | Add Maestro flows (`tools/e2e/maestro/*.yaml`) run by the agent on the Mac against the `dev` build (simulator + one real iPad), triggered per native build and weekly; dev-build-only deep link `olam://test/fixture?id=` + injected clock; `testID` on all interactive elements (09 §12). **Round 2:** resolved with 11's names — flows in `apps/mobile/e2e-maestro/*.yaml`, links `olam://dev/fixture?id=` and `olam://dev/setNow?ts=` (11 §4.1, §12.1; 13 §10.1; 09 §7/§12 #17; 14 `PQ-T-06`). |
 | GAP-49 | 10 PRIV-03 / 11 §7.12 | UC-071 | Export link only by email; no domain in phase 1. | `POST /admin/export` returns the signed link in the response as well; shown in-app. |
 | GAP-49b | 10 §11.2 / 11 | UC-079 | Email delivery retry policy (Resend failure). | Retry 3× with backoff over 2 h; then inbox-only with a health note in SET-07. |
 | GAP-50 | 01 §5.1, §15.1 / 11 §2.3 | UC-039, UC-043 | Printing (season certificate, offline mission, flag summary) — no library/flow. | `expo-print` → PDF → iOS share sheet/AirPrint; all printables A4 RTL. |
@@ -1105,109 +1105,185 @@ Each row: the owning spec that should carry the rule, the journey that exposed i
 | GAP-63 | 01 §9.3, DD-06 | UC-029 | Finale with an absent child; boss day falling on a holiday eve/quiet day. | `bossHP` counts only children who played ≥1 episode this week; the finale completes with any present subset; if Thursday is a Yom Tov/QD, the window moves to the previous weekday evening. |
 | GAP-66 | 10 §6.13 / 08 §6.3 | UC-066 | Settings changed while a child is mid-episode. | Caps/bedtime apply immediately (safety); content settings (weights, nikud, AI) apply from the next episode. |
 | GAP-67 | 01 §14.1 / 12 §6.11 / 11 | UC-091 | Parent voice clips: storage, sync to other devices, format. | Record in the parent area → m4a ≤10 s each → R2 private `voice/<familyId>/<guardianId>/<clipId>.m4a` + device cache; distributed through the content catalog as a family pack; re-record replaces. |
-| GAP-68 | 10 §11.9 vs 11 §4.1 | UC-059 | Deep-link scheme mismatch: `familygame://report/{id}` vs `olam://` (pair only). | One scheme `olam://`; allowed paths `pair`, `report/{id}`, `approvals`, `test/fixture` (dev only). |
+| GAP-68 | 10 §11.9 vs 11 §4.1 | UC-059 | Deep-link scheme mismatch: `familygame://report/{id}` vs `olam://` (pair only). | One scheme `olam://`; allowed paths `pair`, `report/{id}`, `approvals`, `test/fixture` (dev only). **Round 2:** resolved — 11 §4.1 closed list (`pair`, `report/{id}`, `approvals`, dev-only `dev/fixture`, `dev/setNow`); 10 §11.9 uses `olam://report/{id}`. |
 | GAP-72 | 10 §6.13.1 / 08 §6.9 | UC-053 | Test date < 3 days away. | No AL-13; one review block in the next session; copy "המבחן קרוב, חזרה קצרה היום". |
+
+### 3.1 Round 2 resolution status (R7, 2026-11-02 — checked against the owners' current text after their round-2 edits)
+
+Legend: **resolved** = the owning spec now carries a concrete rule (the proposed default or an equivalent); **resolved (modified)** = carried with different values/names, noted; **rejected** = decided against by 00 rev 3 or the owner, with the binding reading; **open** = still missing in the owner (forwarded in `docs/review/round2-R7.md`). Totals: 64 GAPs → 58 resolved (6 of them modified), 3 rejected (GAP-03, GAP-31, GAP-44), 1 partially open (GAP-53 copy in 10), plus GAP-49b's 11-side mirror and the SCR-13 note as non-blocking follow-ups. Source reports: `round2-R1…R6.md`.
+
+| Gap | Status | Where the rule now lives |
+|---|---|---|
+| GAP-01 | resolved | 01 §14.2 `child_resume.ftueCompletedAt` + `ftue.completed`, AC-FTUE-1; 11 §4.16 |
+| GAP-02 | resolved | 01 §15.1 (85 % → `closing`, beat ≤90 s); 08 §6.10 `capOvertimeMs`, §1.9א `cap_bonus`; 11 §5.8/§7.3 `cap.bonus_granted`, `POST /children/:id/cap-bonus`; 10 PA-CSET |
+| GAP-03 | **rejected** | 00 OPD-26 rev 3: K3 15 min, range 5–15 (10 §6.13; 01 §15.1 mirrors) |
+| GAP-04 | resolved (modified) | 10 §6.13 bedtime row (a)–(e) `preBedtimeMin`; 11 §5.5; 01 §15.1 `bedtime_lock` |
+| GAP-05 | resolved | 10 FAM-04; 11 §5.5 (picker, device-wide window, 2-min warning, `bedtime_lock`) |
+| GAP-06 | resolved | 08 §6.1 `focusedMinutesToday`, §6.10 `inactivity` 5 min / `backgrounded` >10 min; 11 §4.16 |
+| GAP-07 | resolved | 10 FAM-03 reset flow, §4.1 `picturepin.miss`, M-14; 11 §4.16 |
+| GAP-08 | resolved | 02 §6.5 canonical; 09 §5.3 (hand at 4 s, auto-open only via a11y); 01 §16.2 withdrawn |
+| GAP-09 | resolved | 02 §7.7 `neighborhoodLayoutMerge`; 11 §6.1/§6.5 `neighborhood_layout` per-tile LWW |
+| GAP-10 | resolved | 02 §7.5 `max(0, minBalance)`, overdraft week pays 0, invariant 15 |
+| GAP-11b | resolved | 01 §15.3 / DD-18, 11 §4.16 `child_settings.launchMode` (lap · coplayFirst · solo) |
+| GAP-12 | resolved | 01 §14.2–14.3 rewritten (expeditions as `mode:'placement'` levels, week-1 slots); 08 §3.1 note |
+| GAP-13 | resolved | 01 §6.6 `mode`; 08 §1.10 `EpisodePlan.mode`; 02 §2.1/§2.7 `levelModeNeverEarns` |
+| GAP-14b | resolved | 01 §9.3 silver + 1 gem (02 `bossDefeated`) |
+| GAP-14c | resolved | 00 B7; 01 §15.4 hebcal city defaults + override; 10 SET-01 |
+| GAP-14d | resolved | 01 §15.4 window applies by `session.started`; 02 §10.3 `appliesBySessionStart` |
+| GAP-14e | resolved | 00 OPD-08 rev 3; 11 §8.4 `ai_daily_cap_cents = 300`, monthly 4000, `prefs.consoleCapCents`; 12 §1.9 |
+| GAP-15 | resolved | 11 §8.3/§9.4 = 12 §3.3 (2,576 px q0.88, `modules/vision-privacy`, orientation bake, double EXIF strip) |
+| GAP-15b | resolved (modified) | 12 §3.16 / 11 §7.9 `capture_queue`: ≤20 pages / 60 MB / 7 days, `clientJobId` |
+| GAP-16 | resolved | 12 §3.1 #13; 09 §8.3 F4 (map node "משחק חדש מהמחברת!"; K2 review slot) |
+| GAP-19 | resolved (P2) | 01 §15.1 car mode (P2); 09 SCR-21; 11 `car.tsx` stub; 10 PA-CSET toggle |
+| GAP-19b | resolved | 09 SCR-16 `mode:'safe_room'`; 08 §6.1 never counts toward caps; 10 W-LOG-04 "רוגע" |
+| GAP-21 | resolved | 00 E5 rev 3 (single `boss_defeated`); 02 §7.6 `levelUpSources`; 11 §10.2 `coop.room_ended`; 01 §10.4 |
+| GAP-22 | resolved | 10 RB-0 / §6.13 `device_settings.childOverrides`; 11 §4.16 |
+| GAP-23b | resolved | 00 B7 rev 3 late-send rule; 10 §11.1; 11 §7.1 step 2; 12 §5.1 |
+| GAP-24 | resolved (modified) | 08 §1.10 `SessionEndReason` canonical (11 §5.8, 10 §4.1 adopt); alias table for round-1 names |
+| GAP-25 | resolved | 01 §15.1 `child_exit` + `secondsSinceLastError`; 10 AL-04 |
+| GAP-26 | resolved | 11 §3.3 `UpdateGate` moments (episode boundary / profile switch / foreground ≥30 min) |
+| GAP-27 | resolved | 11 §4.4 #6, `GET /devices`; 10 FAM-04 + AL-11 `app_update_needed` |
+| GAP-28 | resolved | 02 §2.4 `stickerButtonFor: K3`; 10 W-ECO-06 |
+| GAP-29 | resolved | 09 §8.1 portrait-first canonical; 01 DD-20 aligned |
+| GAP-30 | resolved | 05 §10.4 (entry guard, Bye-bye + exit jingle before the Hebrew wind-down); 01 §15.1 / AC-MX-3; 09 CMP-22 |
+| GAP-31 | **rejected** (stale reading) | 07 §2.4 canonical (S every episode, G every other day, T optional); 01 §5.3 matches; 08 §9.2 note |
+| GAP-32 | resolved | 08 §9.2 `EMO_CHECKIN` (07's thresholds, T4b); 07 §10 wording; 10 §6.9 reference |
+| GAP-33 | resolved | 01 §12.5 `turn_yielded` rule (`parent_exit` <80 % + next child ≤120 s, ≤1/day); 11 §5.8 `turn.yielded` |
+| GAP-35 | resolved | 00 H4 rev 3 (phase-1 Viewer = web only); 10 RB-4 / §7.1 |
+| GAP-36 | resolved | 00 H2 rev 3; 11 §5.2/§7.12 `pnpm ops bootstrap-guardian --role coadmin`; 10 §7.1 |
+| GAP-37 | resolved | 02 §2.2/§6.2 ≤1 mission chest/child/day, surfaced next episode; 06 §16.1; 10 W-HOME-09 |
+| GAP-38 | resolved | 02 §7.3 `parentRefund` (unequip, grid removal, coins back, neutral note); 10 W-ECO-06 copy |
+| GAP-39 | resolved (modified) | 00 C3 rev 3 family-city `DayKey`; `family_prefs.travel {city, until}` (11 §4.8), 01 DD-31, 10 SET-01 |
+| GAP-40 | resolved | 11 §4.4/§4.7 (TTS cache LRU ≤400 MB, region gate copy), §7.1 step 4; 10 AL-11 `storage_low` |
+| GAP-41 | resolved | 11 §9.9 data at rest (`NSFileProtectionCompleteUntilFirstUserAuthentication`, PII list) |
+| GAP-42 | resolved | 02 §7.3 (child "app sleeps" windows + bedtime only); 10 W-ECO-06 |
+| GAP-43 | resolved | 01 §15.1 `camp_asleep` view state; 09 SCR-01 / SCR-07 |
+| GAP-44 | **rejected** | 00 C3 rev 3: one `DayKey` (midnight, family city); 08 §1.1/§6.10 U-CAP-4; 02 §2.1; 11 §4.16 |
+| GAP-46 | resolved | 00 C7a rev 3; 01 §12.1 `coop_letter` (chips/numbers/pack pictures); 07 §2.7 |
+| GAP-47 | resolved | 10 §6.10 A7 "סימון של ילד" (AC-56); 12 §1.8 |
+| GAP-48 | resolved (modified) | 13 §10.1 Maestro layer; 11 §4.1 dev links + §12.1; 09 §7/§12 #17 `testID`; path `apps/mobile/e2e-maestro/` |
+| GAP-49 | resolved | 00 OPD-05 rev 3; 10 PRIV-03 (link shown in-app); 11 §7.12 |
+| GAP-49b | resolved (10) | 10 §11.2 retry 3× over 2 h (+10/+30/+80 min) then inbox-only + SET-07. 11 does not yet state the retry schedule for `reports.email` — forwarded to R6 (non-blocking) |
+| GAP-50 | resolved | 01 §15.1 `expo-print` → A4 RTL PDF → share sheet/AirPrint; 11 §2.3 module |
+| GAP-51 | resolved | 11 §5.1/§7.3/§7.4 `child_remove`, `resync` defined; 10 PRIV-04 |
+| GAP-52 | resolved | 10 FAM-03 / AC-25 scoped to core content; 11 §7.9 + 12 §3.1 `photo.rerender_variants` |
+| GAP-53 | resolved (01); open copy (10) | 01 §10.1 v1 = 3 children, FAM-03 blocks a 4th. 10 FAM-03 does not yet carry the message "בגרסה הזו יש מקום לשלושה ילדים" — forwarded to R5 (non-blocking) |
+| GAP-56 | resolved | 10 PRIV-04 (410 `family_deleting`, offline-only, banner with "ביטול", 401 → setup; AC-58); 11 §7.3 E-26 |
+| GAP-57 | resolved | 11 §5.3 S3 (local `familyId` mismatch → wipe confirm), E-27 |
+| GAP-57b | resolved | 11 §5.3 S5 / §7.4 (`unpair` = push then revoke; `{force:true}` for lost devices) |
+| GAP-60 | resolved | 09 §10 (separate Guided Access passcode); 13 §3.3 parent setup |
+| GAP-62 | resolved | 00 E3/H6; 10 AL-08a phase 1 = poll (API-30) + one local notification on the parent device (AC-59) |
+| GAP-63 | resolved | 01 §9.3 "who counts" (`bossHP` over children with ≥1 episode), DD-06 QD/Yom Tov window move, AC-BOSS-3 |
+| GAP-66 | resolved | 08 §6.10 (caps/windows re-checked at every block boundary; content settings next episode); 10 §6.13; 01 §15.1 |
+| GAP-67 | resolved | 11 §7.13 `POST /voice-clips`, `family.voice` pack; 12 §6.11; 01 §4.10/§14.1 |
+| GAP-68 | resolved | 11 §4.1 closed deep-link list; 10 §11.9 `olam://report/{id}` |
+| GAP-72 | resolved | 08 §6.9 `near_test` review block; 10 §6.13.1 AL-13 suppression (AC-61) |
+| 05 §13 PP-3 (mic denied) | resolved | 05 PP-3a "Let's say it together!" without recording; AC27; EC-25 |
+| 09 SCR-13 (K3 co-op lobby gate) | **open** (minor) | 09 SCR-13 does not yet say the lobby requests the parent gate when K3 is selected — forwarded to R6 (non-blocking; 01 §12 already requires parent-present for K3) |
+| 11 §7.3 guardian remove (devices) | resolved | 11 E-23: revoked guardian → 403 → session cleared, device token stays (device belongs to the family) |
+| 12 §3.9 clone failure copy | resolved | 12 §3.9 / §3.15 "לא הצלחנו לשכפל פריט N — יוצג רק להורה" |
+| 13 §10.3 rows / §3.2 ⟂VERIFY | resolved | 13 §10.3 (expiry banner ≤1 day, island cap, picture-PIN reset, family-delete grace); 00 E1a rev 3 + 13 §3.3 #14 (`preInstallSync`) |
 
 ---
 
 ## 4. Traceability matrix (journeys × spec sections)
 
-Legend: ● primary source · ○ secondary/constraint. Files: 00 foundation, 01 game design, 02 economy, 03 math, 04 Hebrew, 05 English, 06 extra subjects, 07 future skills, 08 engine, 09 UX, 10 parent area, 11 tech, 12 AI pipelines, 13 delivery/QA.
+Legend: ● primary source · ○ secondary/constraint. Files: 00 foundation, 01 game design, 02 economy, 03 math, 04 Hebrew, 05 English, 06 extra subjects, 07 future skills, 08 engine, 09 UX, 10 parent area, 11 tech, 12 AI pipelines, 13 delivery/QA, 14 performance/quality playbook (added in round 2).
 
-| UC | 00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 10 | 11 | 12 | 13 |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| UC-001 install | E1a | | | | | | | | | | | ● §3 | | ● §3 |
-| UC-002 onboarding | H2 | §14.1 | | | | | | | ○ §3.3 | | ● §7.1 | ● §5.2–5.3 | | |
-| UC-003 add child | A2 B3 | | | | | | | | | | ● ON-04, FAM-03 | ○ §5.1 | | |
-| UC-004 avatar | G4 | ● §3.3–3.4 | ○ §7.1 | | | | | | | ○ SCR-09 | | | | |
-| UC-005 PIN/Face ID | E7 | | | | | | | | | | ● ON-06, §9 | ● S4 | | |
-| UC-006 pairing | H1 | | | | | | | | | | ● ON-07/08 | ● S3, §7.4 | | ○ §10.3 |
-| UC-007 co-admin | H1 H2 | | | | | | | | | | ● §7.1–7.2 | ● S2, §5.4 | | |
-| UC-008 viewer | H1 H4 | | | | | | | | | | ● §13, RB-2 | ○ §5.10 | | |
-| UC-009 placement | C2 | ○ §14.2 | ○ §2.7 | ○ §14 | | ○ §14 | | | ● §3 | | ○ ON-12, PA-ASM | | | |
-| UC-010 picker/PIN | H3 | ○ §12.5 | | | | | | | | ○ SCR-01 | | ● §4.16 | | |
-| UC-011 K3 lap | C3 H3 | ● §15.3 | ○ §2.4 | | ○ §12 | | | | | ○ SCR-17 | ○ AL-06 | ○ §4.16 | | |
-| UC-012 K2 episode | C3 | ● §5.3 | ○ §2.3, §2.8 | ○ | ○ | ○ | ○ | ○ §12 | ● §6 | ○ F1 | | | | |
-| UC-013 K1 episode | C2 C3 | ● §5.3 | ○ §2.2 | ○ | ○ | ○ | ○ | ○ §12 | ● §6 | | | | | |
-| UC-014 K3 episode | D5 | ● §5.3 | ○ §6.2 | | | | | | | | | | | |
-| UC-015 level/rescue | G1 G2 | ● §6 | ● §5 | | | | | | | ○ SCR-05 | | ○ §4.11 | | |
-| UC-016 frustration | C2 | ● §6.5 | ○ §2.6 | | | | | | ● §6.7 | | ○ AL-04 | | | |
-| UC-017 chest | D2 | ○ §16.2 | ● §6 | | | | | | | ○ §5.3 | | ○ §5.8 | | |
-| UC-018 shop | D3 | | ● §7.1–7.5 | | | | ○ F.* | | | ○ SCR-08 | ○ PA-ECO | ○ §6.5 | | |
-| UC-019 building | D4 | ● §10.5 | ● §7.7 | ○ M.MEAS | | | | | | ○ SCR-10 | | | | |
-| UC-020 collection | G2 | ● §10.3 | ● §5.4 | | | | | | | ○ SCR-12 | | | | |
-| UC-021 pets | D4 | ○ §4.12 | ● §8 | | | | | | | ○ SCR-11 | | | | |
-| UC-022 capsules | D2 | | ● §5.7 | | | | | | | | | | | |
-| UC-023 surprise | C5 | ● §5.5 | | | | | | | | | | | | |
-| UC-024 movement | G6 | ● §8 | | | | ○ MV-08 | ○ H.* | | | ● SCR-19 | | ● §4.17 | | |
-| UC-025 English island | B2 | ○ §4.3 | | | | ● §4, §10 | | | | ○ CMP-22 | | ○ §4.1 | | |
-| UC-026 speaking | E9 | | | | | ● §13 | | | | | | | | |
-| UC-027 runner | E1b | ● §9.4 | | | | | | | | ○ 06f | | | | |
-| UC-028 evening | G5 B8 | ● §9.5 | | | | | | | | ○ 06e | | | | |
-| UC-029 weekly boss | G5 | ● §9.3 | ○ §6.2 | | | | | | | | | | | |
-| UC-030 co-op same device | C6 | ● §12 | | | | | | ○ SE.TEAM | | ○ SCR-13 | ○ PA-LOG | ● §10.1 | | |
-| UC-031 co-op multi | C7 | ○ §12.1 | | | | | | | | | | ● §10.2 | | |
-| UC-032 guide mode | C6 | ● §12.6 | | | | | | | | | ○ PA-CSET | | | |
-| UC-033 async letter | C7 | ● CO-4 | | | | | | | | | | | | |
-| UC-034 turn-taking | | ● §12.5 | | | | | | | | | | ○ §4.16 | | |
-| UC-035 check-in | C8 | ○ §5.3 | | | | | | ● §5, §10 | ○ §6.7 | | ○ PRIV-01 | ○ §5.7 | | |
-| UC-036 AI helper | C7 E8 | ○ CH-03 | | | | | | ○ §2.3 | | | ○ PA-AI | ○ §7.7 | ● §4 | |
-| UC-037 AI literacy | C7 | ○ MX-A | | | | | | ● §3 | | | | | ● §4.5 | |
-| UC-038 "מוזר לי" | | | | | | | | ○ RF-06 | | | ○ PA-APPR | | ● §1.8 | |
-| UC-039 wind-down | C3 C5 | ● §15.1 | ○ §6.2 | | | | | ○ RIT-CLOSE | ○ §6.10 | ● SCR-07/20 | ○ W-HOME-09 | | | |
-| UC-040 cap/bedtime | C3 | ● §15.1 | | | | | | | ● §6.10 | | ● §6.13, FAM-04 | ● §4.16, §5.5 | | |
-| UC-041 safe room | B8 | | | | | | | | | ● SCR-16 | | | | |
-| UC-042 bedtime story | C7 | ● §15.5 | | | | | | | | | ○ A2 | | ○ §2.5 | |
-| UC-043 season track | D4 | ○ §13 | ● §9 | | | | | | | | | | | |
-| UC-044 events | B7 B8 | ● §13 | ○ §10.3 | | | | | | | | | | | ○ §2.1 |
-| UC-045 Shabbat/QD | B7 | ● §15.4 | ● §10.3 | | | | | | ○ §5.3 | ○ SCR-20 | ○ SET-01 | | | |
-| UC-046 family goal | C5 | ○ §10.4 | ● §10 | | | | | | | | ○ W-HOME-01 | | | |
-| UC-047 monthly boss | | | | ○ MECH.BOSS | ○ §8 | | | | ● §10.2–10.3 | | ○ PA-ASM | | | |
-| UC-048 re-entry | | | | | | | | | ● §10.4 | | ○ AL-05 | | | |
-| UC-049 rollover | | ● DD-18, S6 | | ○ §7 | ○ §13 | ○ §15 | | | | | ○ FAM-03 | | | |
-| UC-050 gate | E7 | | | | | | | | | ○ SCR-15 | ● §9 | ● S4 | | |
-| UC-051 PA-HOME | C6 | | | | | | | | | | ● §6.1 | | | |
-| UC-052 map/skill | C8 C9 | | | ○ §6 | ○ §3 | ○ §3 | ○ | ○ | ○ §5.1 | | ● §6.2–6.4 | | | |
-| UC-053 taught this month | | | | ○ §7 | ○ §13 | ○ §15 | | | ● §6.9 | | ● §6.13.1 | | | |
-| UC-054 photo printed | E8 | | | ○ §8 | ○ §7 | ○ §11 | | | | ○ SCR-14 | ○ A1 | ○ §8.3 | ● §3 | |
-| UC-055 homework | | | | | | | | | | | | | ● §3.10 | |
-| UC-056 child story | C7 | | | | | | | ○ AI.CREATE | | | ○ A5 | | ● §3.11 | |
-| UC-057 photo failures | | | | | | | | | | | | ○ §8.4 | ● §3.15, §1.9 | |
-| UC-058 approvals | C7 | ○ DD-14 | | | | | | | | | ● §6.10 | ○ §4.4 | ● §1.8 | |
-| UC-059 weekly report | | | | | | | | | | | ● §11 | ○ §7.10 | ○ §5 | |
-| UC-060 monthly/narrative | C9 | | | | | | | | ● §8 | | ● §11.8, §6.7 | | ● §5 | |
-| UC-061 alerts | | | | | | | | | ○ §5.1, §6.7 | | ● §10 | | | |
-| UC-062 flags | C8 | | | | ○ §15 | ○ §17 | | ○ §10 | ● §9 | | ● §6.9 | | | |
-| UC-063 rewards | D6 | | ● §11 | | | | | | | | ● §6.11 | | | |
-| UC-064 economy oversight | D1 | | ○ §2.6 | | | | | | | | ● §6.12 | | | |
-| UC-065 share cards | C6 | | | | | | | | | | ● §13 | | | |
-| UC-066 child settings | B5 C9 | | | | | | | | ○ §6.8 | | ● §6.13 | ○ §6.5 | | |
-| UC-067 devices | H5 | | | | | | | | | | ● FAM-04 | ○ §5.5 | | |
-| UC-068 bedtime lock | B8 | | | | | | | ○ RF-07 | | ○ SCR-20 | ● FAM-04 | ● S5, §5.5 | | |
-| UC-069 unpair/wipe | | | | | | | | | | | ○ FAM-04 | ● S5 | | |
-| UC-070 audit | H4 | | | | | | | | | | ● FAM-05 | ● §5.6 | | |
-| UC-071 export | | | | | | | | | | | ● PRIV-03 | ○ §7.12 | | |
-| UC-072 delete | | | | | | | | | | | ● PRIV-04 | ○ §7.3 | | |
-| UC-073 consents | C8 C9 | | | | | | | | ○ §1.7 | | ● PRIV-02 | | | |
-| UC-074 web | H6 | | | | | | | | | | ● §14.3 | ● §5.10 | | |
-| UC-075 interests | C9 | | | | | | ○ §14 | ○ SD.PASS | ● §7 | | ● §6.6 | | | |
-| UC-076 re-sign | E1a | | | | | | | | | | | ● §3.3 | | ● §3.2 |
-| UC-077 OTA | E1 | | | | | | | | | | | ● §11.3 | | ● §10.2 |
-| UC-078 nightly batch | E8 | | | | | | | | | | | ○ §8.1 | ● §1–2 | |
-| UC-079 outages | | | | | | | | | | | | ● §4.11–4.12 | ● §8 | |
-| UC-080 offline/sync | E6 | ○ DD-15 | ○ §6.3 | | | | | | | | ○ FAM-04 | ● §4.8, §6.5 | | |
-| UC-081 restore | | | | | | | | | | | | ● §6.6 | | |
-| UC-082 storage | | | | | | | | | | | | ● §4.4 | | |
-| UC-083 lost device | | | | | | | | | | | | ● §9.7 | | |
-| UC-084 interruptions | | | | | | | | | | ○ §6.7 | | ● §4.5, §12.4 | | ○ §10.3 |
-| UC-085 accessibility | | ○ §16.1 | ○ §6.5 | | | | | | | ● §5.5, §10 | ○ §14.4 | ○ §12.2 | | |
-| UC-086 backups | | | | | | | | | | | ○ SET-07 | ● §5.9, §9.6 | | |
-| UC-087 prototypes | E10 I1 | | | | | | | | | ○ §14 | | ● §3.2 | | ○ §4 |
-| UC-088 pack mid-session | | | | | | | | | | | | ● §4.4 | ○ §3.13 | |
-| UC-089 crash | | | | | | | | | | | | ● §4.11 | | |
-| UC-090 clock/tz | B7 | ○ §15.4 | ○ §10.1 | | | | | | | | ○ §4 | ● §6.4 | | |
-| UC-091 parent voice | E9 | ○ §14.1 | | | | | | | | | | | ● §6.11 | ○ §16.5 |
-| UC-092 playtest/probes | C10 | | | | | | | | | | ○ W-ASM-06 | | | ● §11–12 |
+| UC | 00 | 01 | 02 | 03 | 04 | 05 | 06 | 07 | 08 | 09 | 10 | 11 | 12 | 13 | 14 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| UC-001 install | E1a | | | | | | | | | | | ● §3 | | ● §3 | ○ PQ-DEV |
+| UC-002 onboarding | H2 | §14.1 | | | | | | | ○ §3.3 | | ● §7.1 | ● §5.2–5.3 | | |  |
+| UC-003 add child | A2 B3 | | | | | | | | | | ● ON-04, FAM-03 | ○ §5.1 | | |  |
+| UC-004 avatar | G4 | ● §3.3–3.4 | ○ §7.1 | | | | | | | ○ SCR-09 | | | | |  |
+| UC-005 PIN/Face ID | E7 | | | | | | | | | | ● ON-06, §9 | ● S4 | | |  |
+| UC-006 pairing | H1 | | | | | | | | | | ● ON-07/08 | ● S3, §7.4 | | ○ §10.3 |  |
+| UC-007 co-admin | H1 H2 | | | | | | | | | | ● §7.1–7.2 | ● S2, §5.4 | | |  |
+| UC-008 viewer | H1 H4 | | | | | | | | | | ● §13, RB-2 | ○ §5.10 | | |  |
+| UC-009 placement | C2 | ○ §14.2 | ○ §2.7 | ○ §14 | | ○ §14 | | | ● §3 | | ○ ON-12, PA-ASM | | | |  |
+| UC-010 picker/PIN | H3 | ○ §12.5 | | | | | | | | ○ SCR-01 | | ● §4.16 | | |  |
+| UC-011 K3 lap | C3 H3 OPD-26 | ● §15.3, DD-18 | ○ §2.4 | | ○ §12 | | | | | ○ SCR-17 | ○ §6.13, AL-06 | ○ §4.16 (`launchMode`) | | |  |
+| UC-012 K2 episode | C3 | ● §5.3 | ○ §2.3, §2.8 | ○ | ○ | ○ | ○ | ○ §12 | ● §6 | ○ F1 | | | | |  |
+| UC-013 K1 episode | C2 C3 | ● §5.3 | ○ §2.2 | ○ | ○ | ○ | ○ | ○ §12 | ● §6 | | | | | |  |
+| UC-014 K3 episode | D5 | ● §5.3 | ○ §6.2 | | | | | | | | | | | |  |
+| UC-015 level/rescue | G1 G2 | ● §6 | ● §5 | | | | | | | ○ SCR-05 | | ○ §4.11 | | | ○ PQ-B |
+| UC-016 frustration | C2 | ● §6.5 | ○ §2.6 | | | | | | ● §6.7 | | ○ AL-04 | | | |  |
+| UC-017 chest | D2 | ○ §16.2 | ● §6 | | | | | | | ○ §5.3 | | ○ §5.8 | | |  |
+| UC-018 shop | D3 | | ● §7.1–7.5 | | | | ○ F.* | | | ○ SCR-08 | ○ PA-ECO | ○ §6.5 | | |  |
+| UC-019 building | D4 | ● §10.5 | ● §7.7 | ○ M.MEAS | | | | | | ○ SCR-10 | | | | |  |
+| UC-020 collection | G2 | ● §10.3 | ● §5.4 | | | | | | | ○ SCR-12 | | | | |  |
+| UC-021 pets | D4 | ○ §4.12 | ● §8 | | | | | | | ○ SCR-11 | | | | |  |
+| UC-022 capsules | D2 | | ● §5.7 | | | | | | | | | | | |  |
+| UC-023 surprise | C5 | ● §5.5 | | | | | | | | | | | | |  |
+| UC-024 movement | G6 | ● §8 | | | | ○ MV-08 | ○ H.* | | | ● SCR-19 | | ● §4.17 | | | ○ PQ-R-57 |
+| UC-025 English island | B2 | ○ §4.3 | | | | ● §4, §10 | | | | ○ CMP-22 | | ○ §4.1 | | |  |
+| UC-026 speaking | E9 | | | | | ● §13 | | | | | | | | |  |
+| UC-027 runner | E1b | ● §9.4 | | | | | | | | ○ 06f | | | | |  |
+| UC-028 evening | G5 B8 | ● §9.5 | | | | | | | | ○ 06e | | | | |  |
+| UC-029 weekly boss | G5 | ● §9.3 | ○ §6.2 | | | | | | | | | | | |  |
+| UC-030 co-op same device | C6 | ● §12 | | | | | | ○ SE.TEAM | | ○ SCR-13 | ○ PA-LOG | ● §10.1 | | |  |
+| UC-031 co-op multi | C7 | ○ §12.1 | | | | | | | | | | ● §10.2 | | |  |
+| UC-032 guide mode | C6 | ● §12.6 | | | | | | | | | ○ PA-CSET | | | |  |
+| UC-033 async letter | C7 | ● CO-4 | | | | | | | | | | | | |  |
+| UC-034 turn-taking | | ● §12.5 | | | | | | | | | | ○ §4.16 | | |  |
+| UC-035 check-in | C8 | ○ §5.3 | | | | | | ● §5, §10 | ○ §6.7 | | ○ PRIV-01 | ○ §5.7 | | |  |
+| UC-036 AI helper | C7 C7a E8 | ○ CH-03 | | | | | | ○ §2.3 | | | ○ PA-AI | ○ §7.7 | ● §4 (chips only) | |  |
+| UC-037 AI literacy | C7 | ○ MX-A | | | | | | ● §3 | | | | | ● §4.5 | |  |
+| UC-038 "מוזר לי" | | | | | | | | ○ RF-06 | | | ● §6.10 A7 | | ● §1.8 | |  |
+| UC-039 wind-down | C3 C5 | ● §15.1 (`camp_asleep`, car mode P2) | ○ §6.2 | | | | | ○ RIT-CLOSE | ○ §6.10 | ● SCR-07/20, SCR-21 | ○ W-HOME-09 | ○ §4.16 | | |  |
+| UC-040 cap/bedtime | C3 OPD-26 | ● §15.1, DD-09 | | | | | | | ● §6.10, §1.9א | | ● §6.13, FAM-04 | ● §4.16, §5.5, §7.3 | | |  |
+| UC-041 safe room | B8 | | | | | | | | | ● SCR-16 | | | | |  |
+| UC-042 bedtime story | C7 | ● §15.5 | | | | | | | | | ○ A2 | | ○ §2.5 | |  |
+| UC-043 season track | D4 | ○ §13 | ● §9 | | | | | | | | | | | |  |
+| UC-044 events | B7 B8 | ● §13 | ○ §10.3 | | | | | | | | | | | ○ §2.1 |  |
+| UC-045 Shabbat/QD | B7 | ● §15.4 | ● §10.3 | | | | | | ○ §5.3 | ○ SCR-20 | ○ SET-01 | | | |  |
+| UC-046 family goal | C5 | ○ §10.4 | ● §10 | | | | | | | | ○ W-HOME-01 | | | |  |
+| UC-047 monthly boss | | | | ○ MECH.BOSS | ○ §8 | | | | ● §10.2–10.3 | | ○ PA-ASM | | | |  |
+| UC-048 re-entry | | | | | | | | | ● §10.4 | | ○ AL-05 | | | |  |
+| UC-049 rollover | | ● DD-18, S6 | | ○ §7 | ○ §13 | ○ §15 | | | | | ○ FAM-03 | | | |  |
+| UC-050 gate | E7 | | | | | | | | | ○ SCR-15 | ● §9 | ● S4 | | |  |
+| UC-051 PA-HOME | C6 | | | | | | | | | | ● §6.1 | | | |  |
+| UC-052 map/skill | C8 C9 | | | ○ §6 | ○ §3 | ○ §3 | ○ | ○ | ○ §5.1 | | ● §6.2–6.4 | | | |  |
+| UC-053 taught this month | | | | ○ §7 | ○ §13 | ○ §15 | | | ● §6.9 | | ● §6.13.1 | | | |  |
+| UC-054 photo printed | E8 | | | ○ §8 | ○ §7 | ○ §11 | | | | ○ SCR-14 | ○ A1 | ○ §8.3 | ● §3 | |  |
+| UC-055 homework | | | | | | | | | | | | | ● §3.10 | |  |
+| UC-056 child story | C7 | | | | | | | ○ AI.CREATE | | | ○ A5 | | ● §3.11 | |  |
+| UC-057 photo failures | | | | | | | | | | | | ○ §7.9, §8.4 | ● §3.15, §3.16, §1.9 | |  |
+| UC-058 approvals | C7 | ○ DD-14 | | | | | | | | | ● §6.10 | ○ §4.4 | ● §1.8 | |  |
+| UC-059 weekly report | B7 E5 | | | | | | | | | | ● §11 (template-only) | ○ §7.1, §7.10 | ○ §5 (no LLM) | |  |
+| UC-060 monthly/narrative | C9 E6a | | | | | | | | ● §8.4 | | ● §11.7–11.8 | ○ §7.1 | ● §5 (Haiku, monthly only) | |  |
+| UC-061 alerts | | | | | | | | | ○ §5.1, §6.7 | | ● §10 | | | |  |
+| UC-062 flags | C8 | | | | ○ §15 | ○ §17 | | ○ §10 | ● §9 | | ● §6.9 | | | |  |
+| UC-063 rewards | D6 | | ● §11 | | | | | | | | ● §6.11 | | | |  |
+| UC-064 economy oversight | D1 | | ○ §2.6 | | | | | | | | ● §6.12 | | | |  |
+| UC-065 share cards | C6 | | | | | | | | | | ● §13 | | | |  |
+| UC-066 child settings | B5 C9 | | | | | | | | ○ §6.8 | | ● §6.13 | ○ §6.5 | | |  |
+| UC-067 devices | H5 | | | | | | | | | | ● FAM-04 | ○ §5.5 | | |  |
+| UC-068 bedtime lock | B8 | | | | | | | ○ RF-07 | | ○ SCR-20 | ● FAM-04 | ● S5, §5.5 | | |  |
+| UC-069 unpair/wipe | | | | | | | | | | | ○ FAM-04 | ● S5 | | |  |
+| UC-070 audit | H4 | | | | | | | | | | ● FAM-05 | ● §5.6 | | |  |
+| UC-071 export | | | | | | | | | | | ● PRIV-03 | ○ §7.12 | | |  |
+| UC-072 delete | | | | | | | | | | | ● PRIV-04 | ○ §7.3 | | |  |
+| UC-073 consents | C8 C9 | | | | | | | | ○ §1.7 | | ● PRIV-02 | | | |  |
+| UC-074 web | H6 | | | | | | | | | | ● §14.3 | ● §5.10 | | |  |
+| UC-075 interests | C9 | | | | | | ○ §14 | ○ SD.PASS | ● §7 | | ● §6.6 | | | |  |
+| UC-076 re-sign | E1a | | | | | | | | | | | ● §3.3 | | ● §3.2 | ○ PQ-REL |
+| UC-077 OTA | E1 | | | | | | | | | | | ● §11.3 | | ● §10.2 | ● PQ-REL-01…04, PQ-X-20 |
+| UC-078 nightly batch | E8 | | | | | | | | | | | ○ §8.1 | ● §1–2 | |  |
+| UC-079 outages | | | | | | | | | | | | ● §4.11–4.12 | ● §8 | |  |
+| UC-080 offline/sync | E6 | ○ DD-15 | ○ §6.3 | | | | | | | | ○ FAM-04 | ● §4.8, §6.5 | | |  |
+| UC-081 restore | | | | | | | | | | | | ● §6.6 | | |  |
+| UC-082 storage | | | | | | | | | | | | ● §4.4 | | | ○ PQ-B-24 |
+| UC-083 lost device | | | | | | | | | | | | ● §9.7 | | |  |
+| UC-084 interruptions | | | | | | | | | | ○ §6.7 | | ● §4.5, §12.4 | | ○ §10.3 | ● PQ-P-06/10, PQ-DEV-12 |
+| UC-085 accessibility | | ○ §16.1 | ○ §6.5 | | | | | | | ● §5.5, §10 | ○ §14.4 | ○ §12.2 | | | ○ PQ-R-43 |
+| UC-086 backups | | | | | | | | | | | ○ SET-07 | ● §5.9, §9.6 | | | ○ PQ-R-49 |
+| UC-087 prototypes | E10 I1 | | | | | | | | | ○ §14 | | ● §3.2 | | ○ §4 |  |
+| UC-088 pack mid-session | | | | | | | | | | | | ● §4.4 | ○ §3.13 | | ○ PQ-REL |
+| UC-089 crash | | | | | | | | | | | | ● §4.11 | | | ● PQ-P-10/11, PQ-R-49 |
+| UC-090 clock/tz | B7 C3 | ○ §15.4, DD-31 | ○ §2.1, §10.1 | | | | | | ○ §1.1 | | ○ SET-01 | ● §4.8, §6.4 | | |  |
+| UC-091 parent voice | E9 | ○ §4.10, §14.1 | | | | | | | | ○ §6.6 | | ● §7.13 | ● §6.11 | ○ §16.5 |  |
+| UC-092 playtest/probes | C10 | | | | | | | | | | ○ W-ASM-06 | | | ● §11–12 | ○ PQ-DEV-01…13 |
 
 **Coverage notes.** Curriculum specs 03–07 are reached mainly through the engine (08) and the episode templates (01); their journey-relevant surfaces are: class-topic schedules (03 §7, 04 §13, 05 §15), placement axes (08 §3.2 ↔ 03 §14, 05 §14), flags (04 §15, 05 §17, 07 §10), English island rules (05 §10), movement and SEL rituals (07 §2.4, §5), passion passport (06 §14, 07 §6). Every `[SIM]` sketch for these should import the curriculum pack fixtures rather than synthetic skills.
 
@@ -1215,14 +1291,15 @@ Legend: ● primary source · ○ secondary/constraint. Files: 00 foundation, 01
 
 ## 5. Open items for the parent surfaced by this catalog (batched; nothing blocks)
 
-1. Confirm K3 daily cap 10 vs 15 min (GAP-03) and bedtime defaults (GAP-04).
-2. Confirm the weekly boss day (Thursday) and the finale window (GAP-63).
-3. Travel abroad behavior for Shabbat times (GAP-39).
-4. Whether viewers (grandparents) exist in phase 1 at all (web-only, GAP-35).
-5. Whether to buy the sending domain now (unblocks UC-007 email codes, UC-059 email, UC-071 links).
+1. ~~Confirm K3 daily cap 10 vs 15 min (GAP-03) and bedtime defaults (GAP-04).~~ Decided in 00 OPD-26 rev 3 (K3 15 min, range 5–15; bedtimes 19:30/20:00/20:30); still parent-editable in 10 §6.13.
+2. Confirm the weekly boss day (Thursday) and the finale window (GAP-63) — 00 OPD-07 (default Thursday; window rule in 01 §9.3/DD-06).
+3. ~~Travel abroad behavior for Shabbat times (GAP-39).~~ Decided: family city always; the parent sets a travel city in 10 SET-01 when needed (00 C3 rev 3).
+4. ~~Whether viewers (grandparents) exist in phase 1 at all (web-only, GAP-35).~~ Decided in 00 H4 rev 3: web only in phase 1.
+5. Whether to buy the sending domain now (00 OPD-05; unblocks UC-007 email codes, UC-059 email; export links are shown in-app regardless, GAP-49).
 
 ---
 
 ## Fable review changelog
 
 - **2026-11-02 (F9):** Created this file. Read 00 and specs 01–13 (full for 00, 01 §3–§18, 02 §2–§11, 08 §3–§10, 09 §5–§10, 10 all, 11 §3–§12, 12 §1, §3–§5, §8, 13 §2–§3, §10; headings and targeted sections of 03–07). Wrote 92 journeys (UC-001…UC-092) plus 7 cross-cutting edge-case checklists (EC-01…EC-07), each with preconditions, happy path, alternatives, edge cases, expected behavior, spec references and an E2E sketch tagged by test layer (`[PW]`, `[MAE]`, `[API]`, `[SIM]`, `[📱]`). Added a fixture catalogue (§0.3) and the environment matrix (§0.4) so sketches are concrete. Collected 64 cross-spec gaps (GAP-01…GAP-72, non-sequential by design) with proposed default rules, mirrored into `docs/review/fable-issues-F9.md` grouped by owning spec. Added a traceability matrix (§4) of all journeys × spec sections and a short batched list of parent questions (§5). Marked unverified harness hooks and copy with `⟂VERIFY`.
+- **2026-11-02 (R7, round 2):** Re-checked every GAP (64) and the non-GAP rows of §3 against the owners' **current** text after their round-2 edits (`round2-R1…R6.md`): added **§3.1 Round 2 resolution status** (58 resolved, 6 of them with modified values/names; 3 rejected by 00 rev 3 / the owner — GAP-03, GAP-31, GAP-44; GAP-53's parent copy and GAP-49b's 11-side mirror forwarded as non-blocking). Annotated the §3 rows whose proposal was rejected or changed (GAP-03/04/14e/15b/24/25/31/39/44/48/68) with the binding reading. Corrected journey sentences that stated a now-rejected or changed rule: UC-011 (K3 15 min), UC-016/UC-034 (`child_exit`/`parent_exit` from 08 §1.10), UC-035 (`EMO_CHECKIN` single rule; check-in cadence per 07 §2.4), UC-036 (P3 chips-only, 00 C7a), UC-040 (cap values, `cap.bonus_granted`, `preBedtimeMin`, `DayKey`), UC-045 (hebcal offsets), UC-054 (2,576 px; map-node label), UC-057 (capture queue limits), UC-059 (15-min job; template-only, no LLM), UC-069/072/077/078/079/082/083/090/091 (resolved rules and section numbers). §0.2 `[MAE]`: Maestro path `apps/mobile/e2e-maestro/` and `olam://dev/fixture` / `olam://dev/setNow` (11 §4.1). §4 matrix: added a **14** column (performance playbook) and updated the cells that moved (UC-011, 036, 038, 039, 040, 057, 059, 060, 090, 091). §5: items 1, 3, 4 struck as decided by 00 rev 3.
