@@ -2225,8 +2225,9 @@ Tables that 10 lists as "belonging to 08/02" (`SkillState`, `ReviewSchedule`, `I
 `DispositionMap`, `FlagState`, `ClassTopics`, wallet, chests, purchases, family goal, `real_rewards`)
 are **not D1 tables**: they are projections (device, rebuilt from events) and server-side projections
 rebuilt nightly into `child_skill_month`/`child_skill_week` plus LWW docs (`class_topics/<childId>`,
-`reward/<rewardId>`, `interests/<childId>`). `FlagState` is computed by `evaluateFlags` nightly and
-stored as doc `flags/<childId>` (never in the weekly payload).
+`reward/<rewardId>`, `interests/<childId>`). `FlagState` is computed by `evaluateFlags` **on the
+device** (08 §9.3) and stored as the encrypted doc `flags/<childId>` (§9.8; never in the weekly
+payload); the nightly server run only re-derives the non-sensitive parts it can.
 
 ### 6.3 Migration strategy
 
@@ -2475,8 +2476,10 @@ export { CoopRoom } from './do/CoopRoom';
 ```
 Cron times are UTC (`src/cron/index.ts` dispatches on `ev.cron`):
 - `10 0 * * *` = 02:10/03:10 Israel: nightly backup, purge (§5.9), rollups into `child_skill_week`/
-  `child_skill_month`, `evaluateFlags` (08 §9.3) → docs `flags/<childId>`, alert candidates
-  AL-02..06 (10 §10.1), monthly report preparation on the 1st, and content batch **submit** (§8.1).
+  `child_skill_month`, the server-side re-derivation of the **non-sensitive** alert candidates
+  AL-02..06 (10 §10.1; `evaluateFlags` itself runs on the device, 08 §9.3 / §9.8), nightly
+  recompute of `hasChildUnder36m` (00 C13), monthly report preparation on the 1st, and content batch
+  **submit** (§8.1).
 - `*/15 * * * *` — one 15-minute job with four idempotent steps, in this order:
   1. **Alert queue** (10 §10.2): for each guardian, bundle due `deliveries` (quiet hours 21:00–07:30,
      Shabbat/holiday window from `@hebcal/core` with the family city, Friday rule Q-3, caps CAP-1/2,
@@ -2940,7 +2943,8 @@ dashboard).
 - **Storage:** private bucket `olam-private`, key `photos/<familyId>/<jobId>/<page>.jpg`, no public
   access. Access is only via 10-min presigned URLs to guardians (review screen).
 - **Retention:** deleted right after confirm or reject. An R2 **lifecycle rule** deletes the
-  `photos/` prefix at 30 days as a backstop, and the nightly Cron also purges `photos.delete_after`.
+  `photos/` prefix at 30 days as a backstop, and the nightly Cron also purges `photo_jobs.delete_after`
+  and unconfirmed jobs past `confirm_by` (24 h).
 - **AI:** images go to Anthropic only via the API (no training on API data per Anthropic commercial
   terms; *re-verify at build*). The `ai_log` stores the R2 key, not the image, and the key is dead
   after deletion.
