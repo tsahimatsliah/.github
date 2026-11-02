@@ -77,6 +77,24 @@ Inputs: `reports/אפליקציית למידה משחקית לילדים.md` (v1
 | E10 | **Assets:** Recraft (SVG icons/UI), Nano Banana / GPT Image (scenes, characters), Rive for rigging/animation, Kenney.nl CC0 + ElevenLabs SFX/Music for audio. Designer approval gates: moodboard, character sheets, avatar parts sheet, Rive rigs, audio review. Asset provenance/license log. |
 | E11 | Repo: monorepo in this repository's branch or a new repo (parent to choose; default new private repo `family-learning-game`), pnpm workspaces: `apps/mobile`, `workers/api`, `packages/engine` (adaptive engine, pure TS), `packages/content` (schemas, packs, generators), `packages/ui` (design system), `tools/` (pipelines). |
 
+## H. Identity, users, devices & parent admin (added 2026-11-02)
+
+| ID | Decision |
+|---|---|
+| H1 | **Household model:** one `Family` (tenant) → `Guardian` users (2 parents; the first = **Owner/Admin**, can invite the 2nd as **Co-admin**; optional read-only **Viewer** roles e.g., grandparents) → `Child` profiles (K1–K3; no credentials, no email) → `Device`s (each paired to the family by a guardian; device type iPad/iPhone; mode: shared-kids, single-child, parent-only). |
+| H2 | **Onboarding/registration (once):** owner installs → Sign in with Apple (or email magic link fallback) → creates family → adds children (name, nickname, birthdate, grammatical gender, grade/gan, avatar builder) → sets parent PIN + Face ID → pairs devices via QR/6-digit code → chooses per-device allowed children → placement expeditions start per child. Co-admin joins by invite link/QR. |
+| H3 | **Child sign-in on device:** profile picker with avatars (no passwords); optional picture-PIN per child (K1 only by default) to stop siblings playing as each other; K3 profile only launchable in lap mode/parent-present. Fast user switching on shared iPad; per-child resume state. |
+| H4 | **Parent controls (RBAC):** Owner/Co-admin can edit children, settings, caps, quiet hours, Shabbat, subjects weights, content approval, rewards, device management (rename, restrict children, remote lock "bedtime", unpair/wipe), data export/delete. Viewer: celebrations/reports only, no scores by default. All admin actions audit-logged. |
+| H5 | **Analytics per child, per device, per guardian view:** every event carries `familyId, childId, deviceId, sessionId, appVersion`; dashboard filters by child (primary) and device (secondary: usage per device, last sync, battery-safe). Self-hosted events only (D1), no third-party analytics SDK. Retention policy defined in tech spec. |
+| H6 | **Parent area access:** from any family device via parent gate (Face ID/PIN), plus a lightweight **web dashboard** (Cloudflare Pages) for parents on desktop, using the same Worker API and Sign in with Apple. |
+
+## I. Delivery checkpoints & thread strategy (added 2026-11-02)
+
+| ID | Decision |
+|---|---|
+| I1 | Build proceeds through **natural checkpoints** where the parent's approval saves wasted work/tokens; between checkpoints the agent works autonomously without ping-pong. Each checkpoint ends with a short artifact (interactive prototype/page, screenshots, or a decision list) and at most a handful of batched questions. |
+| I2 | Separate work threads/sessions per stream to keep context clean: (a) Product concept & creative direction (world, hero, characters, style frames) — prototypes as artifacts; (b) Game-type prototypes (mechanic playables); (c) Tech foundation (repo, CI, backend, auth/identity); (d) Content production (curriculum packs, audio); (e) Integration & polish. Streams (a) and (c) can run in parallel. Exact checkpoint list, scope, and approvals are defined in `13-delivery-roadmap-qa.md`. |
+
 ## G. Experience pillars (creative direction — added 2026-11-02 after parent input)
 
 K2 finished Astro Bot (PS5) + DLC and adores it; all kids love 99 Nights in the Forest. The game must feel like a joyful, explorable adventure — not an app with exercises.
