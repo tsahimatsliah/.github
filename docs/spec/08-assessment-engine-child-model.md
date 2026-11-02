@@ -269,7 +269,7 @@ export interface StrandState { childId: ChildId; strand: StrandId; theta: number
 ```ts
 export interface ReviewCard {
   key: string;                              // `${skillId}` או `${skillId}#${itemKey}` (reviewMode='item')
-  skillId: SkillId; itemKey?: string;
+  skillId: SkillId; itemKey?: string;       // itemKey חופשי: itemId, עובדה ('7x8'), או lexId של 04 ('H.WR.UNP.FAM#lx_…' לידע מילה לא מנוקדת)
   ladder: number[];                         // ימים, לפי שכבה (§5.4)
   rung: number;                             // אינדקס ב-ladder
   lastReviewAt: EpochMs; lastReviewDay: DayKey; dueDay: DayKey;
@@ -304,7 +304,7 @@ export interface ChildProfile {
   modelEpoch: number;                       // §10.5.6: "איפוס התקדמות" מעלה את המונה. אירועים עם epoch קטן יותר לא נכנסים ל-fold
   schoolYear: string;                       // 'תשפ"ז' / '2026-27'. מתעדכן ב-rollover (§10.5.7)
 }
-export type EngineChildView = Omit<ChildProfile, 'grammaticalGender' | 'displayName'>;  // כל פונקציות המנוע מקבלות רק את זה
+export type EngineChildView = Omit<ChildProfile, 'grammaticalGender' | 'displayName' | 'handedness'>;  // כל פונקציות המנוע מקבלות רק את זה
 export type TemperamentHint = 'slow_to_warm' | 'high_energy' | 'sound_sensitive' | 'needs_movement_breaks' | 'perfectionist_signs';
 export interface QuestionnaireAnswer { questionId: string; answer: 'yes' | 'partly' | 'no' | 'unsure'; answeredAt: EpochMs }
 export interface PlacementStatus {
@@ -429,6 +429,7 @@ export interface Plan {
   episodeTargetMin: number; dailyCapMin: number;
   restDays: DayKey[];                       // שבת וחגים (B7), נגזר מהלוח
   speedRoundsEnabled: boolean;              // K1 בלבד
+  breakMode: 'auto' | 'on' | 'off';         // §6.2א "מצב חופשה" (03 §7.1, 04 §13.4). 'auto' = נגזר מ-calendar.vacations ≥ 5 ימי לימוד
 }
 ```
 
@@ -1019,6 +1020,20 @@ function budget(child, plan, today, cfg): { minutes: number; items: number; mode
 * **שיתוף העניין** (C9: ‏20–30%): חל על **בחירת נושא העטיפה** בכל הבלוקים ועל בלוק ה-fun. ‏K1 25%, ‏K2 30%, ‏K3 50% (שם זה "החידוש העדין"). זה לא חל על רמת הקושי.
 * **התאמות:** אין חזרות שהגיע זמנן → נתח ה-review עובר ל-new. הפרק הקודם הסתיים בפחות מ-יעד−0.10 → stretch = 0, ‏new −10%, ‏warmup +10%. פרק חזרה מחופשה → §10.4.
 * **עיגול:** largest remainder. שוויון נשבר לפי סדר העמודות.
+
+### 6.2א מצב חופשה ("תחזוקה", `Plan.breakMode`)
+
+פעיל כש-`breakMode='on'`, או `'auto'` ו-`today` בתוך `calendar.vacations` של ≥ 5 ימי לימוד (חנוכה, פסח, קיץ; לא שבת בודדת). הרכב הפרק מוחלף (03 §7.1, 04 §13.4):
+
+| שכבה | warmup | new | review | stretch | fun |
+|---|---|---|---|---|---|
+| K1 | 15% | 25% | 50% | 0 | 10% |
+| K2 | 20% | 30% | 30% | 0 | 20% |
+
+* `monthAlign` (§6.4) מוקפא על היחידה האחרונה (לא מקדימים את החודש הבא בחופשה). `ClassTopic` ב-`upcoming` לא מקבל בוסט.
+* חזרות: לכל היותר **6 לפרק** אחרי `reentry` (§10.4) **וגם** ≤ 30% מהפרק; בשאר החופשה לפי הטבלה.
+* דגלים: שבועות חופשה לא נספרים ב-`persisting` ולא מאפסים (כמו `minWeeklyExposure`).
+* ההורה רואה "מצב חופשה" ב-PA-CSET (10 §6.13) ויכול לכבות.
 
 ### 6.3 בניית הפרק
 
