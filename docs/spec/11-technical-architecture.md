@@ -924,8 +924,26 @@ It's a no-op on iPad (no Taptic Engine) and on web. Per-child toggle. Rate-limit
 Sync triggers:
 - app foreground
 - every 5 min while foreground and online (`expo-network` state)
-- after an episode ends
+- after an episode ends (`session.ended` written → push first, then pull)
+- **app background** (`AppState` → `background`): push-only flush of unpushed events and dirty docs,
+  ≤ 2 s budget, no pull (02 UC-15 / 01 UC-15 rely on the last sync being recent)
 - a manual "סנכרון עכשיו" in the parent area
+
+**`lastServerTime` for the engine and the economy (F2 #21):** every successful `/sync` stores
+`sync_state.last_server_time = serverTime` and `last_server_time_local = localNow`. The engine facade
+passes `ctx.lastServerTime` (and `ctx.now` corrected per §6.4 when |skew| > 2 min) so that: the
+Sunday savings bonus is paid only when `lastServerTime ≥ weekStart` or the device has been unsynced
+≥ 7 days (02 UC-15); the Shabbat window prefers server-derived time when the last sync is < 24 h old
+(01 UC-15); otherwise the device clock is used. `lastServerTime` is also shown in the device card.
+
+**Timezone and travel (01 DD-31, 02 UC-16, GAP-39):** `DayKey` is the **device** local day
+(`ts + tzOffsetMin`, 02 §2.1; implemented once in `packages/shared/dayKey.ts`, §6.4). Shabbat/holiday
+and quiet-day windows always use the **family city** (`family.prefs.city`, OPD-04) until a guardian
+sets `family_prefs.travelCity` ("עיר נסיעה", 10 SET-01; field-level LWW, cleared by the parent when
+back). When `deviceTz ≠ family.tz` for > 24 h the app writes `app.tz_mismatch{deviceTz, familyTz}`
+(telemetry, once per day) and the parent area shows the travel banner (10). The daily cap and the
+family-goal week follow `DayKey` of the device that created the event (02 UC-16); no event is ever
+re-dated.
 
 **First launch offline (E-01).** A freshly installed (or freshly re-signed) app with no network:
 - If `device_self` exists (re-sign/reinstall over an existing install): boot normally, everything in

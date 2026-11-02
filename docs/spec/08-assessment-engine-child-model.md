@@ -1946,6 +1946,16 @@ export const DEFAULT_CONFIG: EngineConfig = {
 | U-FLG-16 | כלל "או": סמן A בשבוע 1, סמן B בשבוע 2, A בשבוע 3 | `persisting` = 1 (לא 3) |
 | U-Q-1 | שני הורים: ש' G2 `yes` ו-`no` | `partly`; `questionnaire_mismatch` |
 | U-FW-1 | פרק מס' 2 של ילד | `itemBudget` × 0.8, closing ב-80% |
+| U-CAP-1 | תקרה 25, 24:30 ממוקדות, beat באמצע | הקטע מסתיים ≤ 90 ש', `closing` ≤ 60 ש', `reason:'daily_cap'`, `capOvertimeMs ≤ 150000` |
+| U-CAP-2 | `cap_bonus` פעמיים באותו `dayKey` | `dailyCapMin` +10 פעם אחת; השני לא משנה מצב (אידמפוטנטי); `mode` לא הופך ל-`episode` אם היתרה < `ep.min` |
+| U-CAP-3 | 4 דק' idle באמצע פריט, ואז מגע | הפריט `excluded:'idle'`; `focusedMinutesToday` עלה ב-≤ 0.5 דק' (30 ש' לפער); אין `session.ended` |
+| U-CAP-4 | אירועים ב-23:50 וב-00:10 שעון מכשיר | שני `DayKey` שונים; התקרה מתאפסת בחצות מקומית; אירוע ב-03:30 שייך ליום החדש (לא 04:00) |
+| U-CAP-5 | תקרה 25 → 10 בדקה 12, באמצע בלוק | ללא שינוי עד גבול הבלוק (≤ 90 ש'), ואז "נחיתה" (U-CAP-1); תקרה 25 → 40 → `remaining` גדל מיד |
+| U-CAP-6 | `childOverrides[child].dailyCapMin = 15`, `child_settings = 40` | `plan.dailyCapMin = 15` על המכשיר הזה בלבד |
+| U-REV-1 | כרטיס K2 ב-rung 14 עובר, ואז ב-rung 30 עובר | אחרי הראשון: `maxPassedDays = 14`, `toEconomyState = 'mastered'`; אחרי השני: 30 → `'retained'`; שני `review_rung_passed{14}`, `{30}` |
+| U-REV-2 | קרדיט עקיף מגיע ל-1 בכרטיס rung 7 | `review_rung_passed{rungDays:7}` נפלט פעם אחת; "עבר רך" לא פולט |
+| U-TST-1 | `ClassTopic.testDate = today + 2` | הפרק הבא: בלוק `review` אחד `reasons:['near_test']` ≤ 30% מהפריטים; אין פריסה ל-`dueDay`; למחרת המבחן `phase='taught'` |
+| U-PLN-1 | מסע מיקום | `EpisodePlan.mode === 'placement'` וכל הבלוקים `role:'probe'|'warmup'|'breather'`; 02 fold מחזיר 0 מטבעות (בדיקה משותפת עם 02 UC-09) |
 
 ### 12.11 אינטגרציה וסימולציה (`test/sim`)
 
@@ -1980,6 +1990,8 @@ export const DEFAULT_CONFIG: EngineConfig = {
 16. **מקרי קצה:** כל בדיקות §12.10ג עוברות. `session_reattribute` משחזר מצב זהה למצב ללא המפגש (S-5). `reset_progress` לא מוחק אירועים.
 17. **דגלים חדשים:** `maxStatus` נאכף; `EMO_CHECKIN` לא מייצא דבר מלבד `{ruleId, status, dayKey}` (בדיקת payload של ה-sync pusher, יחד עם 11 §12.1 סעיף 6).
 18. **עמידות לשעון:** U-SKEW-* עוברים; אין NaN/Infinity במצב אחרי אירועים עם ts שרירותי (property test, 10,000 יומנים).
+19. **תקרה וסיום (§6.10):** U-CAP-1..6 עוברים; `SessionEndReason` הוא ה-enum היחיד ל-`session.ended.reason` בכל `packages/*` ו-`apps/*` (ESLint `no-restricted-syntax` על מחרוזות `'childQuit'|'natural'|'switch'|'cap'|'idle'` מחוץ ל-`packages/shared/events.ts`); `cap_bonus` מופיע ב-`audit_log` (11) ולעולם לא במסך ילד.
+20. **`review_rung_passed` ו-`retained`:** U-REV-1..2 עוברים; `toEconomyState` מקבל `maxPassedDays` ולא `ladder[rung]` (בדיקת טיפוס + U-LVL).
 
 ---
 

@@ -1723,6 +1723,7 @@ Rules: every clip carries `engine:"human"` or `engine:"tts"` in the manifest (ph
 - **Campfire decorations:**
   - Benches, lights, a family flag, a hanukkiah at Hanukkah, a sukkah at Sukkot.
   - Bought with **"עצים למדורה" (logs)**, the shared unit of 02 §7.6: K1's give jar (10 coins = 1 log) and gems (1 gem = 5 logs), K2's give button (1 coin = 1 log), K3's episodes (3 logs each, automatic, the "lighter" role), and +20 logs per weekly goal. Family projects (benches → lantern string → flag → stage → swing → light tower) run in a fixed visible order, one active at a time (02 §7.6). Only the family total is shown to the children, never who gave how much (00 C6).
+- **The family garden (07 §1 #8, 00 D1a) sits next to the campfire**, on the side away from the log pile: a small bed where a flower/stone/lantern appears for every **parent-confirmed kindness or team act** (`kindness_confirmed`). It is a **cosmetic layer only**: no coins, no logs, no fire level, no counter shown to the children (00 C6: a shared garden, never per child), nothing wilts (02 §2.7 `neverEarns`). It is rendered by the hub scene like a decoration; 06's weather station and lantern stand beside it.
 - **The weekly family goal:** "3 adventure days per child this week" (the parent sets 2–5 per child; K3 default 2). Shabbat and holidays don't count and don't hurt. The meter is shared, and the display is "the family's light" without separating children.
 
 ### 10.5 Building in the neighborhood (building system)
@@ -1786,7 +1787,7 @@ What this document still **requires** of the economy (game-design intent, all al
 | CO-1 | **"שני צדי השולחן"** (Face-to-face) | 1 iPad landscape, split into 2 halves, each half **rotated toward its player** (180°) | K1+K2, K2+K3 (with a parent), K1+K3 | 5–8 min | Campfire evening, boss finale, building together |
 | CO-2 | **"כתף אל כתף"** (Side-by-side) | 1 iPad, one shared screen, roles with separate zones (right/left) | Any pair or three, + a parent | 5–8 min | The runner (one runs, one lights), the evening, a level in co-op |
 | CO-3 | **"מכשירים מחוברים"** (Multi-device) | 2–3 devices on the same family account, a session over WebSocket (see Proposed change to 00) | K1+K2(+K3 on a parent's phone/iPad) | 5–10 min | The weekly boss, the evening, Mission Control (K1 commander → K2 artist-bot) |
-| CO-4 | **"מכתב לאח"** (Async) | Any | K1 → K2 | — | K1 builds a riddle or puzzle for her brother (Walkington problem-posing); K2 solves it in his episode. A heart emote goes back |
+| CO-4 | **"מכתב לאח"** (Async) | Any | K1 → K2 | — | K1 builds a riddle or puzzle for her brother (Walkington problem-posing); K2 solves it in his episode. A heart emote goes back. **Structured authoring only (00 C7, F9 GAP-46):** the letter is composed from closed chips (question frames), numbers, and pictures/items from the installed pack — **no free text, no keyboard, no drawing** in the letter; it is stored as a `coop_letter` doc `{from, to, templateId, slots[], createdAt}` (11 §6.1) and rendered from the template on K2's device, so nothing unreviewed can reach him |
 | CO-5 | **"הורה בחדר"** (Parent co-pilot) | 1 device + a parent prompt on screen | Every child (K3 always) | — | Lap-mode / co-play prompts (§15.3) |
 
 - **Drop-in / drop-out** in every mode (LEGO, R5):
@@ -1845,6 +1846,7 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 - **"Turn ring"** on the profile-selection screen: a ring of 3 avatars, with a soft glow around "whose turn is next" (by order of last use). No time is shown to the children; the time is visible to the parent only.
 - **Switching profiles saves instantly** (00 E6, local event log). A forced switch loses nothing; the child returns to the same beat.
 - **Co-op counts for both** (at 50%, §12.1). **No "stealing" time:** an episode that was stopped mid-way "for a sibling" gives a "Patience heart" to the one who yielded, and their next episode starts with a VIP friend surprise (an unexpected reward, not a pre-announced one).
+  - **Detection rule (F9 GAP-33, binding):** the device emits `turn_yielded{childId, sessionId, nextChildId}` when (a) a session ended with `reason:'parent_exit'` (08 §1.10's "switch") **before 80% of its planned minutes**, and (b) a **different** child started a session on the **same device within 120 s**. At most **1 per child per day**; never when the next child is the same child, never for `child_exit`/cap/bedtime endings. The next episode of the yielding child includes the VIP surprise in its Arrival segment (a `vip.*` friend, §4.11) and the heart is a mailbox item. **No coins, no XP** (02 UC-05: the heart is a world object, `neverEarns`). The event is cls `learn` on the wire (`turn.yielded`, 11 §5.8).
 
 ### 12.6 K1 guide mode ("מצב מדריכה")
 
@@ -1928,7 +1930,7 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 
 1. Names, grammatical gender, birth year.
 2. Building avatars (§3.3).
-3. Recording the name + 3 lines (opening, goodnight, milestone).
+3. Recording the name + 3 lines (opening, goodnight, milestone) — the `name_clip` is the only item that blocks anything; format, storage and sync per 12 §6.11 (§4.10).
 4. Shabbat mode and observance level (§15.4).
 5. Daily caps.
 6. Device placement for movement (optional).
