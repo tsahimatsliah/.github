@@ -749,3 +749,395 @@ Return JSON per schema.
 - **נפח צפוי (חודש ייצור):** ~3,000 פריטים + 60 סיפורים + 40 סולמות רמזים. Skins: 300 בקשות × (3K טוקני system ב-cache-hit + 0.5K קלט + 2.5K פלט) ≈ 0.15M קלט + 0.9M cache-read + 0.75M פלט → ≈ $0.3 + $0.2 + $7.5 = **≈ $8**. סיפורים: 60 × 6K פלט ≈ $3.6. שופט: 3,000 × (2K cache + 1K קלט + 0.4K פלט) ≈ $3 + $6 = **≈ $9**. סה"כ P1 ≈ **$20/חודש ייצור, $5–8 במצב יציב** (תואם ai_models_assets).
 - **Latency:** אין יעד מקוון. יעד תפעולי: חבילה ממתינה לאישור עד 07:00 בבוקר; זמינה במכשיר תוך ≤ 10 דקות מאישור.
 
+---
+
+## 3. P2 — "צלם וקבל משחק" (Photo-to-Game)
+
+### 3.1 ארכיטקטורה
+
+```
+ PARENT DEVICE (parent area, Face ID)                         WORKER (realtime)                         MEDIA RUNNER
+ ┌──────────────────────────────────┐
+ │ 1 capture (doc scanner, ≤4 pages)│
+ │ 2 crop/rotate (parent drags)     │
+ │ 3 on-device privacy pass:        │
+ │   face blur · EXIF strip ·       │
+ │   orientation bake · resize 2576 │
+ │ 4 tag: source kind + mode +      │
+ │   which child(ren)               │──POST /v1/photo-jobs──►  5 store R2 photos/ (private, TTL≤30d)
+ └──────────────────────────────────┘                          6 extract: Sonnet 5.5 vision (+ Opus 5.5 in
+                                                                 parallel if handwritten) → ExtractionResult
+                                                               7 code: V17/V18/V02 · reconcile dual reads ·
+                                                                 PII → placeholders · nikud (Nakdan) ──────────► (fallback: Phonikud job)
+ ┌──────────────────────────────────┐◄── push "ready to confirm" ─┘
+ │ 8 CONFIRM SCREEN (photo ⟷ items) │
+ │   fix words · mark answer key ·  │
+ │   pick mode/children · approve   │──POST /confirm──►  9 template select (code) · distractors (code) ·
+ └──────────────────────────────────┘                     10 enrich (Haiku 5.5: per-child variants, hints) ·
+                                                           11 validators · TTS render (Azure/bake-off winner) ·
+                                                           12 pack build + sha256 → R2 → notify devices
+ CHILD DEVICE: 13 game appears in child's island ("משחק חדש מהמחברת!") · items → SRS queue (+1/+3/+7 …, D9)
+                                                                               nightly: loudness re-normalize ──► (runner)
+```
+
+### 3.2 טיפים לצילום (טקסט UX להורה, מוצג בפעם הראשונה ובכפתור "?")
+
+> **איך מצלמים כדי שיצא משחק טוב**
+> 1. דף אחד בכל צילום, ישר מלמעלה, באור יום או מנורה — בלי צל של הטלפון.
+> 2. דף מודפס עובד הכי טוב. כתב יד של ילדים — אפשר, אבל תצטרכו לבדוק את המילים.
+> 3. אפשר לחתוך רק את התרגיל. כדאי להשאיר בחוץ שמות של ילדים אחרים, המורה ותמונות.
+> 4. אם בדף יש תשובות שהילד כבר כתב — זה בסדר, נשתמש בהן רק בשבילכם.
+> 5. ניקוד בתמונה לא נקרא — אנחנו מוסיפים ניקוד מחדש ואתם מאשרים.
+> 6. עד 4 דפים לאותו משחק.
+
+### 3.3 עיבוד על המכשיר (לפני העלאה)
+
+| שלב | מימוש | הערות |
+|---|---|---|
+| צילום + תיקון פרספקטיבה | `react-native-document-scanner-plugin` (VisionKit `VNDocumentCameraViewController`) דרך config plugin ב-EAS; fallback `expo-image-picker` + חיתוך ידני | מרובה דפים |
+| חיתוך | מסך חיתוך Skia עם 4 פינות + "בחר אזור תרגיל" (מלבן נוסף) | ההורה יכול לסמן 1–3 אזורי "החרג" |
+| טשטוש פנים | Expo Module מקומי `modules/vision-privacy` (Swift): `VNDetectFaceRectanglesRequest` → מלבנים מורחבים ב-20% → Skia `Blur` (σ=25) + פיקסליזציה | רץ גם על תמונות/איורים בדף; אין שליחה לשום מקום לפני זה |
+| טשטוש שמות (אופציונלי) | אותו מודול: `VNRecognizeTextRequest` אם `supportedRecognitionLanguages` כולל he; התאמה מול רשימת "שמות לא-משפחה" שההורה הזין | אם עברית לא נתמכת — מדולג, והטיפול בשרת (V18) |
+| כיוון | אפיית EXIF orientation לפיקסלים **לפני** הסרת EXIF | אחרת הדף מגיע מסובב (Claude חלש בטקסט מסובב) |
+| הסרת EXIF | קידוד מחדש עם `expo-image-manipulator` (JPEG) — הפלט לא נושא GPS/EXIF; בשרת בדיקה כפולה: parser שמסיר segments `APP1`/`APP13` | E5 |
+| שינוי גודל | צלע ארוכה 2,576 px (שכבת high-res של Claude); JPEG quality 0.88; לא grayscale | דחיסה כבדה פוגעת בקריאת טקסט |
+| תיוג | `sourceKind` (דף עבודה / מחברת / שיעורי בית להגשה / חומר למבחן / סיפור שהילד כתב / דף מספר), `forChildren[]`, `handwritten?` (ההורה יכול לסמן; אחרת המודל קובע) | |
+
+### 3.4 קליטה בשרת
+
+- `POST /v1/photo-jobs` (multipart, ≤ 4 × 3 MB): אימות סשן הורה; בדיקת MIME; הסרת EXIF כפולה; R2 `photos/{familyId}/{jobId}/{page}.jpg` עם lifecycle 30 יום (E5). ברירת מחדל: **מחיקה מיידית אחרי אישור ההורה** (מתג "שמור את הצילום לעיון" כבוי).
+- רישום `photo_jobs` (D1): `status = uploaded → extracting → needs_confirm → building → ready | failed`.
+
+### 3.5 חילוץ (Extraction)
+
+#### 3.5.1 ניתוב
+- `handwritten=false` (מודפס): `photo.extract` — Sonnet 5.5, תמונה אחת לבקשה (דף), streaming, `effort:"medium"`.
+- `handwritten=true` או שהמודל דיווח `handwriting_ratio ≥ 0.3`: **שתי קריאות מקבילות** (Sonnet 5.5 + Opus 5.5) על אותו דף; פיוס בקוד (§3.5.5). (בלוח heb-ocr, Opus 5 הוביל את Sonnet 5 בכיסוי מילים בעמוד כתב יד מלא: 0.335 מול 0.210; ראו §13.)
+- דף צפוף (> 25 שורות טקסט לפי קריאה ראשונה, או `V17` נכשל): חיתוך לשני חצאים עליון/תחתון עם חפיפה של 10%, כל חצי ב-2,576 px, ואיחוד עם הסרת כפילויות בחפיפה.
+
+#### 3.5.2 טיפים לעברית ב-Claude vision (מיושמים בפרומפט ובקוד)
+1. התמונה **לפני** הטקסט בהודעה (המלצת התיעוד).
+2. רזולוציה מלאה של שכבת high-res (2,576 px) + חיתוך לאזור התרגיל — במקום דחיסה.
+3. לבקש תעתוק "כפי שכתוב", בסדר לוגי (מימין לשמאל בעברית, מספרים ואנגלית משמאל לימין), **בלי תיקון כתיב** ובלי השלמת מילים.
+4. לבקש **אותיות בלבד, בלי ניקוד** (`has_nikud` רק כדגל). ניקוד מחדש ב-Nakdan.
+5. סימון `[?]` במקום ניחוש לאות לא קריאה, ו-`confidence` לכל פריט.
+6. ספרות מערביות (0–9) לכל מספר; ביטוי מתמטי כטוקנים מובנים, לא כמחרוזת.
+7. הפרדה בין טקסט מודפס לכתב יד, ובין "שאלה" ל"תשובה שהילד כתב".
+8. מגבלת `max_tokens` + בדיקת לולאות חזרה (V17) — כשל מוכר של VLM בעברית בכתב יד.
+9. אף פעם לא לבקש לזהות אנשים (Claude מסרב, וזה גם לא נדרש).
+
+#### 3.5.3 Extraction system prompt (English; stable; cached)
+
+```text
+<SAFETY CORE v1 — short form: refuse nothing that is a normal school page; never describe or identify people.>
+
+You transcribe and structure a photographed Israeli school/kindergarten page (Hebrew, sometimes English and math)
+so that a parent can turn it into a practice game. You are not solving the page.
+
+Rules:
+1. Transcribe exactly what is written, in logical reading order (Hebrew right-to-left; numbers and English left-to-right).
+   Do NOT correct spelling, do NOT complete words, do NOT translate. Children's own writing must stay as written.
+2. Hebrew: output consonants only, without nikud, even if the page has nikud. Set has_nikud=true if the page shows nikud.
+   Use final letters as written on the page.
+3. If a letter or word is unreadable, write [?] in its place and add the span to uncertain_spans. Prefer [?] over guessing.
+4. Numbers: Western digits 0-9. Math exercises: fill the math object with left, op, right as written and blank_position;
+   leave math.result_as_written as written on the page (it may be a child's answer, possibly wrong). Never compute answers.
+5. Separate printed text from handwriting (is_handwritten per item). If a child already wrote an answer on the page,
+   put it in child_answer_as_written; never treat it as the answer key.
+6. Personal names other than story characters (classmates, teacher, school, phone numbers): list them in pii_spans and
+   replace them in the text with the token [NAME] / [SCHOOL] / [PHONE].
+7. Classify the page into exactly one content_type (see definitions) and give per-item shapes.
+8. Output at most 60 items. If the page has more, take them in reading order and set truncated=true.
+9. If the page is not a learning page (e.g., a photo of a person, a screen, something inappropriate), set
+   content_type="not_learning_material" and return no items.
+
+content_type definitions:
+- vocabulary_list: words or word↔picture/translation pairs (Hebrew or English).
+- spelling_list: words to practice spelling ("הכתבה", "מילים לשינון").
+- letters_nikud: letters, syllables or nikud signs to practice (gan / grade 1).
+- math_set: arithmetic exercises (expressions with blanks), number bonds, counting tasks.
+- word_problems: math story problems.
+- reading_passage: a text with or without comprehension questions.
+- child_story: a story the child wrote (handwritten or dictated).
+- facts: statements/questions about science, holidays, homeland (מולדת), Torah stories, etc.
+- mixed: several of the above; use per-item shapes.
+```
+
+**User message:** `[image block(s)]` ואז טקסט: `PAGE {{i}}/{{n}}. Parent tags: source_kind={{sourceKind}}, handwritten_hint={{hw}}, children={{K1,K2}} (ages only). Return JSON.`
+
+#### 3.5.4 ExtractionResult — Output schema (Claude subset)
+
+```json
+{
+  "type": "object", "additionalProperties": false,
+  "required": ["content_type","primary_language","has_nikud","handwriting_ratio","truncated","page_title","items","pii_spans","uncertain_spans","notes_for_parent"],
+  "properties": {
+    "content_type": {"type":"string","enum":["vocabulary_list","spelling_list","letters_nikud","math_set","word_problems","reading_passage","child_story","facts","mixed","not_learning_material"]},
+    "primary_language": {"type":"string","enum":["he","en","mixed"]},
+    "has_nikud": {"type":"boolean"},
+    "handwriting_ratio": {"type":"string","enum":["none","some","mostly","all"]},
+    "truncated": {"type":"boolean"},
+    "page_title": {"type":"string"},
+    "items": {"type":"array","items":{
+      "type":"object","additionalProperties":false,
+      "required":["idx","shape","lang","text","paired_text","options","category","order_index","math","child_answer_as_written","is_handwritten","confidence"],
+      "properties":{
+        "idx":{"type":"integer"},
+        "shape":{"type":"string","enum":["word","pair","qa","cloze","sequence_step","category_member","math_expr","statement","passage_paragraph","story_sentence","letter_or_syllable"]},
+        "lang":{"type":"string","enum":["he","en"]},
+        "text":{"type":"string"},
+        "paired_text":{"type":"string"},
+        "options":{"type":"array","items":{"type":"string"}},
+        "category":{"type":"string"},
+        "order_index":{"type":"integer"},
+        "math":{"type":"object","additionalProperties":false,
+          "required":["left","op","right","blank_position","result_as_written"],
+          "properties":{
+            "left":{"type":"string"},
+            "op":{"type":"string","enum":["none","+","-","x",":","compare"]},
+            "right":{"type":"string"},
+            "blank_position":{"type":"string","enum":["none","result","left","right"]},
+            "result_as_written":{"type":"string"}}},
+        "child_answer_as_written":{"type":"string"},
+        "is_handwritten":{"type":"boolean"},
+        "confidence":{"type":"string","enum":["high","medium","low"]}
+      }}},
+    "pii_spans":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["kind","text"],
+      "properties":{"kind":{"type":"string","enum":["person_name","school_name","phone","address","other"]},"text":{"type":"string"}}}},
+    "uncertain_spans":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["item_idx","text"],
+      "properties":{"item_idx":{"type":"integer"},"text":{"type":"string"}}}},
+    "notes_for_parent":{"type":"string"}
+  }
+}
+```
+
+מוסכמות "ריק": `paired_text:""`, `options:[]`, `category:""`, `order_index:-1`, `math.op:"none"`, `child_answer_as_written:""`. אין unions; אין שדות אופציונליים (בתוך מגבלות 16/24).
+
+**הנחיות לפי סוג תוכן (נוספות לפרומפט כ-"type guide", חלק מה-system):**
+
+| content_type | מה לחלץ | shape |
+|---|---|---|
+| vocabulary_list | כל מילה; אם יש תרגום/תמונה מתויגת — `paired_text` (תמונה: תיאור במילה אחת באנגלית, `img:dog`) | `word` / `pair` |
+| spelling_list | כל מילה כפי שהודפסה (לא מה שהילד כתב); אם הילד כתב — ב-`child_answer_as_written` | `word` |
+| letters_nikud | אות/הברה/סימן; שם הסימן ב-`category` אם מופיע ("קמץ") | `letter_or_syllable` |
+| math_set | `math` מלא; `text` = הביטוי כפי שכתוב | `math_expr` |
+| word_problems | `text` = השאלה; `math` רק אם הביטוי כתוב בדף | `qa` |
+| reading_passage | פסקאות לפי סדר (`passage_paragraph`, `order_index`) + שאלות קיימות (`qa`, `options` אם אמריקאיות) | |
+| child_story | כל משפט כפי שנכתב, בסדר (`story_sentence`) — כולל שגיאות כתיב | |
+| facts | כל משפט/שאלה; `category` אם הדף ממיין | `statement` / `qa` / `category_member` |
+
+#### 3.5.5 פיוס קריאות כפולות (כתב יד) ואימות בקוד
+
+1. יישור פריטים לפי `idx`/`order_index` + דמיון טקסט (Levenshtein מנורמל על אותיות בלבד).
+2. לכל מילה: אם שתי הקריאות זהות → `confidence` עולה דרגה; שונות → המילה נכנסת ל-`disputed[]` עם שתי החלופות (מוצגות להורה כבחירה בהקשה).
+3. V17 (לולאות) / V18 (PII שלא הוחלף — התאמה מול רשימת שמות לא-משפחה) / V02 (חישוב מחדש של כל `math_expr`) / ולידציית ספרות.
+4. סינון: `confidence:"low"` לא נכנס למשחק בלי אישור הורה מפורש.
+5. ניקוד (Nakdan) לכל מילה עברית שנכנסת למשחק, במקביל לבניית מסך האישור.
+
+#### 3.5.6 מסך אישור הורה ("10 שניות")
+
+- **פריסה (iPad: זה לצד זה; iPhone: למעלה/למטה):** התמונה (עם זום) ⟷ רשימת הפריטים כצ'יפים. הקשה על פריט מדגישה את מיקומו בתמונה (`order_index`; אין bbox מדויק — הדגשה של הרצועה המשוערת).
+- צ'יפים מסומנים: 🟡 `disputed`/`[?]` (חובה לבחור/לתקן), 🔵 נוקד מחדש (הקשה → השוואת ניקוד Nakdan/Phonikud), ⚪ תקין.
+- **שאלות חובה בראש המסך** (בחירה בהקשה):
+  1. "בשביל מי המשחק?" — K1 / K2 / K3 / כולם (ברירת מחדל מהתיוג).
+  2. "מה זה?" — **שיעורי בית שצריך להגיש** · **חומר ללמוד למבחן/הכתבה** · **סתם לתרגול** · **סיפור שהילד כתב**.
+  3. מתמטיקה: "התשובות שחישבנו נכונות?" (מוצגות רק להורה; מחושבות בקוד). אם בדף יש תשובות של הילד — סימון נכון/לא נכון שקט, להורה בלבד.
+  4. כתיב מסיפור/מחברת של הילד: "אילו מילים לתרגל?" (ההורה מסמן; ברירת מחדל: אף אחת — §3.10).
+- כפתור ראשי: **"צור משחק"** (וכיתוב קטן: "המשחק יהיה מוכן תוך פחות מדקה").
+
+### 3.6 Template Fill — סכמת אחסון
+
+```ts
+export const TemplateFill = z.object({
+  fillId: z.string(),
+  templateId: z.string(),                // from catalog §3.8
+  childId: z.enum(["K1", "K2", "K3"]),
+  sourceJobId: z.string(),
+  mode: z.enum(["homework_practice", "study_list", "free_practice", "review", "story"]),
+  rounds: z.array(z.object({
+    itemId: z.string(),                  // Item (storage) created from the source item or its clone
+    presentation: z.enum(["audio_first", "text_pointed", "text_partial", "text_unpointed", "image"]),
+    optionsCount: z.number().int().min(2).max(6),
+  })).min(1),
+  settings: z.object({
+    timer: z.literal(false).or(z.object({ optIn: z.literal(true), seconds: z.number().int() })), // D10: timers only K1 opt-in after mastery
+    maxConsecutiveMisses: z.number().int().default(3),            // D10
+    hintPolicy: z.enum(["after_2_errors", "on_request"]),
+  }),
+  audioManifestKey: z.string(),
+  createdAt: z.string(),
+});
+```
+
+### 3.7 מסיחים מקטלוגי טעויות (בקוד)
+
+```ts
+export interface ErrorRule { code: string; applies(item: Item, ctx: ChildCtx): boolean; make(item: Item, rng: Rng): string[] }
+// Pipeline: candidates = ⋃ rules.make() → filter → rank → take k
+// Filters: ≠ answer (normalized: strip nikud, finals→base) · unique · same "shape" (digit count / word length ±1) ·
+//          spelling distractors must NOT be a real word in the lexicon (avoids teaching ambiguity) ·
+//          vocabulary distractors MUST be real words from the same semantic category and known lexicon ·
+//          never use a child's own misspelling from the photo as a distractor for that child (privacy + no shaming)
+// Ranking: prefer codes the child actually produced recently (engine error log), then catalog priority, then random.
+```
+
+| תחום | קודים (פירוט ב-§12.2) |
+|---|---|
+| חשבון | `MATH_OP_SWAP` (חיבור↔חיסור), `MATH_OFF_BY_ONE`, `MATH_DIGIT_REVERSAL` (12↔21), `MATH_PLACE_VALUE` (25+7→22/95), `MATH_CARRY_OMIT`, `MATH_BORROW_OMIT` (כולל "קטן מגדול"), `MATH_TABLE_NEIGHBOR` (7×8→49/63), `MATH_ADD_FOR_MULT` (7×8→15), `MATH_COUNT_ALL_AGAIN` (K2 counting-on), `MATH_HALF_DOUBLE` |
+| כתיב עברי | `HE_SOUNDALIKE_T` (ט/ת), `HE_SOUNDALIKE_K` (כ/ק/ח), `HE_SOUNDALIKE_S` (ס/שׂ), `HE_SOUNDALIKE_V` (ב/ו), `HE_GUTTURAL` (א/ע, ה/א בסוף), `HE_FINAL_FORM` (מ/ם, נ/ן, צ/ץ, פ/ף, כ/ך), `HE_MATER_OMIT` (חסר י/ו), `HE_MATER_EXTRA`, `HE_VISUAL` (ב/כ, ד/ר, ה/ח, ו/ז, ס/ם) |
+| אנגלית | `EN_BD_REVERSAL`, `EN_SHORT_VOWEL_SWAP` (bat/bet), `EN_SILENT_E`, `EN_DIGRAPH_SPLIT` (sh→s), `EN_HE_TRANSFER` (ת׳ /th/ → s/z) |
+| אוצר מילים | `VOC_SAME_CATEGORY`, `VOC_SAME_FIRST_SOUND`, `VOC_PICTURE_SIMILAR` |
+| ניקוד (K2) | `NIK_KAMATZ_PATACH_OK` (לא מסיח! שניהם /a/ — אסור להשתמש בהם כמסיח זה לזה), `NIK_A_I` (בָּ/בִּ), `NIK_E_A` |
+
+הערה פדגוגית: במשחקי צליל (K2) אסור להציג כמסיחים צירופים שנשמעים זהה בעברית מודרנית (קמץ/פתח, צירה/סגול, ט/ת, כ/ק כשאלה צליל). כיתוב-כתיב (K1) הוא המקום שבו ט/ת **כן** מסיח.
+
+### 3.8 קטלוג תבניות משחק (≥ 15)
+
+עקרון C1: הפעולה הלימודית היא פעולת המשחק. לכל תבנית: צורות תוכן נתמכות, **מינימום תוכן**, גילים, מודאליות.
+
+| # | `templateId` | שם בעברית | פעולת משחק (C1) | צורות | מינימום תוכן | K3 | K2 | K1 |
+|---|---|---|---|---|---|---|---|---|
+| 1 | `tap_heard_picture` | שמע וגע | לגעת בתמונה שהקמע קורא לה → היא קופצת למחנה | pair (word↔img) | 4 זוגות עם תמונה מהספרייה | ✓ (2–3 אפשרויות) | ✓ (4) | — |
+| 2 | `memory_pairs` | זוגות זיכרון | הופכים קלפים; זוג = בונים אבן במחנה | pair | 3 זוגות (K3), 6 (K2), 8 (K1) | ✓ | ✓ | ✓ |
+| 3 | `count_and_tap` | סופרים ונוגעים | סופרים עצים למדורה בנגיעה; כל נגיעה = מספר בקול (ספירה נקבית, B4) | math (count ≤5/10/20) | מספרים 1–5 (K3), עד 20 (K2) | ✓ | ✓ | — |
+| 4 | `first_sound` | הצליל הראשון | שולחים את הצללון לשער של הצליל ששמענו | word (he) | 4 מילים מפוענחות שאותן ראשונות ⊆ נלמדו | — | ✓ | — |
+| 5 | `balloon_battle` | קרב בלונים | מפוצצים את הבלון עם התשובה כדי לשחרר קריסטל | qa / math_expr / word | 5 פריטים × 3 מסיחים | — | ✓ (שמע) | ✓ |
+| 6 | `shadow_whack` | צללונים קופצים | נוגעים רק בצללונים שנושאים פריט מהקטגוריה | category | ≥5 נכונים + ≥5 לא נכונים | — | ✓ | ✓ |
+| 7 | `sort_to_tents` | מיון לאוהלים | גוררים פריטים לאוהל הנכון | category | 2–3 קטגוריות × ≥3 | — | ✓ (2 קטגוריות) | ✓ |
+| 8 | `letter_unjumble` | סדר את האותיות | מסדרים אותיות-אבנים לגשר | word/spell | 4 מילים, 2–3 אותיות (K2) / 3–7 (K1) | — | ✓ | ✓ |
+| 9 | `spell_builder` | שמע ובנה | שומעים מילה ובונים אותה מאותיות (מקלדת אותיות מוגבלת) | spell + audio | 5 מילים + TTS לכל מילה | — | — | ✓ |
+| 10 | `cloze_bridge` | השלם את המשפט | משלימים מילה חסרה כדי שהגשר ייבנה | cloze | 4 משפטים, מסיחים מאותה קטגוריה דקדוקית | — | ✓ (שמע + תמונה) | ✓ |
+| 11 | `story_sequence` | סדר את הסיפור | מסדרים תמונות/משפטים על מסלול המפה | sequence | 3–4 (K2), 4–6 (K1) | — | ✓ | ✓ |
+| 12 | `true_false_shield` | מגן אמת | מרימים מגן "נכון" או "לא נכון" מול הצללון | statement | ≥6, מאוזן ±1 | — | ✓ (שמע) | ✓ |
+| 13 | `tower_defense_math` | הגנת המגדל | כל תרגיל נכון יורה קריסטל-אור שמחזיר צללון לחבר | math_expr | 8 תרגילים (משוכפלים מאותו כישור) | — | ✓ (עד 10) | ✓ |
+| 14 | `number_line_jump` | קפיצות על ציר | הדמות קופצת על ציר המספרים לתוצאה | math_expr (+/−) | 6 תרגילים | — | ✓ | ✓ |
+| 15 | `rank_order` | מהקטן לגדול | מסדרים לבנים לפי ערך/אורך/סדר אירועים | sequence / numbers | 4–6 ערכים | — | ✓ (3–4) | ✓ |
+| 16 | `mini_crossword` | תשבץ קטן | ממלאים תשבץ (RTL) כדי לפתוח תיבה | pair (clue↔word) | 5 מילים באורך 3–7 | — | — | ✓ |
+| 17 | `word_search` | חיפוש מילים | מוצאים מילים ברשת (RTL+LTR לאנגלית) | word | 6 מילים, רשת 8×8 | — | — | ✓ |
+| 18 | `flash_duel` | קלפי קרב | כרטיסיות חזרה מהירות מול "בוס" — ללא טיימר כפוי | pair / qa | 6 | — | — | ✓ |
+| 19 | `picture_story_listen` | סיפור בתמונות | מקשיבים לסיפור ונוגעים ב"מי?" / "מה?" | story_scene | סיפור 3+ עמודים | ✓ (עם הורה) | ✓ | — |
+| 20 | `comic_choices` | קומיקס עם בחירות | בוחרים מה יקרה עכשיו בסיפור (עד 3 נקודות בחירה) | story_scene | 4 עמודים + 1 בחירה | — | ✓ (עם הורה) | ✓ |
+| 21 | `nikud_sort` | מיון תנועות | מיון הברות לפי צליל התנועה (/a/ מול /i/) | letter_or_syllable | 2 קבוצות × ≥4 | — | ✓ | — |
+
+כללי מודאליות: מתחת לגיל 6 — `audio_first`, ≤ 4 אפשרויות, בלי הקלדה, מטרות מגע גדולות (UX spec). K3: רק תבניות 1–3, 19, ללא כשל ("כל נגיעה מצליחה; הנכונה מקבלת חגיגה גדולה יותר").
+
+### 3.9 בחירת תבנית אוטומטית (דטרמיניסטי)
+
+```ts
+export function selectTemplates(content: ConfirmedContent, child: ChildProfile, history: PlayHistory): TemplateChoice[] {
+  const eligible = CATALOG.filter(t =>
+    t.ages.includes(child.band) &&
+    t.shapes.some(s => content.shapes.has(s)) &&
+    t.meetsMinimum(content, child) &&                       // counts after distractor generation & clone expansion
+    (child.band !== "K3" || t.noFailState) &&
+    (!t.needsReading || child.canReadAt(content.nikudLevel)) &&
+    (!t.needsTyping || child.band === "K1") &&
+    (!t.needsAudioForEveryItem || content.allItemsHaveAudio));
+  const score = (t: Template) =>
+      3 * t.skillFit(content.contentType)                  // primary fit table, e.g. spelling_list → spell_builder=1.0
+    + 2 * novelty(t, history, 5)                           // not played in last 5 sessions → 1
+    + 1 * t.coPlayBonus(child)                             // K2/K3 picture/story templates when parent co-play mode
+    - 2 * (history.lastFrustration(t) ? 1 : 0);            // D10 frustration signal
+  return eligible.sort((a, b) => score(b) - score(a)).slice(0, 3)
+                 .map((t, i) => ({ templateId: t.id, isDefault: i === 0 }));
+}
+```
+
+- אם `meetsMinimum` נכשל רק במספר פריטים: **הרחבה** — שכפול פריטי מתמטיקה באותו כישור (AIG), או הוספת מילים ממאגר הילד באותה קטגוריה (מסומנות "מילה נוספת"), עד המינימום; אחרת התבנית נופלת.
+- אחד מתוך 3 מוצג כ"המשחק המומלץ" ונפתח מיד; השניים האחרים זמינים ב"עוד דרך לשחק".
+- אותו מקור יכול להפיק מילוי שונה לכל ילד (§3.12): דף אוצר מילים של K1 → K1 `spell_builder`, K2 `first_sound` + `memory_pairs`, K3 `tap_heard_picture`.
+
+**טבלת התאמה ראשית (`skillFit=1.0`):** vocabulary_list → memory_pairs/balloon_battle/mini_crossword; spelling_list → spell_builder/letter_unjumble/word_search; letters_nikud → first_sound/nikud_sort/shadow_whack; math_set → tower_defense_math/number_line_jump/balloon_battle; word_problems → balloon_battle (מסיחים מקטלוג)/flash_duel; reading_passage → story_sequence/cloze_bridge/true_false_shield; child_story → comic_choices/picture_story_listen/story_sequence; facts → true_false_shield/sort_to_tents/flash_duel.
+
+### 3.10 מצב שיעורי בית נגד העתקה (anti-cheating)
+
+| מצב (נבחר במסך האישור) | מה הילד מקבל | מה מוסתר | מתי משתנה |
+|---|---|---|---|
+| **שיעורי בית להגשה** (`homework_practice`) | **שכפולי כישור** בלבד: אותו סוג תרגיל עם מספרים/מילים אחרים (AIG: אותו כישור, אותו "קושי מבני" — עם/בלי המרה, אותו לוח כפל, אותה תבנית כתיב) | הפריטים המקוריים ותשובותיהם; מפתח התשובות מוצג להורה בלבד | ההורה לוחץ "הוגש" **או** למחרת ב-06:00 → נפתח מצב `review` עם הפריטים המקוריים |
+| **חומר למבחן/הכתבה** (`study_list`) | הפריטים עצמם (תרגול המילים/העובדות הוא המטרה) | — | — |
+| **תרגול חופשי** (`free_practice`) | הפריטים + שכפולים | — | — |
+| **חזרה** (`review`) | הפריטים המקוריים, משולבים בתור SRS | — | +1/+3/+7… (D9) |
+
+כללי שכפול (`cloneSkill`):
+- מתמטיקה: מזהים את תבנית הכישור מהביטוי (`a+b` עם המרה? טווח? לוח?) → `ItemModel` תואם → 2 שכפולים לכל פריט מקורי, שאף אחד מהם לא זהה (גם לא בהחלפת סדר) לפריט מקורי.
+- כתיב (הגשה): מילים אחרות עם אותה תופעה (אותה אות בעייתית/אם קריאה/סופית) מתוך lexicon.
+- הבנת הנקרא (הגשה): לא מייצרים תשובות לשאלות הדף. במקום: משחק `story_sequence` + `true_false_shield` עם היגדים **אחרים** על הטקסט, שנוצרים ע"י Haiku ונבדקים מול הטקסט (`V12`: אף היגד לא מנסח מחדש שאלה מהדף).
+- העוזר הסוקרטי (P3), אם נקרא מתוך משחק הגשה, מקבל רק את פריט השכפול.
+
+### 3.11 סיפור של הילד → סיפור אינטראקטיבי (באישור)
+
+1. **הסכמת הילד** (על המכשיר שלו, בקול ובתמונה): "אבא/אמא צילמו את הסיפור שכתבת. רוצה שנהפוך אותו לסיפור במשחק?" — "כן" / "לא עכשיו". "לא" נכבד ואינו נשאל שוב לאותו סיפור.
+2. **אישור הורה** (מסך האישור, מצב "סיפור שהילד כתב").
+3. **חילוץ** משפטים כפי שנכתבו (`story_sentence`), כולל שגיאות.
+4. **פיצול לסצנות** (`photo.story`, Sonnet 5.5): המודל מקבץ משפטים לעמודים, מציע תגיות סצנה מ-SCENE_TAGS, ול-K1 מציע 1–2 נקודות בחירה ("מה יקרה אם…") עם המשך קצר **שמסומן כ"הצעה של הרובוט"** ושהילד יכול לדחות ("לא, הרעיון שלי!") — לפי ממצאי CHI 2026 על שמירת כוונת הילד.
+5. **הטקסט של הילד נשמר מילה במילה** ב-`authored_text`. גרסת תצוגה מנוקדת נוצרת מתוך תיקון כתיב **שקט** שמוצג רק להורה כהצעה; ההורה בוחר: "להציג כמו שכתבה" (ברירת מחדל ל-K1) או "להציג מתוקן" (ברירת מחדל ל-K2, שעדיין לא כותב לבד בדרך כלל — הסיפור הוכתב). אין סימון שגיאות מול הילד, אין "תיקון פומבי".
+6. **איורים:** הרכבה מספריית הרקעים/דמויות/מדבקות (P6), ללא יצירת תמונה בזמן אמת. הדמויות מהסיפור ממופות לדמויות קיימות או לאווטאר המשפחה (Rive). "איור מיוחד" (יצירה ב-GPT Image מתיאור טקסטואלי בלבד, בלי תמונות פנים) זמין כבקשת הורה אופליין, עם שער אישור — לא ב-60 השניות.
+7. **קרדיט:** עמוד שער "סיפור מאת {{name}}" (שם מוזרק בלקוח; הקול — הקלטת ההורה של שם הילד, אם קיימת).
+8. **כתיב:** תרגול רק ממילים שההורה סימן (המודל לא מבחין בין טעות OCR לטעות ילד).
+9. **שיתוף בין אחים:** כבוי כברירת מחדל; הילד-הכותב מחליט ("לשתף עם נועה?") — C6, בלי השוואות.
+
+**Output schema (`photo.story`):** `{pages:[{sentence_idxs:[int], scene:{bg, characters[], props[]}}], choices:[{after_page:int, prompt{m,f,pl,n}, options:[{text, is_robot_suggestion:bool}]}], title_suggestion, characters_found:[{name_token, maps_to_char_id}]}` — כל השדות required.
+
+### 3.12 העשרה לכל ילד (`photo.enrich`, Haiku 5.5)
+
+**מה נכנס:** הפריטים המאושרים (אחרי תיקון הורה), הילדים שנבחרו (גיל, מגדר, רמת ניקוד, אותיות שנלמדו — כנתונים, בלי שמות), התבניות שנבחרו.
+**מה יוצא:** לכל ילד — הנחיית פתיחה (GText), עד 3 רמזים לכל משפחת פריט, היגדי נכון/לא נכון לטקסטים, מסיחים **לשוניים** (אוצר מילים/השלמה) — **לא** מתמטיים ולא כתיב (אלה מהקוד).
+
+**System (עברית, cached):**
+
+```text
+<SAFETY CORE v1>
+את/ה מכין/ה חומר משלים למשחק שנבנה מדף של בית הספר/הגן. הפריטים כבר אושרו בידי הורה ואסור לשנות אותם.
+כתוב/כתבי בעברית ישראלית פשוטה, בלי ניקוד, ושלוש גרסאות מגדר (m/f/pl) + n כשאפשר.
+רמזים: מכוונים לחשיבה, לא נותנים את התשובה, לא מזכירים את האות/המספר/המילה הנכונים.
+מסיחים לשוניים: מילים אמיתיות מאותה קטגוריה, באותה רמת קושי, שאינן נכונות בהקשר. אל תשתמש/י בשמות אנשים.
+היגדי נכון/לא נכון: מבוססים רק על מה שכתוב בטקסט; היגד "לא נכון" משנה פרט אחד בלבד. אל תנסח/י מחדש שאלות שמופיעות בדף.
+גיל ורמה לכל ילד מופיעים בהודעה. אם פריט לא מתאים לגיל — סמן/סמני אותו ב-skip_for.
+```
+
+**Output schema:** `{per_child:[{child:"K1"|"K2"|"K3", intro{m,f,pl,n}, hints:[{family_key, ladder:[{m,f,pl,n}]}], tf_statements:[{text, is_true, based_on_item_idx}], lexical_distractors:[{item_idx, options:[string]}], skip_for:[int]}]}` — required בכל רמה; `child` enum.
+
+**נפילה:** אם Haiku נכשל/מסרב/חורג מזמן (8 ש׳) — המשחק נבנה בלי העשרה: הנחיה מתוסרטת כללית לתבנית, רמזים כלליים מתוסרטים, ותבניות שלא דורשות מסיחים לשוניים.
+
+### 3.13 קול ובניית חבילה ל-P2
+
+- שורות חדשות (מילים, משפטים, הנחיות) מרונדרות **בשרת** אחרי האישור: Azure he-IL (או מנצח ה-bake-off אם ה-latency שלו ≤ 1.5 ש׳ לשורה), מקביליות 8, SSML לפי §6.5; מילים שכבר קיימות ב-cache (hash זהה, §6.8) לא מרונדרות.
+- עוצמה: בזמן אמת מוחל gain קבוע לכל קול (נמדד ב-bake-off); נרמול LUFS מדויק בלילה ע"י ה-runner, והקובץ מוחלף ב-R2 (גרסת manifest עולה, המכשיר מוריד שקט).
+- אם ה-TTS לא זמין: K1 משחקת בתבניות טקסט בלבד (בתצוגה לפי רמת ניקוד); K2/K3 ממתינים (הודעה להורה: "הקול יהיה מוכן בעוד כמה דקות").
+
+### 3.14 יעד "זמן עד משחק" (< 60 ש׳ אחרי "צור משחק")
+
+| שלב (אחרי אישור) | P50 | P95 | הערות |
+|---|---|---|---|
+| ניקוד (התחיל כבר לפני האישור, במקביל למסך) | 0 | 3 ש׳ | Nakdan; רק מילים שתוקנו ע"י ההורה מנוקדות מחדש |
+| בחירת תבנית + מסיחים + שכפול (קוד) | 0.2 ש׳ | 0.5 ש׳ | |
+| העשרה Haiku 5.5 | 4 ש׳ | 8 ש׳ (timeout) | אפשר לדלג (§3.12) |
+| ולידטורים | 0.2 ש׳ | 0.5 ש׳ | |
+| TTS (עד ~40 שורות × מגדר רלוונטי בלבד) | 6 ש׳ | 15 ש׳ | מקבילי; רק הגרסאות של הילדים שנבחרו |
+| בניית חבילה + R2 + push | 1 ש׳ | 3 ש׳ | |
+| הורדה למכשיר הילד | 2 ש׳ | 6 ש׳ | אודיו AAC מונו ~10–20KB לשורה |
+| **סה"כ** | **~14 ש׳** | **~36 ש׳** | יעד קשיח P95 ≤ 60 ש׳ |
+
+ולפני האישור (לא נספר ביעד, אבל מדווח): העלאה 1–3 ש׳; חילוץ Sonnet 10–25 ש׳ לדף (כתב יד במקביל עם Opus: המקסימום של שניהם); מסך האישור מוצג בהדרגה (streaming) — פריטים מופיעים כשהם מגיעים. **הסיבוב הראשון** ניתן להפעלה ברגע שיש 4 פריטים מוכנים עם אודיו (המשחק ממשיך להיטען ברקע).
+
+### 3.15 כשלים ונפילות
+
+| מצב | התנהגות |
+|---|---|
+| `not_learning_material` | "לא מצאנו כאן תרגיל. אפשר לצלם שוב?" + טיפים. התמונה נמחקת מיד |
+| < מינימום של כל תבנית | הצעה: "נמצאו רק 2 מילים — להוסיף עוד מהמילים של {{ילד}}?" |
+| חילוץ נכשל פעמיים | "אפשר להקליד את המילים" — מסך הקלדה מהיר (הורה), ואותו צינור מתחיל משלב 7 |
+| הרבה `[?]` (> 30% מהמילים) | ממליצים על צילום חוזר; אפשר להמשיך עם המילים הוודאיות בלבד |
+| Refusal | נרשם; מוצג "לא הצלחנו לקרוא את הדף הזה"; לא מנסים מודל אחר |
+| תקרת $ | §1.9 |
+
+### 3.16 עלות לתמונה (הערכה)
+
+| רכיב | טוקנים | מחיר |
+|---|---|---|
+| Sonnet 5.5 חילוץ: תמונה ~4.8K + system 2.5K (cache read) + פלט ~2K | | ≈ $0.010 + $0.0003 + $0.02 = **$0.03** |
+| + Opus 5.5 (כתב יד בלבד) | אותו דבר | ≈ **$0.06** |
+| Haiku 5.5 העשרה: 3K קלט + 3K פלט | | ≈ **$0.002** |
+| Azure TTS ~1,500 תווים | | ≈ **$0.02** (או 0 בתוך free tier) |
+| **סה"כ לתמונה** | | **$0.05 (מודפס) – $0.11 (כתב יד)** → 30 תמונות/חודש ≈ $2–3 |
+

@@ -546,3 +546,200 @@ Each rescued friend is a **curriculum item** (content ID). In the hub it says it
   - Sleeps at the end of the episode.
 - **K3:** the pet is "פּוּפִּי" (a soft round creature). It reacts to every touch with a laugh or a sound and doesn't evolve. Instead, it gets a hat or a color at every sticker milestone.
 - **Launch catalog (9):** light dragon, crystal turtle, fog cat, bubble fish, cloud fox, note owl, leaf hedgehog, star rabbit, mini gear robot (K1, AI-literacy cluster).
+
+---
+
+## 5. Loops
+
+### 5.1 Loop hierarchy (shared by everyone, different parameters)
+
+| Loop | Length | What happens | Reward/feedback |
+|---|---|---|---|
+| **Micro (action)** | 2–10 s | Learning action → game action (jump on the right syllable, fly exactly 7, measure a beam) | T0 juice (≤0.8s), light into the core, rising note on the pentatonic scale |
+| **Beat (Kishōtenketsu beat)** | 0:45–2:00 | One beat of the level's gimmick (Ki/Shō/Ten/Ketsu) | Checkpoint, a friend rescued |
+| **Level** | K3 1–3 min, K2 3–6 min, K1 6–9 min | One gimmick, 4 beats, 3–7 friends, 2–5 pieces, secrets | T2 at the end, friends move into the hub |
+| **Episode = "a day at camp"** | K3 3–5, K2 8–12, K1 15–20 min (00 C3) | Plan → morning (review) → level/s → camp (show + build) → short evening (campfire) → goodnight + offline mission | Mastery-based coin receipt, sometimes a treasure, a diary page |
+| **Week** | Sun–Fri (Shabbat is rest) | Family weekly goal plus "ערב מדורה משפחתי" with the weekly boss | Gems (K1), family fire level-up, family treasure |
+| **Season** | 6–9 weeks, tied to the calendar (§13) | Story chapter, region, seasonal event, adventure album | A season album that never expires, a season certificate printed for home |
+
+### 5.2 The Plan–Play–Show&Tell ritual (Plan-Do-Review, `future_skills` §5.1)
+
+Built into every episode, in the hub.
+
+| Step | K3 | K2 | K1 |
+|---|---|---|---|
+| **Plan** (≤40s) | The parent picks one of 3 picture "doors" together with the child ("what do we feel like today?") | Lost Friends Board: picks 1 of 2 levels (silhouettes of the friends waiting there); predicts "קַל 🌶 / מְאַתְגֵּר 🌶🌶" | Picks a quest + an optional "flame" (modifier: Stretch / Cozy / Mystery) + **a goal and prediction** ("I'll rescue 6 out of 7", "I'll try a new strategy") |
+| **Play** | Peekaboo level | Level + camp | 1–2 levels / challenge + camp + evening |
+| **Show** (in the camp, ≤60s) | The friends arrive in the playroom; the parent asks "מה מצאת?" (a prompt on screen) | The rescued friends arrive, each says its item; the child "introduces" them to ניצי by poking | Same, plus **calibration**: prediction vs. what happened → "Calibration Star" for an accurate prediction (not for success!) |
+| **Tell** (≤40s) | — | 1 tap: 😀/😐/😮‍💨 "איך היה?" + "מה עזר?" (3 tool icons) | One-line sentence "בפעם הבאה אני…" (chips or 15s voice recording, kept on device) + optional 30s Show&Tell recording for the parent (MX-T05) |
+
+### 5.3 Episode structure minute by minute (default template)
+
+The adaptive engine fills the content slots. These are the default durations. `EpisodeTemplate` (Appendix A) makes them configurable.
+
+#### K2 (5.5): `episode.k2.default`, 10:00 (range 8–12)
+
+| Time | Segment | What happens | Content (engine) | Notes |
+|---|---|---|---|---|
+| 0:00–0:40 | **Arrival + Plan** | The פנסון wakes up in the tent, ניצי says "אור בוקר". Optional feelings check-in (1 tap, every other day). Lost Friends Board → choice of 2 levels | — | Voice only, big pictures |
+| 0:40–2:00 | **Warm-up review: "בוקר טוב לחברים"** | Walk through the neighborhood: 3–4 friends rescued earlier are "asleep". Wake each one by doing its item ("which friend says /b/?", tap the right one; "show me 4 crystals") | 3–4 due items from the SRS ladder (gap D9) | Short, easy (≥90% expected) |
+| 2:00–2:45 | **Level: Ki (introduce)** | Entering the level through the gate. ניצי demonstrates the gimmick with the new item, in a safe place | New skill: 1 item, worked example | No mistake possible (an action with a single target) |
+| 2:45–4:15 | **Level: Shō (develop)** | The gimmick plus movement/height. 2 friends rescued. **Movement moment** (MV-*) ≤45s | 4–6 items of the new skill | Hint after 2 errors (gap D10) |
+| 4:15–5:45 | **Level: Ten (twist)** | A twist that requires understanding (the gate swaps the order, a shadowling scrambles). 1–2 friends + interleaved practice | 4–6 items: 60% new, 40% older mixed | Secret room available |
+| 5:45–6:30 | **Level: Ketsu (conclude)** | An easy celebratory finish: running to the gate, the last friend + T2 | 1–2 easy items | Lands on success ("land the plane") |
+| 6:30–8:00 | **Camp: Show + Build** | The friends move in (T1 each, quick). Coin receipt. Place one decoration or build mission (`MX-M10` simple), feed the pet | Optional build mission: 2–3 counting/shape items | The coins appear *after* the action (00 D1, Lepper) |
+| 8:00–9:20 | **Short evening by the campfire** | 3–4 sleepy shadowlings come to warm themselves. Light each one with an item (review) → they become friends | 4–5 mixed review items | Calm, dusk palette, not dark |
+| 9:20–10:00 | **Goodnight + Tell + offline mission** | Tell (1 tap). The friends yawn and go to sleep. Offline mission card (picture + voice). ניצי: "שיחקנו יופי…" → the app sleeps | — | No autoplay; reopening goes through the parent gate (00, `child_psychology` §7D) |
+
+#### K1 (8.5): `episode.k1.default`, 18:00 (range 15–20)
+
+| Time | Segment | What happens | Content |
+|---|---|---|---|
+| 0:00–1:00 | **Arrival + Plan** | Lost Friends Board (map of regions with silhouettes). Choice of quest + flame (Cozy/Stretch/Mystery) + goal and prediction | — |
+| 1:00–3:00 | **Warm-up review: "סיור בוקר"** | A "guard patrol" in the neighborhood: wake 6–8 friends (fast fact fluency only after mastery, gap D11). Optional time-trial of the patrol against *her own* record (ghost) | 6–8 due items, mixed between subjects |
+| 3:00–3:45 | **Level A: Ki** | Introduce the gimmick (worked example + "your turn") | New skill |
+| 3:45–5:45 | **Level A: Shō** | Develop + movement moment (≤60s, optional seated) | 6–8 items |
+| 5:45–7:45 | **Level A: Ten** | A twist + a "struggle-first" puzzle (in Stretch: 60–90s without a hint, then a hint ladder) | 5–7 items, 60/40 new/mixed |
+| 7:45–8:30 | **Level A: Ketsu** | Finish + secret exit (sometimes) | 1–2 |
+| 8:30–12:00 | **Block B (one of the following, by plan/engine)** | (a) a short second level in another subject (interleaving); (b) a region boss (§9.2); (c) a hidden secret level; (d) a runner chase (MX-R01) | 8–12 mixed items |
+| 12:00–14:30 | **Camp: Show + Build + Shop** | Friends move in, coins/gems receipt, Build Mission (area/perimeter/arrays), decorating the neighborhood, collection room, shop/wishlist | 3–5 build items |
+| 14:30–16:30 | **Evening at the campfire** | Defense: a wave of shadowlings (MX-B02), mixed review. If siblings are around, this is the natural co-op point | 6–10 mixed |
+| 16:30–18:00 | **Show&Tell + goodnight** | Prediction vs. result, "next time I'll…", optional recording, offline mission, diary page (if found), goodnight | — |
+
+#### K3 (2.5): `episode.k3.lap`, 4:00 (range 3–5), lap mode only (§15.3)
+
+| Time | Segment | What happens |
+|---|---|---|
+| 0:00–0:30 | **Hello** | The parent opens (gate). פופי peeks out of a box: "!קוּקוּ" + the child's name (recorded by the parent) |
+| 0:30–1:00 | **Plan** | 3 big doors with pictures (animals / colors / music). The child points, the parent taps, or the child taps |
+| 1:00–2:40 | **Peekaboo level** | 3 friends hiding in a playroom diorama (2.5D isometric, fixed camera). Tap a bush → it shakes → a friend appears and says its item ("!פָּרָה! מוּ!" / "!אָדֹם!" / "!שְׁנַיִם!"). **There are no wrong answers**: every tap does something fun. A parent prompt on screen: "שאלו: איפה הפרה?" |
+| 2:40–3:20 | **"Copy me" (MV-01)** | A 30–40s song with movements (clap, arms up, stomp), parent with the child, no sensing |
+| 3:20–3:45 | **The friends come home** | The friends hop into the playroom, a sticker in the album (T2 sensory, short) |
+| 3:45–4:00 | **Goodnight** | The friends go to sleep under a blanket, a lullaby of 2 notes. A parent prompt: "שאלו: מה מצאת היום?" → the app sleeps |
+
+### 5.4 Meta loop per child
+
+| | K3 | K2 | K1 |
+|---|---|---|---|
+| **Long-term "map"** | Sticker album (12 pages of 6) + a playroom that fills with toy friends | Lost Friends Board + hub neighborhood that fills + collection room | Same plus Adventure Album (season track, 30 tiers, never expires) |
+| **Collections** | Stickers, toy friends | Friends by species, pieces (mosaic), 1 pet | Same plus diary pages, emotes, hero parts, seasonal mosaic |
+| **Currencies** (00 D5) | None (stickers only) | Coins + treasures + pet | Coins + gems + treasures + shop + season track |
+| **Hub milestones** | Every 5 toy friends → a new toy in the playroom (sound/light) | Building thresholds (§10.2) | Same plus her own buildings (design mode) |
+| **Challenge** | None | 🌶🌶 optional | Stretch / Mystery flames, struggle-first, time-trial against herself, Mentor Track (guide mode) |
+| **Weekly** | Participates in the family evening (as "lighter") | Participates + personal goal | Participates + personal goal + Mentor Track |
+
+### 5.5 Daily surprise (Animal Crossing done right, R10)
+
+- At each entry (max 1/day), there is **one** new thing in the camp. Examples:
+  - a letter from a friend in the mailbox (a diary page / a riddle);
+  - a visiting shadowling friend who asks for a small favor (an optional bonus item);
+  - a new item in ברגית's catalog;
+  - a "lost" friend sitting on the camp's roof (an easy secret to find).
+- **They accumulate:** after 3 days away, there are 3 letters waiting (no FOMO, nothing is lost).
+- **There is no "you came 5 days in a row" reward** and no daily login reward (gap D5, Radesky).
+
+---
+
+## 6. Level structure
+
+### 6.1 The level template: Kishōtenketsu + secrets
+
+`LV-template` structure (each level is an instance; levels are assembled from **chunks** built by the designer + an engine-supplied content slot):
+
+| Beat | Goal | Space | Friends | Pieces | Content |
+|---|---|---|---|---|---|
+| **Ki** (introduce) | Teach the gimmick safely | 1 small area, no possible failure (e.g., a single target) | 0–1 (demonstration) | 0 | 1 new item, worked example |
+| **Shō** (develop) | The gimmick + movement/height/combination | 1–2 areas | 2 (1 on the path, 1 slightly off the path) | 1–2 | 4–8 items |
+| **Ten** (twist) | Change that requires understanding | 1 area + a secret room | 1–2 + 1 secret | 1–2 | 4–7 items (interleaved) |
+| **Ketsu** (conclude) | Easy finish and celebration | Runway to the exit gate | 1 (the last, easy) | 0–1 | 1–2 |
+
+**Counts per age (default)**
+
+| | K3 | K2 | K1 |
+|---|---|---|---|
+| Friends per level | 3 (all on the path) | 5 (3 on the path, 2 secret) | 7 (4 on the path, 3 secret) |
+| Pieces | 0 | 3 | 5 |
+| Secret exit (to a hidden level) | — | 10% of levels | 15% of levels |
+| Checkpoints | Unnecessary (no falling) | Every 20–30s of play | Every 30–45s |
+| Level length | 1:00–2:40 | 3:00–6:00 | 6:00–9:00 |
+
+**Rule of "no level without its learning".** Friends on the path are rescued only through a learning action. A **secret friend** is found through curiosity (looking behind a waterfall, jumping on a strange stone, poking a talking flower) **plus** an easy learning action at the moment of the rescue. This keeps P-1 while also rewarding curiosity (`astrobot` §Q4: Gopnik).
+
+### 6.2 The grammar of secrets (G1)
+
+Every level must include ≥4 of the following 8 types (CI lint on the level file):
+1. **Glint:** a shimmer every 3 seconds on a hidden object, within 6 tiles of the path.
+2. **Sound tell:** a soft giggle or note from a hidden direction, spatial (`expo-audio` pan/volume by distance, E1b).
+3. **Visible friend behind a gate:** the purest information gap. You see the friend, and the gate opens with the skill.
+4. **Odd tile:** a tile with a different color; jumping or tapping it reveals a ledge.
+5. **Talking background object:** a flower or rock that says a riddle when poked.
+6. **Off-path ledge:** a ledge ≤3 tiles off the main path, reachable with the power-up.
+7. **Breakable decoration:** a crate or bush that bursts open into sparks plus a piece.
+8. **Pet's nose:** the pet points (after 20s without progress or 45s without a secret found).
+
+**Density:** ≥1 interactable per 6×6 tiles, and ≥1 reward per 30s of walking (P-2).
+**Breadcrumbs:** "sparks" (`spark`) arranged in a line lead to the next goal. Collecting them gives light to the core (an in-episode resource, see §11.1). They are not a currency.
+
+### 6.3 Controls by age (E1b) `⟲REVISE-AFTER-SPIKE`
+
+| | K3 | K2 | K1 |
+|---|---|---|---|
+| Movement | **Tap anywhere → the פנסון rolls there** (path find). Dragging = "follow the finger". Ignore a second touch, debounce of 300ms | Tap-to-move + **big jump button** (bottom right, ≥15 mm) or tap on the פנסון = jump | Tap-to-move **or** floating joystick (appears under the left thumb, deadzone 15%) + jump/action buttons on the right |
+| Camera | Fixed (2.5D isometric diorama) | Automatic follow (pitch 40°, auto yaw, no rotation) | Automatic + optional swipe-to-orbit with auto recenter after 2s |
+| Interaction | Tap on an object = go and interact (auto) | Tap on an object; drag-and-snap in mechanics (snap radius 20 mm) | Full: drag, trace, type a short word |
+| Falling into a gap | Impossible (no gaps) | Bounces back to the edge with a cute animation (`oops_cute`), 0.6s, from the nearest checkpoint | Same, 0.8s |
+| Auto-run mini-levels | — | Tap-to-jump (Super Mario Run model) | Tap-to-jump + swipe to change lane |
+| Tilt | — | — | A bonus only in selected mini-levels (MV-07), never required |
+| Min target size (physical, gap §4.7) | ≥20 mm (≈120pt iPhone / ≈104pt iPad) | ≥15 mm (≈90/80pt) | ≥10 mm (≈60/52pt) |
+| Handedness | — | Toggle to mirror the jump button | Toggle to mirror joystick/buttons |
+
+- The world is **not mirrored in RTL** (E1b). Only the 2D HUD is RTL.
+- **"Forward" progression in the hub and regions is right to left.** For example, the first gate is on the right, and progress on the Lost Friends Board runs right to left (Apple HIG RTL).
+
+### 6.4 HUD (2D, RTL, Reanimated)
+
+- **Top right:** the friend jar in this level (silhouettes `●●○○○`; no numbers for K2/K3).
+- **Top left:** a pause button with דובדובה (pause / "I need a break" / back to camp) + "שמע שוב" (replay the instruction).
+- **Bottom:** prompt bubble (K1: short text + 🔊; K2/K3: icon + voice only).
+- **No** score, no timer (except an opt-in K1 time-trial against herself), and no coins in the HUD during a level. Coins show only in the camp (an informational receipt).
+
+### 6.5 Failure handling (no-fail, gap D10, 00 C2)
+
+| Event | K3 | K2 | K1 |
+|---|---|---|---|
+| Wrong answer | No such thing (everything works) | A funny, informative bounce (the wrong stone "sinks" with a בּוֹפּ and comes back), no loss | Same + "עוד לא" |
+| 2 errors in a row on the same item | — | Hint from גלגלון (step 1 of the ladder) + step down (fewer distractors) | Same; hint ladder of 3 steps |
+| 3 errors | — | Worked example by ניצי ("בוא נעשה יחד") + an easier item; **never more than 3 in a row** | Worked example / switch to another tool |
+| <60% over 8 items | — | The engine lowers a level, ניצי "takes a lantern breath" with the child, the next item is easy for sure | Same + an offer to switch to Cozy flame |
+| Falling into a gap / bump | — | 0.6s and back to the checkpoint, no loss of friends | Same |
+| "Stuck" (60s without progress) | — | The pet points + a glowing path | Same, after 90s |
+
+### 6.6 Level schema (code)
+
+```ts
+// packages/content/src/schema/level.ts
+export type Beat = 'ki' | 'sho' | 'ten' | 'ketsu';
+export interface LevelTemplate {
+  id: string;                    // 'lv-r05-numberjet-01'
+  region: RegionId;              // 'R-05'
+  gimmick: MechanicId;           // 'MX-M01' (exactly one; CI fails if >1 new gimmick)
+  ages: ('k1'|'k2'|'k3')[];
+  grid: { w: number; h: number; tileSize: number; elevations: number[][] }; // camera-agnostic
+  chunks: Array<{ beat: Beat; chunkId: string; origin: [number, number] }>;
+  friendSlots: Array<{ beat: Beat; pos: [number,number,number]; kind: 'path'|'secret'; secretType?: SecretType; itemSlot: ItemSlotRef }>;
+  pieceSlots: Array<{ pos: [number,number,number]; secretType: SecretType }>;
+  checkpoints: Array<[number,number,number]>;
+  movementMoment?: { beat: 'sho'|'ten'; moment: MovementId };
+  secretExit?: { pos: [number,number,number]; to: string };
+  itemSlots: Record<ItemSlotRef, { skill: SkillId; role: 'new'|'review'|'mixed'; difficultyBand: 1|2|3|4|5 }>;
+  durationTargetSec: { k1?: [number,number]; k2?: [number,number]; k3?: [number,number] };
+  landmarks: Array<{ pos: [number,number,number]; assetId: string }>; // ≥1 visible from spawn
+}
+export type SecretType = 'glint'|'sound'|'visibleBehindGate'|'oddTile'|'talkingObject'|'offPathLedge'|'breakable'|'petNose';
+```
+
+**Production budget (realistic for a solo build):**
+- **Year 1:** 12 chunks per gimmick × 24 gimmicks = a combinatorial library.
+- **MVP:** 3 regions × 6 levels.
+- Levels are assembled by `tools/level-assembler` (seed + gimmick + chunks). The designer approves before release (E10).
+- Content (which letter/number) is injected at runtime from the engine, so one level can be replayed with different content.

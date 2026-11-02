@@ -311,3 +311,283 @@ UNITs (פירוט מלא ב-§5): ‏`SAT` → `INM` → `GOK` → `EUR` → `HB
 
 **חוק:** קודי `ERR.PH.R`, ‏`ERR.PH.H_DROP` ו-`ERR.PH.NG_G` (ר גרונית, h חלשה, "sing-g") **לא נאכפים בכלל**,
 כי הם לא פוגעים בהבנה. הם מופיעים רק כהערה לכותבי התוכן: אל תבנו פריט סביבם.
+
+---
+
+## 4. איך האנגלית חיה בעולם (שילוב פנימי, 00-C1)
+
+אזור האנגלית במחנה נקרא **מזח הבלון של Pip** (Pip's Balloon Dock): המקום שבו בלון האוויר החם של Pip נוחת.
+הכניסה מלווה בג'ינגל קבוע של 1.2 שנ', בגוון האנגלית ובמעבר עמוד LTR (§10.4). כל מכניקה כאן היא הלמידה
+עצמה, ואף אחת מהן לא מתפקדת כשער חידון.
+
+| מכניקה (שם במשחק) | פעולת משחק = פעולת למידה | צמתים | תבנית | ילדים |
+|---|---|---|---|---|
+| **פנסי צלילים** (Sound Lanterns) | צללונים כיבו את הפנסים. שומעים צליל ומקישים על הפנס עם הגרפמה, והפנס נדלק. | `PH.*.GPC`, `AL.NAME.ID` | T03, T04 | K1 |
+| **מחשלת המילים** (Word Forge) | רונות־אותיות מונחות על הסדן משמאל לימין. הפטיש מכה בכל רונה (צליל), החלקה ימינה ממזגת, **והחפץ נוצר**: ‏net תופסת צללון, box מאחסנת, hat הופך לפריט קוסמטי. מילה מומצאת הופכת ל"יצור טיפשי" שנכנס לאלבום. | `PH.*.BLEND`, `PA.PHON.BLEND` | T06, T08 | K1 |
+| **ערבוב הצללונים** (Mumble Scramble) | צללון ערבב אותיות במילה. שומעים את המילה ומסדרים את האותיות במשבצות משמאל לימין, והצללון חוזר להיות חבר. | `PH.*.SEG`, `WR.DICT.SPELL` | T07 | K1 |
+| **מערת ההד** (Echo Cave) | שתי דלתות עם שתי תמונות. ההד אומר מילה, וכשבוחרים נכון נפתח שביל. דובר אחר בכל פעם. | `PR.MP.*` | T09 | K1 (K2 גרסה של 2 דלתות בלי ציון) |
+| **עמדת המסחר של Pip** (Trading Post) | Pip מבקש פריטים באנגלית ("I need a red apple!"). מוצאים ומגישים, ומקבלים חומרי בנייה. | `VO.*.REC`, `OR.L.*` | T01 | K2, K1 (K3 גרסת "גלה") |
+| **אימון "Pip Says"** | פקודות תנועה. הילד זז, וההורה או הילד מאשר. ב-K1 יש מצב "Pip Says" עם מלכודת (בלי "Pip says" לא זזים). | `OR.L.CMD`, `VO.VRB` | T02 | כולם |
+| **גחליליות** (Tricky Fireflies) | גחליליות עם מילים מסובכות. תופסים את המילה ש-Pip אומר. | `TW.*.READ` | T10 | K1 |
+| **מגילות סיפור** (Story Scrolls) | סיפור פענוחי מאיר את השביל ביער. מצב "קראי לאח" (מדריכה, 00-C6) | `RD.*`, `PH.*.READ` | T11 | K1 (K2 מאזין) |
+| **מדורת קריוקי** | שירה ותנועה סביב המדורה, וקריוקי השלמת מילה | `SG.*` | T13 | כולם |
+| **שיחה עם Pip** (Pip Chat) | תורות דיאלוג כתובות מראש. Pip שואל, והילד בוחר בועה או אומר (הקלט והשווה) | `OR.S.*` | T12 | K2, K1 |
+
+**חומרים במשחק המשפחתי (המדורה):** כל פעולת אנגלית מוסיפה לדלק המדורה המשותפת, בדיוק כמו מתמטיקה ועברית.
+ב-K3 התפקיד הוא "שומר/ת האש": הקשה על חיה או צבע שהשיר מזכיר מוסיפה ניצוץ, ואין כישלון.
+
+---
+
+## 5. פוניקה: רצף מלא (Scope & Sequence)
+
+### 5.1 עקרונות הרצף
+
+1. **רצף לפי Letters and Sounds / Jolly** [V/BK]: ‏s a t p כבר מאפשרות מילים אמיתיות בצעד הראשון. אין
+   שימוש בטקסטים של UFLI, כי UFLI אוסרת יצירות נגזרות [N].
+2. **התאמה לאנגלית אמריקאית:** short o היא /ɑ/ (hot, top). ‏r-controlled נלמד כ-ar, ‏or ו-er/ir/ur (/ɝ/), בלי
+   יחידות ear/air/ure הבריטיות.
+3. **התאמה לדוברי עברית:** w/v ו-th מוצגים יחד עם אימון האזנה בזוגות מינימליים. השלישייה a/u/o (/æ ʌ ɑ/)
+   מקבלת צומת PR נפרד. e שקטה (MGE) מלמדת שאנגלית כותבת תנועות. לכל צעד יש מילים מומצאות (pseudowords) כדי
+   למדוד פענוח אמיתי, בדומה ל-NWF [N].
+4. **קצב:** צעד נפתח רק כשהצעד הקודם נשלט (§3.4.4). זמן היעד הוא 1.5–3 שבועות לצעד (§15).
+5. **סדר הצגה בתוך צעד:** צליל (עם כרטיס פה ותנועת יד) ← גרפמה (גדולה וקטנה) ← מיזוג בעל-פה ← מיזוג מילים ←
+   מילה מומצאת ← איות ← משפט ← סיפור. שם האות מגיע בסוף הצעד.
+6. **עיצורים נמשכים קודם במיזוג:** ‏s, m, n, f, l נמתחים ("sssaaat"), ועיצורים סותמים מוקלטים קטועים (§12.3).
+
+### 5.2 טבלת הרצף
+
+| # | UNIT | גרפמות חדשות (בסדר ההוראה) | פונמות (US IPA) | מילים מסובכות חדשות | יעד שבועות | בוס/ציון דרך |
+|---|---|---|---|---|---|---|
+| S1 | `SAT` | s, a, t, p | /s/ /æ/ /t/ /p/ | I, a | 1.5 | — |
+| S2 | `INM` | i, n, m, d + סיומת רבים ‎-s (‏taps, pins) | /ɪ/ /n/ /m/ /d/ | the, is, and\* | 2 | הסיפור הראשון: "Pip" |
+| S3 | `GOK` | g, o, c, k | /g/ /ɑ/ /k/ /k/ | to, no, go | 2 | — |
+| S4 | `EUR` | ck, e, u, r | /k/ /ɛ/ /ʌ/ /ɹ/ | you, my, of | 2 | — |
+| S5 | `HBF` | h, b, f, ff, l, ll, ss | /h/ /b/ /f/ /l/ /s/ | he, she, we, me, be, was, his\*, has\* | 2.5 | **Boss א': "23 פנסים"** |
+| S6 | `JVW` | j, v, w, x | /dʒ/ /v/ /w/ /ks/ | they, are, all | 2 | — |
+| S7 | `YZQ` | y, z, zz, qu | /j/ /z/ /kw/ | do, her, what | 1.5 | **Boss אלפבית: 26 אותיות, גדולות וקטנות, צליל ושם** |
+| S8 | `DIG` | sh, ch, th (/θ/ ו-/ð/), ng, nk | /ʃ/ /tʃ/ /θ/ /ð/ /ŋ/ /ŋk/ | there, some, come, one, said | 3 | — |
+| S9 | `CLU` | אין גרפמה חדשה: צירופי עיצורים CVCC, ‏CCVC, ‏CCVCC; ‏s בתוך מילה כ-/z/ (is, his, has, as) | — | like, have, little, were, so | 3 | — |
+| S10 | `MGE` | a_e, i_e, o_e, u_e, e_e | /eɪ/ /aɪ/ /oʊ/ /juː/ /iː/ | two, who, does, love, your | 3 | **Boss סוף שנה: "מגילת המחנה"** |
+| S11 | `VTM` (אתגר, יוני) | ee, ea, ai, ay, oa, ow (snow), igh, y (/aɪ/) | /iː/ /eɪ/ /oʊ/ /aɪ/ | people, could, would, should, their, water | 4 | — |
+| S12 | `RCT` (כיתה ד') | oo (moon), oo (book), ar, or, er, ir, ur | /uː/ /ʊ/ /ɑɹ/ /ɔɹ/ /ɝ/ | Mr, Mrs, oh, friend, because, school | — | — |
+| S13 | `EXT` (כיתה ד') | ow (cow), ou, oi, oy, aw, au, ew, ue, wh, ph, ‎-ed, ‎-ing, soft c/g, ‎-le, y (/i/) | — | לפי Band I | — | — |
+
+\* `and` מסובכת עד S9 (צירוף nd). ‏`is/his/has` מסובכות עד S9 (‏s = /z/ בתוך המילה). סיומת הרבים ‎-s היא מורפמה שנלמדת כבר ב-S2 ("one pin, two pins"), והבודק מתיר אותה כחריג מכלל הצירופים.
+
+### 5.3 מילים פענוחיות לכל צעד
+
+הרשימות **מצטברות**: בכל צעד מותר להשתמש גם בכל מה שלפניו. ‏`pseudo` הן מילים מומצאות למכניקת "אמיתי או
+טיפשי". ✱ = שם (אות גדולה). הרשימות S1–S10 הורצו בבודק פענוחיות ראשוני בזמן כתיבת המסמך (סקריפט אב-טיפוס, 0 כשלים). מילים שמובנות לילד בעל-פה
+מסומנות ב-VO (§7), והשאר מקבלות תמונה.
+
+**S1 `SAT`** (s a t p)
+- real: at, sat, pat, tap, sap, taps, pats, sats
+- pseudo: tas, pas, aps, tat
+- phrases: `I sat.` · `I tap.` · `Tap, tap, tap!` · `A pat.`
+
+**S2 `INM`** (+ i n m d)
+- real: it, in, an, am, sit, pit, tip, sip, nip, pin, tin, din, dip, dim, did, mid, man, mat, map, pan, nap, tan,
+  mad, dad, sad, pad, tins, pins, maps, mats, naps, dips; ✱ Pip, Sam, Tim, Pam, Nan, Dan, Mia\*\*
+- pseudo: tid, nim, dap, sim, mip, nad, pid
+- sentences: `Pip sat.` · `Sam is sad.` · `I am Pip.` · `Tim and Pam sit.` · `Dad naps.` · `The map is in the tin.`
+
+\*\* **Mia** היא דוגמה לשם שאינו פענוחי (ia). שמות הילדים באנגלית יוגדרו מראש כמילים מסובכות אישיות (§19).
+
+**S3 `GOK`** (+ g o c k)
+- real: on, got, not, pot, top, dot, cot, cod, nod, pop, mop, cog, cap, cat, can, cop, kit, kid, kin, gap, gas,
+  tag, nag, sag, dig, pig, gig, dog\*, cats, pigs, pots, tops, caps, kits; ✱ Tom, Kim, Kit
+- pseudo: gom, kag, tog, cim, gop, dak
+- sentences: `Pip got a pig.` · `The cat is on top.` · `Kim can tap a pot.` · `No, cat! Go, go, go!` · `It is not a dog.`
+
+\* במבטא אמריקאי "dog" נוטה ל-/dɔg/. היא לא תשמש מילת מפתח לתנועה /ɑ/. מילת המפתח של o היא **pot** (§6).
+
+**S4 `EUR`** (+ ck e u r)
+- real: kick, sock, sack, tick, neck, deck, pick, pack, duck, tuck, rock, rack, sick, dock, pet, net, men, ten,
+  pen, red, get, met, set, peg, den, up, us, cup, mud, sun, run, rug, nut, gum, pup, mom, cut, tug, rat, ram, rip,
+  rid, rot, rim, rag, ducks, socks, pens, cups, nuts; ✱ Ted, Ken, Meg
+- pseudo: rup, ret, muk, sut, nock, ded
+- sentences: `Ted gets a red cup.` · `The sun is up.` · `Pip runs to the rock.` · `A duck in the mud.` · `You can pet my pup.`
+
+**S5 `HBF`** (+ h b f ff l ll ss)
+- real: hat, hot, hen, hug, hit, him, hum, hop, hut, had, bat, bed, big, bag, bun, bus, bib, bit, bet, but, bug,
+  bad, bin, fan, fun, fig, fit, fog, fed, fin, off, puff, cuff, huff, lid, leg, log, lot, let, lip, lap, lit, lick,
+  luck, lock, bell, doll, fill, hill, tell, sell, mess, kiss, less, boss, miss, hiss, toss, fuss, hats, bags, bells;
+  ✱ Bob, Ben, Bill, Liz\*\*\*
+- pseudo: hib, fom, lud, bek, fass, holl
+- sentences: `Ben has a big red hat.` · `Bob fell off the log.` · `Fill the bag, Pip!` · `He hid in the hut.` · `She can hop on the bed.` · `We had fun in the sun.`
+
+\*\*\* "Liz" נכנס רק ב-S7 (z).
+
+**S6 `JVW`** (+ j v w x)
+- real: jam, jet, jog, jug, job, jab, van, vet, vat, wet, web, wig, win, wag, wit, wed, will, well, box, fox, six,
+  mix, fix, ox, tax, wax, fax, sax, jets, vans, webs, wigs; ✱ Jim, Jen, Max, Vic
+- pseudo: jit, vop, wum, lix, vam, jeck
+- sentences: `A fox sat in a box.` · `The vet has a big van.` · `Max will win.` · `They are all wet.` · `Jen fed six hens.`
+- זוגות w/v: ‏wet/vet (S6). השאר מגיעים ב-S9 וב-S10
+
+**S7 `YZQ`** (+ y z zz qu)
+- real: yes, yet, yum, yap, yell, yak, zip, zap, buzz, fizz, jazz, fuzz, quiz, quit, quick, quack, quill;
+  ✱ Zak, Liz
+- pseudo: yot, zeb, quan, zuff, yick
+- sentences: `Yes! Zak can zip the bag.` · `Quick, quick, quack!` · `The bug can buzz.` · `Let her do the quiz.` · `Quiz Liz!` · `What is in the box?`
+
+**S8 `DIG`** (+ sh ch th ng nk)
+- sh: ship, shop, shed, shut, shell, fish, dish, wish, rush, cash, mash, bash, gush, shock
+- ch: chip, chin, chop, chat, chick, check, much, rich, such, chess, chum
+- th /θ/: thin, thick, moth, math, bath, path, Beth, thud
+- th /ð/: this, that, then, them, than, with\*
+- ng / nk: ring, sing, king, long, song, bang, hang, sung, wing, thing, pink, sink, think, bank, thank, junk, honk, wink
+- pseudo: shom, chib, thup, zing, shev, chock
+- sentences: `The fish is in the dish.` · `Chip and Beth sing a song.` · `I think this is a ship.` · `Thank you!` · `Come and get the shell.` · `Some ducks run to the shed.`
+
+\* במבטא אמריקאי "with" נשמעת /wɪθ/ או /wɪð/, ושתיהן מתקבלות.
+
+**S9 `CLU`** (צירופים + ‎-s)
+- CVCC: ants, hand, sand, band, land, milk, tent, best, nest, rest, test, west, vest, jump, lamp, camp, help,
+  desk, gift, list, mist, belt, pond, wind, hunt, lift, soft, fast, mask, went, and, bump
+- CCVC: frog, flag, stop, spot, swim, clap, crab, drum, grin, plum, step, snap, from, black, block, truck, trip,
+  sniff, spell, still, twin, skip, trap, drop, glad, plan, slip, sled, spin, smell, snack, flip, grab, brick
+- CCVCC ומעבר: stamp, crisp, blast, trunk, drink, stick, crash, fresh, brush, lunch, bench, shrimp\*
+- ‏s = /z/: is, his, has, as (עוברות ממילים מסובכות למפוענחות)
+- pseudo: blim, frap, nust, stog, crub, plint
+- sentences: `The frog can jump in the pond.` · `Stop and help the crab!` · `Fred has a black tent.` · `Swim fast, frog!` · `I like milk and jam.` · `They were in the camp.`
+- זוגות w/v: ‏west/vest, ‏went/vent
+
+\* shrimp: ‏CCCVCC עם דיגרף, לשלב אתגר בלבד.
+
+**S10 `MGE`** (+ a_e i_e o_e u_e e_e)
+- a_e: cake, make, name, game, late, gate, tape, plane, lake, snake, grape, shake, came, same, made, cave, wave, safe
+- i_e: bike, kite, five, time, line, ride, like, nine, pine, smile, white, slide, hide, fine, mine, bite, wide, prize
+- o_e: bone, home, nose, rope, hole, note, joke, stone, smoke, those, hope, rose, globe
+- u_e: cube, cute, tube, mule, June, flute, use, huge\*
+- e_e: these, Pete, Steve
+- pseudo: dake, fime, zote, nube, plome, vike
+- sentences: `Kate has a cake.` · `I like my bike.` · `Five kites go up.` · `The cute mule is at home.` · `Who made this game?` · `Do you love your home?`
+- זוגות e שקטה (`E.PR.MP.LS`): cap/cape, kit/kite, hop/hope, cub/cube, pin/pine, not/note, tap/tape, rip/ripe,
+  mad/made, hat/hate, can/cane, rob/robe, tub/tube, slid/slide, win/wine; ‏w/v: ‏wine/vine
+
+\* huge: ‏g רכה, אתגר בלבד.
+
+**S11 `VTM`** (אתגר; + ee ea ai ay oa ow igh y)
+- ee: see, bee, tree, feet, green, sheep, three, week, sleep, queen, teeth, need, seed
+- ea: sea, eat, tea, read, meat, beach, team, clean, leaf, dream
+- ai / ay: rain, tail, wait, paint, train, snail, mail · day, play, say, way, may, gray, stay
+- oa / ow: boat, coat, road, soap, goat, toast · snow, slow, low, grow, show, yellow\*, window\*
+- igh / y: night, light, right, high, bright · my, by, fly, cry, sky, why\*\*, try
+- זוגות (`E.PR.MP.IEE`): ship/sheep, sit/seat, fit/feet, hit/heat, bin/bean, chip/cheap, lip/leap, still/steal
+
+\* דו-הברתיות, אתגר. \*\* wh, מסובכת.
+
+**S12 `RCT`** (כיתה ד'; + oo oo ar or er ir ur): moon, food, zoo, room, spoon, pool, cool, soon, tooth · book,
+look, good, foot, cook, wood, hook · car, star, park, farm, arm, dark, shark, card, jar · for, fork, corn, horse,
+short, sport, storm, born, horn · her, fern, bird, girl, first, shirt, turn, burn, fur, nurse.
+זוגות (`E.PR.MP.UU`): full/fool, look/Luke, pull/pool.
+
+### 5.4 בנק זוגות מינימליים (לתבנית T09)
+
+כל זוג צריך שתי תמונות שאפשר לצייר בבירור, ולכן זוגות מופשטים מסומנים בסוגריים (לשימוש רק בשמע).
+
+| צומת | זוגות |
+|---|---|
+| `E.PR.MP.WV` | wet/vet, west/vest, wine/vine, went/vent, (wail/veil), (wiper/viper) |
+| `E.PR.MP.TH` | thin/tin, three/tree, thick/tick, bath/bat, math/mat, path/pat, thank/tank, thick/sick, think/sink, thing/sing, mouth/mouse, (thumb/sum) |
+| `E.PR.MP.DH` | then/den, they/day, (though/dough), (breathe/breeze) |
+| `E.PR.MP.AUO` | cat/cut/cot, hat/hut/hot, cap/cup/cop, bag/bug, ran/run, mad/mud, sack/suck/sock, rack/ruck/rock, (lack/luck/lock) |
+| `E.PR.MP.IEH` | pin/pen, sit/set, big/beg, bit/bet, pig/peg, tin/ten, lid/led |
+| `E.PR.MP.IEE` | ship/sheep, sit/seat, fit/feet, hit/heat, bin/bean, chip/cheap, lip/leap, still/steal, (live/leave) |
+| `E.PR.MP.UU` | full/fool, pull/pool, look/Luke, (could/cooed) |
+| `E.PR.MP.LS` | cap/cape, kit/kite, hop/hope, cub/cube, pin/pine, not/note, tap/tape, can/cane, tub/tube, rip/ripe |
+
+### 5.5 מילים מסובכות: שיטת "מילת לב"
+
+- כל מילה מסובכת מוצגת עם **החלק הרגיל מפוענח והחלק הלא רגיל מסומן בלב** (למשל ב-said: ‏s ו-d רגילות, ‏ai ❤).
+- מקור הרשימה: Letters and Sounds Phase 2–5 [BK] ו-Dolch Pre-Primer/Primer [V], בסינון לפי שימושיות.
+- סה"כ עד סוף S10 יש **42 מילים** (כולל and/is/his/has, שהופכות לפענוחיות ב-S9 ועוברות לרשימת "פוענחו!" כחגיגה
+  קטנה, לא כנטישה).
+- מילת Dolch שמופיעה בצעד שבו היא פענוחית (למשל can, it, up, big, red) **לא** נלמדת כמילה מסובכת. היא מפוענחת.
+
+### 5.6 בודק פענוחיות (קוד, `packages/content/en/decodable.ts`)
+
+```ts
+// pseudo-code
+type Unit = "SAT"|"INM"|"GOK"|"EUR"|"HBF"|"JVW"|"YZQ"|"DIG"|"CLU"|"MGE"|"VTM"|"RCT"|"EXT";
+interface Mapping { word: string; graphemes: string[]; source: "cmudict-align"|"manual" }
+// 1. כל מילה מפורקת לגרפמות בעזרת מילון יישור גרפמה-פונמה (נגזר מ-CMUdict + עקיפות ידניות) [BK: CMUdict BSD]
+// 2. מותרת אם: כל גרפמה ∈ allowed(unit) (מצטבר) ו-pattern(word) ∈ patterns(unit)
+//    patterns: SAT..DIG = {VC, CVC, CVCC* only digraph/ck/ff/ll/ss/zz/nk endings}; CLU+ = +{CCVC, CVCC, CCVCC};
+//    MGE+ = +{split digraph}; VTM+ = +{vowel teams}
+// 3. או: word ∈ trickyTaught(unit) ∪ personalNames(child)
+// 4. טקסט מותר אם 100% מהטוקנים מותרים; מילת תוכן אחת לא-פענוחית מותרת רק עם תמונה + tap-to-hear ומסומנת "picture word"
+function isDecodable(word: string, unit: Unit, child: ChildId): Verdict;
+```
+
+CI: כל פריט שמסומן `decodable: true` עובר את הבודק. אם הוא נכשל, ה-build נכשל (AC2).
+
+### 5.7 כללים לטקסטים פענוחיים (גם לפרומפט של ה-LLM)
+
+- אורך: S2–S4 עד 2 משפטים של 3–5 מילים לעמוד, 3 עמודים. S5–S8 עד 3 משפטים, 4–5 עמודים. S9–S10 עד 4 משפטים,
+  6 עמודים.
+- כל סיפור כולל את **Pip** ולפחות אחד מגיבורי המחנה, ומסתיים בשינוי קטן במצב (נמצא משהו, נבנה משהו). אין
+  אלימות. צללונים מתהפכים לחברים.
+- לכל סיפור יש שאלת הבנה אחת לפחות שאפשר לענות עליה בתמונה (`E.RD.TEXT.COMP`).
+- כל מילה ניתנת להקשה לשמיעה (Pip). הקשה לא פוגעת בשליטת `PH.*.READ` של מילה פענוחית, אבל נרשמת כ"נעזרה".
+- הטקסטים מיוצרים ב-Batch (00-E8), עוברים את הבודק, נבדקים ב-QA על ידי Sonnet ומחכים לאישור הורה אופציונלי.
+
+---
+
+## 6. מלאי הפונמות (General American, 45 מזהים)
+
+הטבלה היא גם **רשימת ההקלטות** של הדובר הילידי (§12.3). "סיכון" = סיכון העברה לדוברי עברית [BK].
+"סוג" = n (נמשך: מוקלט רגיל + מתוח) או s (סותם: מוקלט קטוע, בלי שווא).
+
+| ID | IPA | גרפמה עיקרית | מילת מפתח | צעד | סוג | סיכון / הערה |
+|---|---|---|---|---|---|---|
+| `ph_s` | s | s, ss | sun | S1 | n | — |
+| `ph_ae` | æ | a | apple | S1 | n | גבוה: מתמזג עם /ʌ/ /ɑ/ ← /a/ עברית |
+| `ph_t` | t | t | top | S1 | s | — |
+| `ph_p` | p | p | pig | S1 | s | — |
+| `ph_ih` | ɪ | i | igloo | S2 | n | גבוה: ‏/ɪ/→/i/ |
+| `ph_n` | n | n | net | S2 | n | — |
+| `ph_m` | m | m | moon | S2 | n | — |
+| `ph_d` | d | d | dog | S2 | s | — |
+| `ph_g` | g | g | goat | S3 | s | — |
+| `ph_aa` | ɑ | o | pot / octopus | S3 | n | גבוה: ‏/ɑ/→/a/ (עברית) או /o/ |
+| `ph_k` | k | c, k, ck | cat, kite | S3 | s | — |
+| `ph_eh` | ɛ | e | egg | S4 | n | נמוך: קרוב ל-/e/ עברית |
+| `ph_uh` | ʌ | u | umbrella / up | S4 | n | גבוה |
+| `ph_r` | ɹ | r | red | S4 | n | ר גרונית: **לא נאכף** |
+| `ph_h` | h | h | hat | S5 | n (נשיפה) | h חלשה: **לא נאכף** |
+| `ph_b` | b | b | bat | S5 | s | — |
+| `ph_f` | f | f, ff | fish | S5 | n | — |
+| `ph_l` | l | l, ll | leg | S5 | n | — |
+| `ph_dzh` | dʒ | j | jam | S6 | s | נמוך (ג׳) |
+| `ph_v` | v | v | van | S6 | n | ניגוד w/v |
+| `ph_w` | w | w | web | S6 | n | בינוני: ‏w→v אצל חלק מהדוברים [V] |
+| `ph_ks` | ks | x | box | S6 | s | צירוף, מוקלט כיחידה |
+| `ph_j` | j | y | yes | S7 | n | — |
+| `ph_z` | z | z, zz, s | zip | S7 | n | — |
+| `ph_kw` | kw | qu | queen | S7 | s | צירוף, מוקלט כיחידה |
+| `ph_sh` | ʃ | sh | ship | S8 | n | — |
+| `ph_ch` | tʃ | ch | chip | S8 | s | נמוך (צ׳) |
+| `ph_th` | θ | th | thumb / three | S8 | n | גבוה: ‏→t/s |
+| `ph_dh` | ð | th | this / feather | S8 | n | גבוה: ‏→d/z |
+| `ph_ng` | ŋ | ng, n(k) | ring | S8 | n | ‏"ring-g": **לא נאכף** |
+| `ph_zh` | ʒ | s (treasure) | treasure | S13 | n | נמוך (ז׳). מוקלט עכשיו לשלמות |
+| `ph_ey` | eɪ | a_e, ai, ay | cake | S10 | n | — |
+| `ph_iy` | iː | e_e, ee, ea | tree | S10 | n | ניגוד /ɪ/ |
+| `ph_ay` | aɪ | i_e, igh, y | kite | S10 | n | — |
+| `ph_ow` | oʊ | o_e, oa, ow | boat | S10 | n | ‏/o/ עברית טהורה, בלי גלישה: לא נאכף |
+| `ph_yuw` | juː | u_e | cube | S10 | n | — |
+| `ph_uw` | uː | oo, ew, ue | moon | S12 | n | ניגוד /ʊ/ |
+| `ph_uu` | ʊ | oo, u | book | S12 | n | גבוה |
+| `ph_ar` | ɑɹ | ar | car | S12 | n | — |
+| `ph_or` | ɔɹ | or | fork | S12 | n | — |
+| `ph_er` | ɝ | er, ir, ur | bird | S12 | n | גבוה (אין בעברית) |
+| `ph_aw` | aʊ | ow, ou | cow | S13 | n | — |
+| `ph_oy` | ɔɪ | oi, oy | coin | S13 | n | — |
+| `ph_ao` | ɔ | aw, au | saw | S13 | n | במבטא US רבים ממזגים עם /ɑ/. מוקלט, שימוש מינימלי |
+| `ph_schwa` | ə | a (about), the | **לא נלמד כצליל בודד** | — | n | מוקלט לבניית "the" ו-"a" במודלים בלבד |
+
+**מילת המפתח של `ph_ih`:** ‏**igloo** (נשמעת /ɪ/ בבירור, וקל לצייר אותה). insect ו-itch נפסלו כי קשה לצייר
+אותן או כי הן לא נעימות. **הערה:** ‏`ph_ks` ו-`ph_kw` אינן פונמות. הן צירופים שמוקלטים כיחידה, ולכן יש 43 פונמות
+ועוד 2 צירופים, סה"כ 45 קבצי צליל.
