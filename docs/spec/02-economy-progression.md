@@ -2090,4 +2090,4 @@ met      = goal > 0 && progress ≥ goal
 - **חנות וצנצנות (F9 GAP-38/42/10/09):** ביטול הורה של פריט לבוש/מוצב (§7.3); "החנות סגורה" = חלונות הילד ושעת השינה בלבד; `saveBonus` על `max(0, minBalance)` ושבוע משיכת-יתר = 0; מיזוג `neighborhood_layout` LWW למשבצת עם החזרת הפריט למלאי (§7.7).
 - **מדורה (F9 GAP-21, F2 #28):** "(1–10)" הוסר (בלי תקרה); עלייה רק מארבעת האירועים / אירוע ה-DO; `levelUpSources` ב-config.
 - **מדבקות (F9 GAP-28):** "תן מדבקה" ל-K3 בלבד.
-- **config:** `neverEarns` מורחב, `enabledFor`, `offlineMissionChestsPerDayMax`, `braveryLadderComplete`, `makerProjectComplete`, `saveBonus.basis` clamped, `pausedChildTarget`, `dayRolloverHour`, `edgeRules` חדשים; אינווריאנטים 13–15; קריטריוני קבלה חדשים ב-§14.1.
+- **config:** `neverEarns` מורחב, `enabledFor`, `offlineMissionChestsPerDayMax`, `braveryLadderComplete`, `makerProjectComplete`, `saveBonus.basis` clamped, `pausedChildTarget`, `dayKey: familyCityCalendarDay`, `edgeRules` חדשים; אינווריאנטים 13–15; קריטריוני קבלה חדשים ב-§14.1.
