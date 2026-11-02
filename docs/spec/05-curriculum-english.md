@@ -196,7 +196,7 @@ UNITs (פירוט מלא ב-§5): ‏`SAT` → `INM` → `GOK` → `EUR` → `HB
 | `E.PR.MP.DH` | /ð/–/d/ | then/den, they/day, though/dough | K1 | `E.PR.MP.TH` | M-PR |
 | `E.PR.MP.AUO` | /æ/–/ʌ/–/ɑ/ | cat/cut/cot, hat/hut/hot, bag/bug, cap/cup/cop | K1 | `E.PH.EUR.GPC` (u) | M-PR |
 | `E.PR.MP.IEH` | /ɪ/–/ɛ/ | pin/pen, sit/set, big/beg | K1 | `E.PH.EUR.GPC` (e) | M-PR |
-| `E.PR.MP.IEE` | /ɪ/–/iː/ | ship/sheep, sit/seat, chip/cheap | K1 | `E.PH.MGE.BLEND` (אוזן קודמת לקריאה: הצומת נפתח בהאזנה כבר אחרי `INM`) | M-PR |
+| `E.PR.MP.IEE` | /ɪ/–/iː/ | ship/sheep, sit/seat, chip/cheap | K1 | `E.PH.INM.GPC` (האזנה בלבד, לא תלוי בקריאת ee. ההדגשה בלוח השנה היא במאי) | M-PR |
 | `E.PR.MP.UU` | /ʊ/–/uː/ | full/fool, look/Luke, pull/pool | K1 (אתגר) | `E.PR.MP.IEE` | M-PR |
 | `E.PR.MP.LS` | תנועה קצרה–ארוכה (e שקטה) | cap/cape, kit/kite, hop/hope, cub/cube | K1 | `E.PH.MGE.GPC` | M-PR |
 | `E.PR.STRESS.TAP` | הטעמה: איפה החלק "החזק"? | BA-by, ba-NA-na, TI-ger | K1 (אתגר) | — | M-STD |
