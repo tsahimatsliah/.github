@@ -1197,7 +1197,7 @@ met      = goal > 0 && progress ≥ goal
 - [ ] שבוע פסח עם 2 ימים זמינים: כל `effTarget = min(t, ceil(1.2)) = 2`. שבוע בלי ימים זמינים: "שבוע מנוחה".
 - [ ] שבת לא נכללת ב-`availableDays`. יום שמשחקים בו בשבת (נעילה כבויה) נספר כבונוס.
 - [ ] ילד עם `profile.paused = true`: `effTarget = 0`, `goal` ללא תרומתו; פרק שהוא בכל זאת שיחק = בונוס.
-- [ ] פרקים ב-23:30 וב-00:40 באותו לילה → `DayKey` אחד (גלגול 04:00); פרק במוצאי שבת 00:30 → שייך לשבוע המסתיים.
+- [ ] מכשיר ב-`America/New_York` (עיר משפחה תל אביב, בלי עיר נסיעה): אירוע ב-18:30 שעון ניו יורק = 01:30 בישראל → `DayKey` של המחר הישראלי; עם עיר נסיעה "New York" → `DayKey` של אותו יום; `DayKey` לא יורד אף פעם באותו מכשיר.
 - [ ] יעד שלא הושג לא מייצר אף אירוע UI.
 
 **עונה ואוסף:**
@@ -1946,8 +1946,8 @@ met      = goal > 0 && progress ≥ goal
     "dayCountsIf": {"K1": "episodeCompleted", "K2": "episodeCompleted", "K3": "lapEpisodeCompleted"},
     "targets": {"K1": 3, "K2": 3, "K3": 2},
     "pausedChildTarget": 0,
-    "dayRolloverHour": 4,
-    "weekFrom": "dayKey",
+    "dayKey": "familyCityCalendarDay",
+    "weekBoundary": "sunday00:00-familyCity",
     "availabilityFactor": 0.6,
     "overshootAllowance": 1,
     "restDays": {"shabbat": true, "yomTov": true, "parentDeclared": true},
@@ -2020,7 +2020,7 @@ met      = goal > 0 && progress ≥ goal
 | UC-13 | **מסרב ללמוד, רוצה תגמולים** | פרק עם 0 `item_answered` → 0 מטבעות, 0 XP (גם `episodeComplete` דורש ≥1 פעולת למידה, `episodeCompleteRequiresLearning: true`); החנות, החיה וחדר האוצרות זמינים לצפייה (`shopBrowsing`, `petTapping` = 0); `session_start_screen` ו-`shopTimeShareMax` (§14.3 #2) מזיזים את מסך הפתיחה למפה; אין נזיפה ואין "החנות נעולה" | פרק 0-פריטים → `grants = []`; `episodeComplete` לא משולם; `free_choice` נרשם |
 | UC-14 | **האפליקציה נהרגה בזמן חשיפת תיבה** | §6.3 כלל 7 | שלוש נקודות חיתוך (לפני `chest_earned`, בין earned ל-opened, אחרי opened) → תכולה מוענקת בדיוק פעם אחת או אפס, לעולם לא פעמיים |
 | UC-15 | **שינוי שעון במכשיר** | `DayKey` מונוטוני לכל מכשיר (§2.1): שעון אחורה לא מאפס תקרות ולא יוצר יום ראשון נוסף; שעון קדימה מסיים יום מוקדם (אין רווח); `saveBonus` של יום ראשון משולם **רק אם** `lastServerTime` (סנכרון אחרון) ≥ תחילת יום ראשון **או** המכשיר לא סונכרן ≥7 ימים (אופליין אמיתי): כך קפיצת שעון ליום ראשון כשהמכשיר מחובר לא מקדימה בונוס; השרת מצמיד `ts` עתידי ל-`serverNow+5min` (11 §6.4); סטייה >2 דק' = טלמטריה להורה | שעון −2 ימים → `perSkillPerDay` לא מתאפס; שעון +10 ימים עם סנכרון טרי → `saveBonus` לא משולם עד שה-`serverTime` מגיע |
-| UC-16 | **אזור זמן של המכשיר ≠ משפחה** | `DayKey` לפי `tzOffsetMin` של האירוע (אזור הזמן של המכשיר) עם גלגול 04:00 (§10.1); חלון שבת לפי עיר המשפחה עד שההורה מגדיר "עיר נסיעה" (01 DD-31 `travelCity`); שבוע היעד המשפחתי נגזר מ-`DayKey` (ראשון→שבת) של המכשיר שבו נוצר האירוע | אירועים מ-`America/New_York` נספרים ליום המקומי שלהם; `familyGoal.week` יציב לסדר הגעה |
+| UC-16 | **אזור זמן של המכשיר ≠ משפחה** | `DayKey` לפי **עיר המשפחה** (00-C3): `tzOffsetMin` של האירוע הוא ההיסט של `family.tz`, או של "עיר הנסיעה" (`family_prefs.travel.city`, 01 DD-31) כל עוד היא מוגדרת; גם חלון השבת לפי אותה עיר; שבוע היעד המשפחתי = ראשון 00:00 → שבת 23:59 באותה עיר. בלי עיר נסיעה, ילד בניו יורק משחק "ביום הישראלי" (ההורה רואה באנר, 01 DD-31) | אירועים מ-`America/New_York` בלי עיר נסיעה → `DayKey` ישראלי; עם עיר נסיעה → יום מקומי; `familyGoal.week` יציב לסדר הגעה |
 | UC-17 | **ניתוק באמצע משחק מרובה-מכשירים (CO-3)** | `boss_defeated{participants}` נפלט **פעם אחת** על ידי ה-`CoopRoom` (00 E5, התקבל) עם `id` יחיד ומסונכרן לכל המכשירים; הילד שהתנתק מקבל את התיבה שלו בכניסה הבאה (היא על המדף); אם לא השתתף כלל (`participants` בלי הילד) אין תיבה, ואין קנס; **רמת המדורה עולה רק מאירוע ה-DO** — אור שנתרם בזמן ניתוק ממוזג למד הערב הבא, לא לרמה (§7.6, F9 GAP-21) | אותו `id` שמגיע משני מכשירים → תיבה אחת לכל משתתף; `fireLevel` אחרי המיזוג = מספר אירועי העלייה הייחודיים |
 | UC-18 | **K1 במצב מדריכה יותר מדי** | `mentor_session_completed` לכל היותר **1 ביום** (`mentorSessionsPerDayMax`), ≥3 דק'; 15 מטבעות + 60 XP על **ההתקדמות שלה**; אף מטבע על תשובות של K2; `coopIdle` לא משלם; הפעלה דורשת הגדרת הורה (10 §6.13, ברירת מחדל כבוי) | שני מפגשי חונכות ביום → grant אחד; מפגש של 2 דק' → 0 |
 | UC-19 | **אגירה** | `hoardingAlarm` (§12.3): יתרת "להוציא" > 4 שבועות הכנסה במשך 3 שבועות → בעונה הבאה פריטים חדשים ב-C/D; **לא מורידים הכנסה ולא לוקחים כסף**; חיסכון גבוה בכוונה = הצלחה, לא אזעקה; תצוגה: מעל 9,999 מוצג "9,999+" (`maxDisplayedCoins`), היתרה האמיתית נשמרת | fold עם 12 שבועות הכנסה ו-0 הוצאה: יתרה = Σ הכנסה, `hoardingAlarm=true`, שום grant שלילי |
@@ -2041,7 +2041,9 @@ met      = goal > 0 && progress ≥ goal
   "paysOncePerSkill": true,
   "dayKeyMonotonicPerDevice": true,
   "shabbat": { "source": "@hebcal/core", "window": ["candle-30m", "havdalah+30m"], "xpCounts": true, "coinsGemsChests": "deferToAfterWindow", "appliesBySessionStart": true },
-  "dayRolloverHour": 4,
+  "dayKeyTz": "family.tz|family_prefs.travel.city",
+  "retainedOn": "review_rung_passed.rungDays>=30",
+  "rapidGuessReads": "rtMsScored",
   "levelModeNeverEarns": ["placement", "benchmark"],
   "levelRevertedTakesBack": false,
   "parentRefund": { "unequipToPrevious": true, "returnToJar": "spend", "mailboxNote": true, "takenAwayAnimation": false },
@@ -2081,7 +2083,8 @@ met      = goal > 0 && progress ≥ goal
 - **חוט ונגזרות (F6 #1–2):** שמות חוט לפי 11 §5.8 דרך `toEngineEvent`; `chest_earned` הוא פלט נגזר עם `chestId = hash(sourceEventId)`, רק `chest_opened` נשמר (§2.1, §6.3 כללים 1 ו-7).
 - **D1a ו-07 (F4 #7–#11):** `neverEarns` כולל `checkin_done`, `kindness_confirmed`, `bravery_step_done`, `journal_entry`, `wonder_asked` (+ invariant zod); טריגרים חדשים `braveryLadderComplete` (K1: תיבת כסף עם יהלום אחד בלבד, לא מוכרז; K2: תג + גן) ו-`makerProjectComplete`; `stretchAttempt` ל-K1/S בלבד; `offlineMission` רק ל-`mission.economy === 'offlineMission'`; הגן המשפחתי מחוץ לבור העצים (§7.6).
 - **מצב שלב (F9 GAP-13):** `levelMode`/`provenance` של `placement`/`benchmark` → 0 מענקים, חילוצים נספרים.
-- **יעד משפחתי (F5 #3, F9 GAP-44):** `profile.paused` → `effTarget = 0`; גבול יום 04:00 (`dayRolloverHour`), שבוע נגזר מ-`DayKey`.
+- **יעד משפחתי (F5 #3, F9 GAP-44, 00-C3 גרסה 3):** `profile.paused` → `effTarget = 0`; **`DayKey` = יום קלנדרי בעיר המשפחה / עיר הנסיעה** (`tzOffsetMin` של האירוע = ההיסט של עיר המשפחה), אין גבול 04:00 (GAP-44 נדחה ב-00); §2.1, §10.1, UC-16.
+- **R5 (08):** `retained` לפי `review_rung_passed{rungDays ≥ 30}` / `maxPassedDays` ולא לפי ה-rung הנוכחי (באג K2); `paysOncePerSkill` ל-`review_rung_passed` לפי `(skillId, rungDays)`; הניחוש המהיר קורא `rtMsScored` (§2.1, §2.6, §4.1).
 - **שבת (F5 #4, F9 GAP-14d):** §10.3 — `applyEvent` מאפס מענקים בחלון לפי `ts`, בלי תלות ב-UI; החלון חל לפי תחילת המפגש (`appliesBySessionStart`); בדיקות ב-§14.1 ואינווריאנט 13.
 - **תיבות משימה (F9 GAP-37):** ≤1 ביום, XP עד 3, חשיפה בפרק הבא (מכתב + מדף).
 - **חנות וצנצנות (F9 GAP-38/42/10/09):** ביטול הורה של פריט לבוש/מוצב (§7.3); "החנות סגורה" = חלונות הילד ושעת השינה בלבד; `saveBonus` על `max(0, minBalance)` ושבוע משיכת-יתר = 0; מיזוג `neighborhood_layout` LWW למשבצת עם החזרת הפריט למלאי (§7.7).
