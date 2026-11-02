@@ -659,6 +659,7 @@ K_tmpl = 0.01;                           τ_T ← clamp(τ_T − K_tmpl·w·(x �
 
 * **צירי מיקום באנגלית** (05 §3): ‏`english.oral_vocab` = עמוד שדרה מ-`E.VO.*.REC`; ‏`english.listening` = `E.OR.L.*.REC`; ‏`english.letter_sounds` = `E.PH.*.GPC` לפי סדר היחידות; ‏`english.decoding` = `E.PH.*.BLEND`. השם `english.listening_vocab` שהופיע בטבלת E3 של K1 הוחלף ב-`english.listening`.
 * **בדיקה:** `questionnaire-map.json` עובר ולידציה מול `ContentIndex` ב-CI (כל מיומנות קיימת, או מסומנת `provisional`). כל מיומנות שבשאלון ואינה `placementEligible` עדיין מקבלת תצפית-פסאודו.
+* **פריסה (fan-out):** המזהה הזמני נשמר גם כ-`alias` ב-`ContentIndex.aliases[questionId] = [{skillId, weight}]` (F3 #3), ותצפית-פסאודו אחת מתפרסת לכל המיומנויות הממופות: `w = questionnaireWeight × weight` (0.7 × 1.0 = 0.7; 0.7 × 0.5 = 0.35 למשל ב-`M.NUM.COMP.COUNT10`). `partly` מפצל כרגיל (§3.3).
 
 ### 3.4 האלגוריתם (לכל ציר)
 

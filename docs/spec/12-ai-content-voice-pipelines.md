@@ -765,7 +765,7 @@ Return JSON per schema.
 
 **Output schema:** `{status, reason, title{plain}, pages[{text{m,f,pl,n}, scene{bg, characters[], props[]}}], comprehension[{q{m,f,pl,n}, correct, distractors[]}], target_words_used[], ambiguous_words[]}` — כל השדות required, מבנה כמו §2.4.
 
-**עיבוד:** V08 decodability (K2 — כל מילה ⊆ ALLOWED_WORDS ∪ FUNCTION_WORDS אחרי הסרת קידומות; כשל אחד = הסיפור חוזר ל-revise עם רשימת המילים הבעייתיות), V09, V10; `scene` ממופה ל-`imageRef` מתוך ספריית רקעים ומדבקות (P6) — **אין יצירת תמונה בזמן ריצה**.
+**עיבוד:** **מיפוי 1:1 ללקסיקון (K2, 04 §5.5):** כל טוקן בפלט, אחרי הסרת קידומות מותרות (ו/ה/ב/כ/ל/מ/ש), חייב להתאים **בדיוק** לרשומת `unpointedMale` אחת ב-`lexicon.he.json` (ALLOWED_WORDS = רשימת `lexId` → `unpointedMale`); **הטקסט המנוקד של K2 מועתק מהלקסיקון (`pointed`) ולעולם לא נוצר ע"י Nakdan/Phonikud**; טוקן בלי התאמה מדויקת = V08 fail → revise עם רשימת הטוקנים. V08 decodability (K2 — כל מילה ⊆ ALLOWED_WORDS ∪ FUNCTION_WORDS אחרי הסרת קידומות; כשל אחד = הסיפור חוזר ל-revise עם רשימת המילים הבעייתיות), V09, V10; `scene` ממופה ל-`imageRef` מתוך ספריית רקעים ומדבקות (P6) — **אין יצירת תמונה בזמן ריצה**.
 
 ### 2.6 פרומפט Batch #1 — סולמות רמזים ושבח
 
@@ -833,7 +833,8 @@ Return JSON per schema.
  └──────────────────────────────────┘                     10 enrich (Haiku 5.5: per-child variants, hints) ·
                                                            11 validators · TTS render (Azure/bake-off winner) ·
                                                            12 pack build + sha256 → R2 → notify devices
- CHILD DEVICE: 13 game appears in child's island ("משחק חדש מהמחברת!") · items → SRS queue (+1/+3/+7 …, D9)
+ CHILD DEVICE: 13 game appears as a map node per 09 F4 (label "משחק חדש מהמחברת!"; K2: next episode's review slot) · items → SRS queue (+1/+3/+7 …, D9)
+               gender/variant change later → job `photo.rerender_variants` (renders the missing m/f/pl lines, silent download; 10 AC-25 scope)
                                                                                nightly: loudness re-normalize ──► (runner)
 ```
 
@@ -1002,6 +1003,7 @@ content_type definitions:
   1. "בשביל מי המשחק?" — K1 / K2 / K3 / כולם (ברירת מחדל מהתיוג).
   2. "מה זה?" — **שיעורי בית שצריך להגיש** · **חומר ללמוד למבחן/הכתבה** · **סתם לתרגול** · **סיפור שהילד כתב**.
   3. מתמטיקה: "התשובות שחישבנו נכונות?" (מוצגות רק להורה; מחושבות בקוד). אם בדף יש תשובות של הילד — סימון נכון/לא נכון שקט, להורה בלבד.
+  3א. **סימון מתמטי מהדף (03 §1.5):** אם זוהה סימון שונה מהגדרת הילד (`·` במקום `×`, `÷` במקום `:`, סימני פריטה/נשיאה בשורה) — שורת אישור: "בכיתה כותבים · במקום ×. לעדכן?" — `notation.*` של הילד משתנה **רק** ב-✓; לעולם לא מחליפים תצוגה בשקט.
   4. כתיב מסיפור/מחברת של הילד: "אילו מילים לתרגל?" (ההורה מסמן; ברירת מחדל: אף אחת — §3.10).
 - כפתור ראשי: **"צור משחק"** (וכיתוב קטן: "המשחק יהיה מוכן תוך פחות מדקה").
 

@@ -1044,7 +1044,7 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
   - % nikud: 100 → 50 (hard vowels only) → 0
   - words with multiple readings
   - sentence length
-- **Failure:** the goggles "lend" the nikud for 2 seconds (a hint) without lowering the track. Only the engine moves the track.
+- **Failure:** the goggles "lend" the nikud for 2 seconds (a hint) without lowering the track. Only the engine moves the track. **Every lend emits `hint:lens{wordId, lexId}`** so the engine can count lens taps per 100 words (04 §6.4 rule 4: ≥8 per 100 words is a difficulty signal, never a penalty).
 
 #### MX-H07 `story-scroll` (מגילת הדרכים)
 - **Ages · Skills · Input:** K1 comprehension (literal → inference). Input: reading a short passage + choosing a route or action in the world.
@@ -1398,6 +1398,43 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
 - **Knobs:** part set, material limit, goal distance, gravity/friction presets (fixed, not child-tunable), circuit parts (K1).
 - **Failure:** no fail state; after 3 runs without success, one part glows as a suggestion; the child can keep tinkering indefinitely (creative mode earns nothing, 02 §2.7).
 - **Safety:** circuits are a cartoon battery + bulb only; no mains sockets, no alarm buttons (06 S.ENG.05, 00 B8).
+
+#### MX-H12 `rune-splitter` (מפצל הרונות) — 04 `rune-splitter`; the core K2 predictor `H.PA.PH.SPLIT`
+- **Ages · Skills · Input:** K2 (K1 as review in R-03): split a CV into consonant + vowel (`H.PA.PH.SPLIT`: "מָ — what's the first sound?" → /m/), identify and swap the vowel (`H.PA.PH.VOWEL`: "מָ and מִ, what's different?"), segment CVC into phonemes with Elkonin boxes (`H.PA.PH.SEG`: דָּג → 3), delete a phoneme (`H.PA.PH.DEL`: "סַבָּא without /s/" → אַבָּא). Input: tap **sound buttons** (speaker icons that play /m/, /a/, /s/; never letters-as-text for the PA items), drag a **vowel tile** onto a rune, tap boxes.
+- **Rules:** a CV rune (pre-baked glyph, §2.3) blocks a gate. Tap the sound button of its first sound → the rune **splits** into a consonant half and a vowel half with a satisfying crack; the gate opens. Shō: "which vowel is inside?" (drag the vowel tile to rebuild a different rune: מָ → מִ, the picture changes from "מָה?" to "מִי?"). Ten: Elkonin boxes — a CVC word's picture sits on 3 boxes; tap a box per sound in order (RTL); each box lights with its sound. Ketsu: deletion — "קוֹף without /k/" → the rune loses its first half and becomes אוֹף (nonsense is fine; ניצי giggles, the friend comes out anyway).
+- **Learning = action:** the split *is* the key; a correct first sound physically breaks the rune. Blending (MX-H02) is the reverse motion, so the two mechanics share the anvil/rune art and the child sees "build" and "break" as one idea.
+- **Feedback:** every sound button plays the human-recorded phoneme (00 E9 HREC, never TTS for isolated consonants); after a correct split both halves say their sound, then the whole rune says the CV again (segment → blend check). Wrong button: the rune hums its real first sound (informative), no buzzer.
+- **Knobs:** CV set (from 04's letter blocks B1–B5 and vowel order), number of sound buttons (2 → 4), whole-CV vs. first-sound distractors (`E.PA.CVWHOLE`, `E.PA.ADDVOWEL` from 04's catalog), CVC length (2–3 boxes), deletion position (initial only for K2).
+- **Failure:** after 2 errors the correct button pulses while ניצי stretches the sound ("mmm… מָ"); after 3, a worked example with the mouth-shape card (04) and an easier CV. Never more than 3 in a row (AC-LV-6).
+- **Movement/Evening:** MV-02 clap variant for CV count; evening compact form: a shadowling shows a rune, tap its first sound to light it.
+- **Priority:** Tier B, shipped in S0 — the first non-MVP mechanic to build.
+
+#### MX-H13 `twin-detective` (בלש התאומים) — 04 `twin-detective`
+- **Ages · Skills · Input:** K2: look-alike letter pairs (`H.LK.VIS.<PAIR>`: ד/ר, ב/כ, ה/ח, ו/ז, ג/נ…; a pair is served only when **both** letters are ≥70% known, 04), final forms (`H.LK.FIN`), dagesh and shin dot (`H.LK.DAG`, `H.LK.SHIN`), letter vs. digit vs. picture (`H.PR.UNIT`). K1: print ↔ handwriting (`H.HW.CURS.REC`). Input: drag a magnifier over a row (the "lens" from MX-H01 re-used as a detective's glass) + tap.
+- **Rules:** the shadowlings swapped "twin" letters on the camp signs. A row of 6–8 runes; find **all** the ד (distractors ר). Each correct find pops the rune into the jar; the magnifier **animates the distinguishing feature** (the ד's corner vs. the ר's curve; the dot of שׁ on the right) when hovering (04: "animation that highlights the distinctive feature"). Ten: memory pairs (ד ↔ דָּג picture, ר ↔ רַכֶּבֶת). Ketsu: "fix the sign" (שָׁלוֹמ → שָׁלוֹם).
+- **Learning = action:** only the real twin lifts under the glass; a wrong one "slides" and shows its own sound + its feature.
+- **Feedback:** a found rune says its sound (sound-first, 00 B6); a wrong tap plays the distractor's sound and highlights the feature difference side by side for 1.0s.
+- **Knobs:** pair (from 04 §2.3א), row length (4–8), number of targets (1–4), feature animation on/off, K1 handwriting fonts (2 hands).
+- **Failure:** after 2 errors the feature animation stays on; after 3, ניצי points at one target and the row shrinks to 4. Pair-specific errors feed 04's `E.VIS.<PAIR>` (never a merged "visual" error).
+- **Evening:** compact form — a shadowling wears a letter mask; tap the matching twin on the sign.
+
+#### MX-H14 `writing-studio` (סטודיו כתיבה) — 04 `writing-studio`; not tracing (04 P8)
+- **Ages · Skills · Input:** K2: invented spelling with letter tiles (`H.SP.INV`: "how do we write מָה?" → the first sound's letter, then a letter per CV), short decodable words with final forms (`H.SP.CVC`: יָם, דָּג, שָׁם), labelling a drawing (`H.WC.EM.LABEL`), **joint writing with a parent** (`H.WC.EM.JOINT`, Aram & Levin: 7 weeks × 3/week). Input: drag tiles into slots; parent prompts on screen (same layer as K3 lap prompts, §15.3).
+- **Rules:** a studio tent in the neighborhood. A purpose first, never "write this word": a birthday card for a friend, a shopping list for Shabbat, a sign for the room, a "letter to the campfire" (04 §14.4). The child **says** the word, taps the sound button per sound, then drags a tile for each sound. The parent-mediation script runs on screen for the adult ("שאלו: מה הצליל הראשון? תנו לו למצוא את האות"), one prompt per step, 04 §14.4 wording. **Invented spelling is expected and accepted** (`E.SPL.PHON` is logged as "expected", never marked wrong in gan). The finished card/sign appears **in the world** (on the tent, in the mailbox of the friend, on the campfire).
+- **Learning = action:** the written word *is* the object (the sign is readable in the neighborhood; the shopping list fills the camp kitchen).
+- **Feedback:** the studio reads the child's tiles back exactly as written (phonetically, from the HREC bank) so the child hears what they wrote; no red marks. For K2-advanced CVC items with a final-form slot, the slot shape hints the final letter.
+- **Knobs:** tile set (letters known ≥70%, plus 2 unknowns), slots shown/hidden, parent-mediated vs. solo (solo only after ≥3 mediated sessions), purpose template.
+- **Failure:** no fail. If the child stalls 10s, the sound button of the next sound pulses; after 20s the parent prompt suggests "say it slowly together".
+- **Phygital (00 C10):** every studio piece can be printed (rune-scroll) and the real handwriting happens on paper; in-app accuracy is never the measure. Safety tags per C13 on the paper mission.
+
+#### MX-H15 `word-machine` (מכונת המילים) — 04 `word-machine-oral`, `agreement-builder`, `sentence-lab`
+- **Ages · Skills · Input:** K2 **oral** morphology: one → many (`H.MO.OR.PL`), m → f (`H.MO.OR.GEN`), diminutives (`H.MO.OR.DIM`), word families/professions (`H.MO.OR.FAM`), verb agreement (`H.MO.OR.VAGR`). K1 **written**: agreement-builder (drag forms so the sentence "stands"), sentence-lab (grammar/punctuation). Input: tap the picture/choice (K2, voiced), drag word tiles (K1).
+- **Rules:** ברגית's contraption has an input hopper and an output chute with a lever: put in "יֶלֶד", pull the "הַרְבֵּה" lever → "יְלָדִים" comes out (voiced) and the matching picture multiplies. Levers: הרבה / נקבה / קטנטן / "מי עושה את זה?" / הוא-היא-הם. K2 chooses the output from 2–3 voiced options (the machine "proposes", the child picks; a wrong pick makes the machine produce a silly object, e.g., one giant child instead of many). Twist: irregulars (אִשָּׁה → נָשִׁים) marked as "the machine's secret drawer". K1: a sentence on a bridge of planks; drag the agreeing form (גָּדוֹל/גְּדוֹלָה) so the plank fits and the bridge holds.
+- **Learning = action:** the transformed word is what appears in the world (many children run out; the bridge holds).
+- **Feedback:** the machine always says the full pair ("יֶלֶד — יְלָדִים") after the answer; K2 never sees text for this mechanic (oral skill), only pictures + voice. All forms come from the approved lexicon (00 B3/B4), never generated.
+- **Knobs:** lever set, regular/irregular ratio, options (2–3), K1 sentence length, punctuation items.
+- **Failure:** after 2 errors the correct output is said slowly and the child just taps it; after 3, worked example. `E.MO.PLURAL_IRREG`, `E.MO.GENDER_AGR` from 04's catalog.
+- **Evening:** compact form — a shadowling holds "one"; feed it "many" to light it.
 
 ---
 
