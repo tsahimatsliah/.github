@@ -292,6 +292,7 @@
   - צימוד מכשיר בקוד QR או בקוד של 6 ספרות, ובחירת הילדים שמורשים בכל מכשיר.
   - בורר פרופילים, ‏picture-PIN ל-K1, ו-K3 נפתח רק במצב משותף.
   - ב-VS כל זה רץ **מקומית**. ה-Worker נפרס ל-staging בלי נתונים אמיתיים של ילדים. ‏RBAC (H4) והאירועים עם `familyId, childId, deviceId, sessionId, appVersion` (H5) כבר בסכמה.
+  - **רישום האירועים (`packages/shared/events.ts`, 11 §5.8) כחלק מתשתית C3, לא כתוספת מאוחרת:** סכמות zod לכל האירועים ש-10 §4.1 מונה כחסרים (`screen.enter/exit`, `app.background/foreground`, `behavior.signal`, `skill.level_changed/reverted`, `benchmark.result`, `placement.finished`, `creation.saved`, `launch.blocked`, `parent.tonight_done`, `parent.input`, `focus.span`), `item.answered` **v2** (שדות 08 §1.4: `outcome`, `chosenErrorTag`, `steps`, `representation`, `assisted`…; v1 נשאר קריא ל-replay) ו-`session.ended` עם ה-enum הקנוני של 08 §1.10. בלי זה אף מדד של 10 §4.2 לא ניתן לחישוב (10 AC-38), ולכן זה קריטריון יציאה של C3 ולא של ה-MVP.
 
 **ה-artifact:** ‏build על האייפד. ההורה עובר בעצמו onboarding מלא (כ-10 דקות), מצמיד את האייפון, ובודק את מסך הניקוד, את Rive, את הקול שנבחר ואת בורר הפרופילים. מצורף עמוד Artifact עם תוצאות ה-bake-off וטבלת היכולות.
 
@@ -507,7 +508,7 @@
    - רמה שנייה לכל ילד, עם gimmick חדש (G3).
    - ‏`03/K1-MULT` עד 6 משפחות.
 5. **1–14.3:**
-   - ‏`10/PARENT-WEEKLY`: דוח באימייל ובלוח בווב (H6).
+   - ‏`10/PARENT-WEEKLY`: דוח באימייל ובלוח בווב (H6). **המייל חסום על OPD-05 (דומיין ל-Resend, יעד C3):** בלי דומיין הדוח יוצא רק ל-PA-INBOX וללוח בווב, והמייל נדלק ברגע שהדומיין מאומת (אין שינוי קוד). הדוח השבועי הוא תבניות בלבד (10 §11.7, 12 §5) — אין תלות ב-Anthropic.
    - ‏`10/THIS-MONTH-INPUT`.
    - ‏`10/ANALYTICS-PER-CHILD-DEVICE` (H5).
    - ‏`05/EN-ISLAND-1`, ‏`R-08`, ל-K1 ול-K2 (B2).
@@ -860,7 +861,7 @@ C1–C7  O מפרסם artifact ושאלות; ממשיך ב-streams שלא תלו
 | P0-E7-S4 | בורר פרופילים | פרצופי אווטאר בלבד, בלי טקסט חובה. ‏picture-PIN ל-K1 (ברירת מחדל). ‏K3 נפתח רק דרך "מצב משותף" מאחורי מחוות הורה. מעבר מהיר שומר מצב (resume) לכל ילד |
 | P0-E7-S5 | שער הורה | Face ID או PIN, בלי חשבון (gap_audit §4.13). 3 ניסיונות ואז השהיה. נבדק ש-K1 לא עוברת |
 | P0-E7-S6 | ‏Worker staging | ‏Hono על Workers: ‏`/v1/auth/email_code/*` (request + verify, always-202), ‏`/v1/auth/bootstrap`, ‏`/v1/pairings/*`, ‏`/health` (11 §7). מיגרציית D1. פריסה ב-wrangler מ-CI. **בלי נתוני ילדים אמיתיים.** תלוי ב-Cloudflare (Q-09). אם אין, stub מקומי |
-| P0-E7-S7 | מעטפת אירועים | כל אירוע כולל `familyId, childId, deviceId, sessionId, appVersion` (H5), נשמר ביומן append-only מקומי, ונמדד בו מדד זמן החגיגות. אין SDK אנליטיקה |
+| P0-E7-S7 | מעטפת אירועים ורישום האירועים | כל אירוע כולל `familyId, childId, deviceId, sessionId, appVersion` (H5), נשמר ביומן append-only מקומי, ונמדד בו מדד זמן החגיגות. אין SDK אנליטיקה. **`packages/shared/events.ts`** (11 §5.8) עם סכמת zod לכל אירוע ברשימת 10 §4.1 (כולל 11 האירועים שסומנו "חסר"), `item.answered` v2 (08 §1.4) ו-`SessionEndReason` של 08 §1.10; בדיקת CI: כל מדד ב-10 §4.2 מחושב מ-fixture של אירועים בלבד (10 AC-38) |
 | P0-E7-S8 | ‏Audit log מקומי | כל פעולת אדמין (הוספת ילד, שינוי מגבלה, צימוד) נרשמת (H4) |
 
 #### P0-E8 ‏baseline פדגוגי וקליטת משפחה (streams a ו-c, ממשק להורה)
@@ -1105,10 +1106,10 @@ Story נחשבת גמורה **רק** כשכל הסעיפים הרלוונטיי�
 | תוכן | ולידטורים מ-12 | סכמות, מגדר, ניקוד, אורך שורה לגיל (01 §2.5), מילים אסורות, אודיו קיים | כל חבילה |
 | רכיבים | Testing Library | רכיבי UI, שער הורה, בורר פרופילים | כל PR |
 | ויזואלי ו-E2E בווב | Playwright (תמונת Docker נעוצה, E4) | צילומי RTL לפי 09 §13.2, זרימות onboarding וסשן, מסלול דטרמיניסטי בעולם (`window.__olam.world.moveTo`, `window.__olam.ready`), איסוף מדדי `window.__olam.perf`, layout-shift = 0 (14 `PQ-B-26`) | כל PR |
-| ‏Maestro (Simulator על ה-Mac) | Maestro 10 זרימות (14 §5) | מסלול זהב נייטיב, בדיקת layout-shift בצילום כפול (`PQ-T-06`) | כל build ל-`family` |
+| ‏Maestro — E2E על מכשיר (15 GAP-48) | Maestro 10 זרימות ב-`tools/e2e/maestro/*.yaml` (14 §5), מורץ ע"י הסוכן דרך Remote Control: Simulator בכל build נייטיב + **אייפד אמיתי אחד פעם בשבוע**; תלוי ב-`testID` על כל רכיב אינטראקטיבי (09 §12) ובקישור עומק ל-build `dev` בלבד `olam://test/fixture?id=FX-…&clock=…` שטוען fixture (15 §0.3) ומזריק שעון (11 §4.1 — ⟂VERIFY שהנתיב נוסף ל-allow-list של הסכמה; בלי זה הזרימות רצות על onboarding מלא) | מסלול זהב נייטיב, בדיקת layout-shift בצילום כפול (`PQ-T-06`), זרימות `[MAE]` של 15 (שורות 11 §12.4 #1, #10, #12, #13 ממופות לזרימות) | כל build ל-`family`; אייפד אמיתי שבועי |
 | מכשיר | build `dev` / `family` דרך ה-Mac, ‏Instruments (14 §8 `PQ-DEV-01..13`) | §10.3 | כל build ל-`family`, ולפחות פעם בשבוע |
 | **חבילת מקרי קצה `E-01…E-24`** (11 §4.18, `tools/ci/edge-matrix.mjs`) | vitest / Playwright / Maestro לפי המזהה | התקנה ראשונה אופליין (E-01), פקיעת חתימה (E-06), OTA באמצע פרק (E-05), אחסון מלא (E-04), הפרעות (E-16), Split View (E-13), Low Power/חום (E-17/18)… | **לפני C4: לפחות E-01/02/03/05/06/16; לפני MVP: כולן** |
-| **קריטריוני קבלה של המפרטים** | vitest סימולציות | 03 `MATH-AC-20…25` (קצה, probe נייר, החלפת פרופיל, מיפוי רצועה/רמה, numerals משותף), 04 `HEB-AC-19…30` (רגרסיית דהייה, החלפת פרופיל, probe), 05 AC1–AC17, 12 §10; **סימולציית מתזמן של 1,000 שבועות** (job CI אחד, `tools/eval/scheduler-sim.ts`, משותף ל-05 AC18 / 06 AC-06-22 / 07 AC-35: משקלי מקצועות, מכסות יומיות, מצב חופשה, שבת — נכשל אם מקצוע כלשהו סוטה > 15% מהמשקל שלו ב-4 שבועות) | בספרינט שמנחית `packages/engine` + `packages/content` (VS-E8, VS-E13, MVP-E3/E4); הסימולציה רצה לילית מ-MVP-E4 |
+| **קריטריוני קבלה של המפרטים** | vitest סימולציות | 03 `MATH-AC-20…25` (קצה, probe נייר, החלפת פרופיל, מיפוי רצועה/רמה, numerals משותף), 04 `HEB-AC-19…30` (רגרסיית דהייה, החלפת פרופיל, probe), 05 AC1–AC17, 12 §10; **08 §12.11 סימולציות `S-5` (reattribute: שחזור ביט-לביט), `S-6` (anomaly: `identity_suspect` ≥ 70% / ≤ 5% — מדווח ולא חוסם עד כיול), `S-7` (rollover: שנה + מעבר + שנה בלי NaN/`dueDay` בעבר)** וקריטריוני 08 §13 #11/#16; **10 §16 `AC-38…53`** (חישוביות כל מדד מ-fixture בלבד, מצבי שבת ב-4 שבתות + יום כיפור, תקרת תוכן, AL-11/15/17); **סימולציית מתזמן של 1,000 שבועות** (job CI אחד, `tools/eval/scheduler-sim.ts`, משותף ל-05 AC18 / 06 AC-06-22 / 07 AC-35: משקלי מקצועות, מכסות יומיות, מצב חופשה, שבת — נכשל אם מקצוע כלשהו סוטה > 15% מהמשקל שלו ב-4 שבועות) | בספרינט שמנחית `packages/engine` + `packages/content` (VS-E8, VS-E13, MVP-E3/E4); הסימולציה רצה לילית מ-MVP-E4 |
 | ילדים | playtest | §11 | שבועי |
 | למידה | probes על נייר | §12 | פעמיים בשבוע |
 

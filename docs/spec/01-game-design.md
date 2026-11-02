@@ -134,7 +134,7 @@ No names, silhouettes, sounds or story framing are taken from existing games. Ru
 | R-05 | **מכרות הגביש** | K2: counting, 10-frame, addition/subtraction to 20. K1: multiplication/division, place value to 10,000, fractions | Caves of crystal clusters, mine carts, rails | `MX-M01` number jet, `MX-M05` array hammer |
 | R-06 | **סדנת ברגית** | geometry, measurement, patterns, area/perimeter, Build Missions | A huge workshop yard, scaffolding, cranes | `MX-M10` measuring rope |
 | R-07 | **מצפה הפליאה** | science, world knowledge, experiments, geography of Israel | Observatory, greenhouses, map of Israel as a 3D diorama | `MX-X01` wonder telescope |
-| R-08 | **Sunny Harbor** | English (oral for K2, phonics + vocab for K1) | Turquoise-yellow harbor, lighthouse, English signs only (LTR) | `MX-E01` echo shell |
+| R-08 | **Sunny Harbor** | English (oral for K2, phonics + vocab for K1) | Harbor and lighthouse in 09's `region.englishIsle` palette (purple-teal, §2.3); Sunny herself stays turquoise + yellow; English signs only (LTR) | `MX-E01` echo shell |
 | R-09 | **מוסך גלגלון** | AI literacy, computational thinking, debugging | A workshop of bots, conveyor belts, screens | `MX-A01` remote controller |
 | R-10 | **עץ השקט** | SEL: emotions, breathing, problem solving, perspective-taking | A giant tree with a treehouse, soft light, a creek | `MX-S02` lantern breath |
 | R-11 | **שביל הגחליליות** | Mixed review in runner form (all subjects) | A twisting path through the forest at dusk | auto-run (`MX-R01`) |
@@ -156,7 +156,7 @@ No names, silhouettes, sounds or story framing are taken from existing games. Ru
   - Minimum luminance: `palette.dusk.minLuminance = 0.28` (relative luminance of the average frame). Never below it for K2/K1. For K3, `0.45`, and K3 sees dusk only, never evening (R8).
   - The fire is visible in every evening frame. Darkness never covers more than 40% of the screen area.
 - **English island** (00 B2):
-  - Accent color `palette.english = #19B7B0` (turquoise) plus yellow.
+  - **Colour tokens are 09's (00 J1):** the island frame, signs and region tint use `region.englishIsle` (`#5F37C0 / #8C5CF0 / #A8F0E9`, 09 §3) and the subject colour `subject.english = grape`. The earlier value `palette.english = #19B7B0` is **withdrawn** (it conflicted with 09; 05 references tokens only). **Sunny (CH-02) keeps her character colours, turquoise + yellow** (§4.3): the island is purple-teal, the otter in it is turquoise-yellow, so she reads clearly against it. The "English frame" that wraps English moments outside the island (bottles, Sunny Says) also uses `region.englishIsle`.
   - All signs are in English (LTR), as pre-rendered textures.
   - Entry jingle `sfx.english.enter` (3 ukulele notes) and exit `sfx.english.exit` (the reverse).
 - **Text in the world:** no 3D text (E1b).
@@ -186,9 +186,11 @@ S0 and S1 are 8 weekly chapters, each ending in a family boss (§9.3).
 | 3 | "בתוך המכרה" | Crystals, counting, carts | הקוסם הכפול (doubles and mixes up quantities) |
 | 4 | "שמונה לילות" | Hanukkah (§13) | צל הסביבון (a spinning top that has lost its letters) |
 | 5 | "הערפל עולה" | Fog on the lake, reading by context | ענן נמנום (a sleepy cloud that makes things blurry) |
-| 6 | "ספינה מחו"ל" | The English island opens, Sunny arrives | Mr. Mix-Up (mixes up English words) |
+| 6 | "ספינה מחו"ל" | The English island opens (R-08, week 6 from launch = the week of 2026-12-13; the gate opens on ~2026-12-20, 05 §15.1), Sunny arrives | **Mr. Mix-Up** = הבלגניסט (CH-04) in an island costume with a **separate en-US male voice** (§4.5; mixes up English words) |
 | 7 | "הסדנה של ברגית" | Big building, the bridge to the island | צריח עקום (a tower built crooked) |
 | 8 | "למה הבלגניסט מבולגן?" | Revealed: the Muddler sneezed because he was cold and alone outside the camp | The Muddler himself (puzzles with no "defeat"; he joins as the camp's MC) |
+
+**Pre-island phase, "בקבוקים מהים" (weeks 1–5; requested by 05 §15.1, adopted).** From launch (2026-11-08) until R-08 opens (chapter 6, ~2026-12-20) English arrives only by sea: 2–3 times a week a bottle washes up at the camp shore (the daily-surprise slot, §5.5 / §5.3 `english_bottle`) with a recording of Sunny: one short song + 2–3 words, inside the English frame, 3–5 minutes, for every child (K3 with a parent). In the story the bottles are Sunny's letters from her ship on its way to the valley; the ship is the chapter-6 beat ("ספינה מחו"ל"). K1's English placement ("המכתב של Sunny", 05) arrives in week 3 as a bottle. Bottles stay in the mailbox forever (asset IDs in §7.4; dates in §13.2 S0).
 
 **Lore discovered through play.** About 40 "pages from ניצי's diary" are hidden as secrets.
 - K1 reads them (with nikud, according to her nikud-fade track).
@@ -323,7 +325,7 @@ S0 and S1 are 8 weekly chapters, each ending in a family boss (§9.3).
 | CH-01 | **ניצי** (זיקי, גחלי) | Firefly, mascot | m | Warm yellow-orange | Main guide, scripted, everywhere | All (narration, guidance) |
 | CH-02 | **Sunny** (Juniper, Pippa) | Sea otter, lighthouse keeper | f | Turquoise + yellow | **English only** | English |
 | CH-03 | **גַּלְגַּלּוֹן** (בּוֹרְגִי, מְכוֹנִי) | Machine/robot, **clearly a machine** | m (grammatical) | Silver-steel + orange LED | AI helper: hints, AI-literacy | AI, thinking, hints |
-| CH-04 | **הַבַּלְגָּנִיסְט** (מר בלבול, הקוסם בלגן) | Shadow magician (comic villain) | m | Purple-gray + gold hat | Weekly boss, season arc, becomes a friend | Every subject (mixes them up) |
+| CH-04 | **הַבַּלְגָּנִיסְט** (מר בלבול, הקוסם בלגן) | Shadow magician (comic villain) | m | Purple-gray + gold hat | Weekly boss, season arc, becomes a friend. **On the English island he is "Mr. Mix-Up"** (island costume, separate en-US voice, §4.5) | Every subject (mixes them up) |
 | CH-05 | **הַצְּלָלוֹנִים** | Round shadow blobs, a group | pl (each one m/f at random, fixed per individual) | Soft gray-purple → glowing when lit | "Enemies" that become friends | Every subject |
 | CH-06 | **בְּרָגִית** (קוֹצִית, פַּטִּישׁוֹנָה) | Hedgehog engineer | f | Red-orange + blue overalls | Building, measuring, geometry, works in progress | Math (space), building |
 | CH-07 | **דֻּבְדּוּבָה** (מיכמש, דובית) | Large soft bear | f | Pink-lilac | Calm, emotions, Tree of Quiet | SEL |
@@ -331,6 +333,8 @@ S0 and S1 are 8 weekly chapters, each ending in a family boss (§9.3).
 | CH-09 | **משפחה** (parents, grandparents, family pet) | NPCs built by the parent | per person | — | "Camp elders", recorded voices | Personal support |
 | CH-10 | **נִיצוֹצוֹת** (the rescued friends) | Species of light creatures | per individual | By species | The collectibles, filling the hub | By species (see 4.11) |
 | CH-11 | **Pip** (Sunny's little crab) | Small crab, **silent** | — (no voice, no gender in speech) | Coral-orange + turquoise claws | Hero of K1's decodable English stories (05 §7); lives only on the English island | English reading (decodable from 05 stage S2: "Pip sat.") |
+
+**Roles in the extra-subject and future-skills content (06/07; no new characters, F4):** 07's `COMPANION` is played by existing cast members — **ניצי (CH-01)** for AI literacy, computational thinking and self-direction (`AI.*`, `TK.*`, `SD.*`), **דובדובה (CH-07)** for every `SE.*` activity and the feelings check-in (`RIT-OPEN`), **ברגית (CH-06)** for `SD.MAKER`; 07's `ROBOT`/`BOTS` are **גלגלון (CH-03)** and his bots (the only machines, G4). 06 uses **פרופסור למה (CH-08)** for science (`S.*`) and ברגית for `S.TECH`. "Hats" in 07's scripts (detective hat, inventor hat) are **costume props** on those characters, never separate characters. The content pipeline's `characterId` field takes only `CH-*` ids (07 AC-33).
 
 ### 4.2 CH-01 ניצי (mascot)
 
@@ -423,6 +427,7 @@ S0 and S1 are 8 weekly chapters, each ending in a family boss (§9.3).
   - The weekly boss (§9.3), each week in a different "magic form".
   - The face of the season arc.
   - In the finale he joins the camp as **MC of the evenings** and from then on presents the evening challenges.
+  - **"Mr. Mix-Up" on the English island (binding, 05 §4 / 12 §6.4):** the boss of R-08 (chapter 6) and the "friend" voice of MX-E07 is הבלגניסט **in an island costume** (sailor's cap over the top hat, the smoke cloak tied back). He has a **second, separate en-US male voice** (12 voice bible: "חבר / Mr. Mix-Up"): one voice = one language (00 B2). **CH-04's Hebrew voice never speaks inside the island, and the Mr. Mix-Up voice never speaks outside it**; every `MIXUP` line is tagged `lang:'en'` and plays only with `englishContext=true` (05 AC24). He never says a Hebrew word on the island, not even his own catchphrases; his English catchphrase is "Is this a hat? …No? Oh! It's a cat!" (he "muddles", the children fix it). Asset ids under `en/char/mixup/*` (§7.4).
 - **Voice direction:**
   - A theatrical male baritone, over-the-top "show" style, with circus-host rolled Rs.
   - Never threatening, never a low growl, no evil laugh.
@@ -516,6 +521,7 @@ S0 and S1 are 8 weekly chapters, each ending in a family boss (§9.3).
   - milestone praise (T3 only);
   - a weekly "family clue" for the boss (optional).
   - Each recorded line plays at most 1 time per day. Clips: up to 12 per parent and 6 per grandparent.
+  - **Format, storage and distribution are 12 §6.11's** (F9 GAP-67): recorded in the parent area ("הקולות שלנו"), `expo-audio` preset HIGH (AAC mono 48 kHz, `.m4a`), **each clip ≤10 s** (the recorder stops at 10 s), stored at `family/{familyId}/voice/{speaker}/{PV-id}.{variant}.{take}.m4a` in the private R2 bucket plus the device cache, listed in the `family-voice.json` manifest and shipped to every family device as a **family content pack** through the normal pack catalog (11 §4.4). **Re-recording replaces**: a new take is uploaded and the manifest's chosen take moves to it; the old take is deleted within 24 h. Only clips with `review:"parent_ok"` ever play. Nothing is sent to any AI vendor (00 E6a).
 - **The child's name:** recorded by the parent (00 E9). It is never TTS.
 - **Reducing self-focus** (Kucirkova): in 1 of every 3 stories, the hero of the scene is a family member ("Grandma Rina found a lost friend in the garden, help her count").
 - **Do:** treat family members as heroes who help.
@@ -604,7 +610,7 @@ The adaptive engine fills the content slots. These are the default durations. `E
 
 | Time | Segment | What happens | Content (engine) | Notes |
 |---|---|---|---|---|
-| 0:00–0:40 | **Arrival + Plan** | The פנסון wakes up in the tent, ניצי says "אור בוקר". Optional feelings check-in (1 tap, every other day). Lost Friends Board → choice of 2 levels | — | Voice only, big pictures |
+| 0:00–0:40 | **Arrival + Plan** | The פנסון wakes up in the tent, ניצי says "אור בוקר". Optional feelings check-in (MX-S01, 1 tap, ≤20 s, skippable with "לא רוצה להגיד"; **band G: every other day, in the first episode of that day only** — 07 §2.4 `RIT-OPEN` follows this cadence). Lost Friends Board → choice of 2 levels | — | Voice only, big pictures |
 | 0:40–2:00 | **Warm-up review: "בוקר טוב לחברים"** | Walk through the neighborhood: 3–4 friends rescued earlier are "asleep". Wake each one by doing its item ("which friend says /b/?", tap the right one; "show me 4 crystals") | 3–4 due items from the SRS ladder (gap D9) | Short, easy (≥90% expected) |
 | 2:00–2:45 | **Level: Ki (introduce)** | Entering the level through the gate. ניצי demonstrates the gimmick with the new item, in a safe place | New skill: 1 item, worked example | No mistake possible (an action with a single target) |
 | 2:45–4:15 | **Level: Shō (develop)** | The gimmick plus movement/height. 2 friends rescued. **Movement moment** (MV-*) ≤45s | 4–6 items of the new skill | Hint after 2 errors (gap D10) |
@@ -624,7 +630,7 @@ The adaptive engine fills the content slots. These are the default durations. `E
 
 | Time | Segment | What happens | Content |
 |---|---|---|---|
-| 0:00–1:00 | **Arrival + Plan** | Lost Friends Board (map of regions with silhouettes). Choice of quest + flame (Cozy/Stretch/Mystery) + goal and prediction | — |
+| 0:00–1:00 | **Arrival + Plan** | Feelings check-in (MX-S01: area → word of 9 → intensity 1–3, ≤20 s, **every episode for band S**, skippable, 07 §2.4). Lost Friends Board (map of regions with silhouettes). Choice of quest + flame (Cozy/Stretch/Mystery) + goal and prediction | — |
 | 1:00–3:00 | **Warm-up review: "סיור בוקר"** | A "guard patrol" in the neighborhood: wake 6–8 friends (fast fact fluency only after mastery, gap D11). Optional time-trial of the patrol against *her own* record (ghost) | 6–8 due items, mixed between subjects |
 | 3:00–3:45 | **Level A: Ki** | Introduce the gimmick (worked example + "your turn") | New skill |
 | 3:45–5:45 | **Level A: Shō** | Develop + movement moment (≤60s, optional seated) | 6–8 items |
@@ -639,7 +645,7 @@ The adaptive engine fills the content slots. These are the default durations. `E
 
 | Time | Segment | What happens |
 |---|---|---|
-| 0:00–0:30 | **Hello** | The parent opens (gate). פופי peeks out of a box: "!קוּקוּ" + the child's name (recorded by the parent) |
+| 0:00–0:30 | **Hello** | The parent opens (gate). פופי peeks out of a box: "!קוּקוּ" + the child's name (recorded by the parent). Optional parent-led check-in (4 faces, nothing stored; band T, 07 §2.4) |
 | 0:30–1:00 | **Plan** | 3 big doors with pictures (animals / colors / music). The child points, the parent taps, or the child taps |
 | 1:00–2:40 | **Peekaboo level** | 3 friends hiding in a playroom diorama (2.5D isometric, fixed camera). Tap a bush → it shakes → a friend appears and says its item ("!פָּרָה! מוּ!" / "!אָדֹם!" / "!שְׁנַיִם!"). **There are no wrong answers**: every tap does something fun. A parent prompt on screen: "שאלו: איפה הפרה?" |
 | 2:40–3:20 | **"Copy me" (MV-01)** | A 30–40s song with movements (clap, arms up, stomp), parent with the child, no sensing |
@@ -753,6 +759,8 @@ export interface LevelTemplate {
   id: string;                    // 'lv-r05-numberjet-01'
   region: RegionId;              // 'R-05'
   gimmick: MechanicId;           // 'MX-M01' (exactly one; CI fails if >1 new gimmick)
+  mode?: 'normal'|'placement'|'benchmark'|'review'|'boss'|'event'; // default 'normal'. Set per instance by the planner (08 §1.10 Session.mode / EpisodePlan.mode).
+                                 // 'placement'|'benchmark' → 02 §2.7 neverEarns (no coins/XP/chests); rescues still count for the collection (G2); 08 §3.6 UI rules (no right/wrong feel).
   ages: ('k1'|'k2'|'k3')[];
   grid: { w: number; h: number; tileSize: number; elevations: number[][] }; // camera-agnostic
   chunks: Array<{ beat: Beat; chunkId: string; origin: [number, number] }>;
@@ -1205,7 +1213,7 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
   - K1: a nuanced word + intensity 1–3.
   - Input: tap.
 - **Rules:**
-  - Optional at the start of an episode (default every other day, can be turned off).
+  - Optional at the start of an episode (07 `RIT-OPEN`). **Cadence by band (07 §2.4, in sync with §5.3):** S (K1) every episode; G (K2) every other day, first episode of that day only; T (K3) optional, parent-led. ≤20 s, always skippable ("לא רוצה להגיד" is a legitimate answer and is never flagged); the parent can turn it off.
   - דובדובה validates ("מותר להרגיש…") and offers a fitting tool.
   - **Data is not stored, or stays on the device only** (00 C8).
 
@@ -1436,6 +1444,40 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
 - **Failure:** after 2 errors the correct output is said slowly and the child just taps it; after 3, worked example. `E.MO.PLURAL_IRREG`, `E.MO.GENDER_AGR` from 04's catalog.
 - **Evening:** compact form — a shadowling holds "one"; feed it "many" to light it.
 
+#### Names used by 06/07 that are not catalog IDs (mapping, F4 #15)
+
+07 §7.1 and 06 §4.5 name activities by their own logical names. They map onto the catalog as **modes/variants** of existing mechanics, or are **FS screens** (07-owned UI that is not a level gimmick and therefore outside the "one gimmick per level" rule). `skills.json` / 07's activity files may use either name; `mechanics.aliases.json` (04's alias table, extended) carries the mapping.
+
+| 06/07 name | Catalog | Notes |
+|---|---|---|
+| `blicket` | `MX-X02:blicket` | Content skin on the test-it lab (already adopted) |
+| `fair-test-builder` | `MX-X02:fair-test` | The "change one thing" variant of MX-X02; band S |
+| `breath-mic` | `MX-S02:mic` | Lantern breath with optional microphone onset (RMS only, no recording; AC-MV-4 applies) |
+| `ladder` (bravery) | `MX-S06` | Parent-ticked steps; end-of-ladder gem per 02 (`braveryLadderComplete`, never announced) |
+| `build-sim` | `MX-X05` | Adopted |
+| `code-strip` / `code-stack` | `MX-T02:strip` (band G, RTL per 00 B9a) / `MX-T02:stack` (band S, vertical); simple 3-card strips in K3/K2 = `MX-A01` | Arrows are absolute screen directions (B9b) |
+| `map-place` | `MX-X03:place` | Place a card on the Israel/world diorama |
+| `shelf-3`, `route-planner`, `passport`, `season-track`, `rule-builder` | **FS screens** (`FS-SHELF3`, `FS-ROUTE`, `FS-PASSPORT`, `FS-SEASON`, `FS-RULES`), owned by 07 | Not level gimmicks; they appear inside `ritual_mid` / FS episodes and in the hub. A screen that later carries a level gets an `MX-*` id in this catalog first |
+
+#### 7.4 English content asset IDs (what 12 §6.10.1 produces for this document; `LICENSES.json` and pack manifests use these exact ids)
+
+All ids are kebab-case under `packages/content/en/` (§0 conventions). `<nn>` is zero-padded.
+
+| Asset family | ID pattern | Count at S0 | Used by |
+|---|---|---|---|
+| Bottles from the sea | `en/bottles/bottle-<nn>` with clips `en/bottles/bottle-<nn>/song.m4a` and `en/bottles/bottle-<nn>/word-<k>.m4a` (k = 1..3), plus `card.png` (the bottle's picture) | 15 bottles (S0: `bottle-01…15`; CANDLES = `bottle-11`, ABC = `bottle-01`, K1 placement letter = `bottle-06`) | §13.2 S0, §5.3 `english_bottle` |
+| Tricky-word clips (MX-E05) | `en/mx-e05/tw-<word>` (e.g., `tw-the`, `tw-said`) with `say.m4a`, `beam.png` | per 05 `TW.*.READ` list | MX-E05 lighthouse |
+| Decodable ship-log pages (MX-E06) | `en/mx-e06/log-s<stage>-<nn>` (stage = 05 phonics stage, `log-s2-01` = "Pip sat.") with `page.png`, `read.m4a` (Sunny), `words.json` | per 05 `RD.*` | MX-E06 |
+| Dock-talk dialogue trees (MX-E07) | `en/mx-e07/dock-<topic>-<nn>` (`dock-hello-01`) with `tree.json` and `lines/<lineId>.m4a` (speaker `sunny` or `mixup`) | per 05 `OR.S.*` | MX-E07 |
+| Minimal-pairs bank (MX-E01 `pairs`) | `en/pairs/<word>.<voice>.m4a`, voice ∈ `h` (human, 12 session A), `f1`, `f2`, `m1`, `m2` (the 4 adult TTS talkers) | ~70 words × 5 | MX-E01 `pairs` (AC-MX-8) |
+| Phonemes, letter names, nonsense words | `en/hrec/ph-<ipa-safe>` (e.g., `ph-th-voiceless`), `en/hrec/ln-<letter>`, `en/hrec/nw-<word>` | 45 / 26 / ~60 (05 §6) | MX-E03, MX-E01 |
+| Songs | `en/songs/<song-id>` (`vocals.m4a`, `backing.m4a`, `lyrics.json`) | ~27 (05) | MX-E02, bottles |
+| Pip (CH-11) | `en/char/pip/<state>` (`idle`, `wave`, `click`, `carry`) as Rive artboards + `sig.m4a` (2-note click) | 1 sheet | MX-E06, island |
+| Mr. Mix-Up (CH-04 island form) | `en/char/mixup/lines/<lineId>.m4a` (en-US "friend" voice only), `en/char/mixup/costume` (Rive) | per 05 `MIXUP` lines | R-08 boss, MX-E07 |
+| Wordlings (sparkling.word) | `en/wordlings/<word>` (`star.png`, `say.m4a` in Sunny's voice) | one per vocabulary word | §4.11, collection room |
+
+Rules: every clip carries `engine:"human"` or `engine:"tts"` in the manifest (phonemes, letter names and nonsense words are human-only, AC-MX-3); no asset under `en/` is referenced from a Hebrew scene (AC-MX-3); a missing `en/` asset falls back per DD-38 and logs `asset.missing`.
+
 ---
 
 ## 8. Learning through movement (G6)
@@ -1545,13 +1587,15 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
   finaleDamage = remaining HP (the finale always finishes the boss if all the participants took part)
   ```
   So the family wins if each child completes ~80% of their planned episodes. Each child contributes **equally in display terms**.
+- **Who counts (F9 GAP-63, binding):** `Σ_child` runs only over children who are **not paused** (10 FAM-03 `profile.paused`, 02 §10.1 `effTarget = 0`) **and** who have played ≥1 episode this week by the time the finale starts; a child who was absent all week (sick, away) is simply not in `bossHP` for that week and is never "missing". The **finale completes with any present subset** (even one child; even K3 alone with a parent as `assist`): `finaleDamage = remaining HP` for the children present. An absent child's rescues/evening damage from earlier in the week still count. The boss is never "waiting for" anyone.
+- **Boss day on a Yom Tov / quiet day (DD-06):** if the chosen boss day (default Thursday) is a Yom Tov or a quiet day (00 B7a), the finale window moves to the **previous weekday evening** that is neither (e.g., Wednesday); if the whole Thursday–Friday-noon window is blocked, the boss sleeps and carries over (next bullet). No boss ever appears on a quiet day (AC-SHAB-2).
 - **If they didn't make it:** the boss "falls asleep" at the edge of the camp with its meter frozen, and carries over to next week. No loss, and no "the boss beat you".
 - **A parent can take part:**
   - a recorded clue ("רמז מאבא") that opens the finale, plus 1 tap;
   - or an "Abba/Ima" role in the finale (an extra player in same-device mode, giving light to the weakest one, `assist`).
 - **Reward (numbers owned by 02 §6.2, trigger `bossDefeated`):**
   - K1: a **silver chest** (40 coins + 1 gem + the next item on the silver track). K2: a **wood chest** (3 coins + next item). K3: nothing extra (participation is the reward; the family envelope comes with the weekly goal).
-  - +1 family fire level (the boss and the weekly goal are two separate level-ups; see §10.4).
+  - +1 family fire level (the boss and the weekly goal are two separate level-ups; see §10.4). In CO-3 the `boss_defeated{participants}` event is emitted **once by the `CoopRoom` Durable Object** (00 E5, DD-34) with one id; in CO-1/CO-2 the host device emits it once with the shared `coop_session` id (§21 UC-06). Every child's chest derives from that single event (02 UC-17).
   - Everyone: the boss joins as a VIP for that week (a cute version wanders the camp) and the "family treasure" is that VIP plus the fire level, not a separate chest.
 
 ### 9.4 The runner: "מרדף הגחליליות" (MX-R01, Temple Run–like)
@@ -1600,7 +1644,7 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
 
 - **Structure:**
   - The campfire in the center.
-  - **3 neighborhoods**, one per child (K1 on the right, K2 in the middle-left, K3 = an entrance to the playroom). The neighborhood's color is the child's chosen color.
+  - **3 neighborhoods**, one per child (K1 on the right, K2 in the middle-left, K3 = an entrance to the playroom). The neighborhood's color is the child's chosen color. **v1 supports exactly 3 children** (F9 GAP-53): the hub layout, the turn ring (§12.5) and CO-1/CO-2 zones are built for three; 11's schema allows N children, so 10 FAM-03 **blocks adding a 4th child** with the message "בגרסה הזו יש מקום לשלושה ילדים" (a v2 item: a 4th neighborhood behind the campfire).
   - Gates to regions around the edges.
   - Buildings that unlock.
 - **The rescued friends live in the neighborhood of the child who rescued them:**
@@ -1658,6 +1702,7 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
   - (b) a weekly boss defeated;
   - (c) a seasonal event completed (by ≥1 child reaching the event treasure);
   - (d) Lag BaOmer (§13.2) gives +2.
+  - **Only those four events raise the level** (02 §7.6, F9 GAP-21). Light contributed in co-op (`coop_light_share`), logs, lanterns (`campfire_lantern_lit`) and offline merges never produce a level-up by themselves. In CO-3 the level-up source is the `CoopRoom`'s single `boss_defeated`; contributions made while a device was disconnected are merged as light into the **next** evening's meter, never as a retroactive level (11 §10.2).
 - **Visual ladder:** levels 1–10 are the **flame sizes** of the first "ring" (99 Nights' 6 levels → our 10). From level 11 on, every 10 levels add a **color ring** of embers around the fire (ring 2 = the second season's color, and so on), the fire keeps its maximum size and the lit zone stays at its maximum radius. A new season therefore **adds** a ring color to the fire, it never shrinks it. `fireLevel` is unbounded in config (`campfire.fireLevel.max: null`, `flameStepsPerRing: 10`).
 - **Lit zone in the evening** widens with levels 1–10 (radius `6 + 0.6·level` tiles, capped at 12) and shortens the shadowlings' path (§9.5).
 - **Region unlocks (binding rule; replaces the vaguer "fire opens regions"):** a region opens when **both** hold:

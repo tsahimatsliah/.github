@@ -210,6 +210,8 @@ Rules:
 | expo-device / expo-battery | SDK map | `modelId → ptPerMm` (A7, 09 §4.1; unknown model → 6.42 pt/mm + telemetry) / Low Power Mode (§4.7) |
 | *(deferred)* `olam-gamecontroller` Expo Module | — | **Not in the vertical-slice allow-list.** iOS GameController (DualSense/MFi): stick = move, X = jump, haptics map → controller rumble. Allowed after C4, never required by any mechanic (00 E3, 09 PC-2). ADR when picked up. |
 | *(tiny)* `olam-thermal` Expo Module | — | `ProcessInfo.thermalState` + `os_proc_available_memory()` (§4.7). ~40 lines Swift; written at C4 perf pass |
+| *(local)* `modules/vision-privacy` Expo Module | — | Swift, ~80 lines: `VNDetectFaceRectanglesRequest` (rects grown 20 % → Skia blur σ=25 + pixelate) and `VNRecognizeTextRequest` for the "non-family names" list when Hebrew is supported — the **on-device face/name blur that runs before any photo upload** (12 §3.3, §8.3, §9.4). Required by SCR-14; in the dev-build native allow-list from the sprint that lands it |
+| *(optional)* `react-native-document-scanner-plugin` | latest ≥ 7 days old at adoption | VisionKit document camera + perspective fix (12 §3.3). Until adopted: `expo-camera` + the Skia crop screen (CMP-44); ADR when picked up |
 | expo-splash-screen / expo-screen-orientation / expo-keep-awake / expo-network / expo-constants / expo-application / expo-device | SDK map | |
 | expo-apple-authentication | 58.0.2 | installed but enabled by flag in phase 2 only |
 | react-native-webview | 14.0.1 | 3D fallback 1 and the parent's in-app web views |
@@ -465,7 +467,16 @@ Signing settings are written by a config plugin (`plugins/withSigning.ts`):
   and the device list show "תוקף ההתקנה: עוד N ימים". At ≤ 1 day, the parent gate screen shows a
   gentle banner. Kids never see expiry.
 - When an app has expired on a device, nothing is lost. Re-install, or the next routine run, restores
-  it, and local data stays because the bundle ID and team are the same.
+  it, and local data stays because the bundle ID and team are the same. ⟂VERIFY (01 DD-37, 02 UC-21,
+  F2 #22) in the **first re-sign cycle, on one device**: a `devicectl device install app` over the same
+  bundle id keeps the SQLite container (the routine's smoke check: `device_self.paired_at` unchanged,
+  `event` row count ≥ before, `resign-state.json` records `containerPreserved: true`). Until that is
+  verified, `resign.sh` runs with `--pre-install-sync` (default on): before installing it queues a
+  `resync` device command through `POST /v1/ops/notify {kind:'pre_install_sync', deviceId}`, waits up
+  to 10 min for `devices.last_sync_at` to advance (the app flushes on its next foreground), then
+  installs and logs the outcome; the parent area's device card shows "סנכרון: N אירועים ממתינים"
+  (10 FAM-04) so the parent can press "סנכרון עכשיו" first. If the container is ever lost, the
+  server copy restores everything except `local_only` data (§6.6).
 - **Manual trigger (13 §3.2 compatibility):** the parent can also say "חתימה שבועית" in chat, or run
   `tools/mac/resign.sh --all` themselves. The script is the same; the LaunchAgent is only the
   automatic caller. (13 calls the script `tools/device/resign.sh`; the canonical path is
@@ -505,7 +516,18 @@ runtimeVersion: { policy: "fingerprint" }
      idle ≥ 60 s, and no co-op room is active → silent `Updates.reloadAsync()` (the picker re-renders
      in < 2 s; a kid who taps during the reload simply lands on the picker again). This covers the
      shared iPad that is never cold-started for weeks.
+  2b. **Episode boundary / profile switch** (GAP-26): when `session.ended` has been written and the
+     app is about to render the picker (wind-down done, "החלפת שחקן", inactivity return), and an
+     update is already downloaded → `reloadAsync()` **before** the picker mounts (the child sees the
+     picker ~1 s later; the resume doc was just saved, so nothing is lost). Not after `rest.tsx`
+     transitions (a bedtime lock must stay visible).
+  2c. **Foreground after a long background** (GAP-26): `AppState` → `active` after ≥ 30 min in the
+     background, no child session open (`useSession().active === false`) and an update downloaded →
+     `reloadAsync()` before any route renders. A backgrounded mid-episode app (E-16, ≤ 10 min) is
+     *not* reloaded; it resumes to "לגעת כדי להמשיך".
   3. From the parent area, "עדכון זמין — להפעיל מחדש?" (manual).
+  - `UpdateGate.ts` is the **only** caller of `Updates.reloadAsync()` (lint, 14 PQ-X-20); every
+    moment above logs `app.update{where:'cold'|'picker'|'boundary'|'foreground'|'parent'}`.
   - **Never** while a `(child)` route, a mini-game, a chest reveal, the wind-down, a movement activity
     or a co-op room is mounted. `UpdateGate` checks `useSession().active === false` and
     `useCoop().roomId === null` before every reload; a test mounts a child route and asserts that
@@ -579,6 +601,8 @@ app/
 │  ├─ chest/[chestId].tsx      chest reveal (contents fixed at earn time, D2)
 │  ├─ move/[activityId].tsx    SCR-19 movement activity (SafetyCard → MovementCoach → cooldown)
 │  ├─ playroom.tsx             SCR-17 K3 lap-mode playroom (calmMeadow; the only K3 "hub")
+│  ├─ car.tsx                  SCR-21 "מצב רכב" (P2, flag `carMode`; 01 §15.1 audio-only option): playlist +
+│  │                           one "עצור"; no session/econ events, 0 cap minutes; parent-gate toggle (09 §8.2)
 │  └─ photo-game/[packId].tsx  play a parent-approved photo-to-game pack (opens as a `secret` map node)
 ├─ (coop)/
 │  ├─ lobby.tsx                SCR-13 same-device or multi-device; choose children/roles
@@ -603,8 +627,22 @@ Navigation rules:
 - Kids can never reach `(parent)` or `(setup)` without the gate.
 - Leaving the app from the child layout requires a parent gate in `shared-kids` mode. iOS Guided Access
   is recommended for K3 (parent checklist).
-- Deep links use scheme `olam://`, for `olam://pair?code=…` only. Universal links need associated
-  domains, which means the paid program, so they're not used.
+- Deep links use the scheme **`olam://`** (one scheme everywhere; 10 §11.9's `familygame://` is
+  superseded). Universal links need associated domains, which means the paid program, so they're
+  not used. Closed route list (`src/services/deeplinks.ts`, zod-parsed; anything else → `+not-found`):
+  - `olam://pair?p=<pairingId>&n=<nonce>&api=<base>` — QR pairing (S3), setup screens only.
+  - `olam://invite?c=<code>` — co-admin/viewer invite (S2) → `(setup)/sign-in`.
+  - `olam://report/{id}` — weekly/monthly report (10 §11.9 email link) → parent gate → `(parent)/…`.
+  - `olam://approvals[/{id}]` — approvals inbox → parent gate.
+  - `olam://device/{id}` — device detail (expiry/health emails) → parent gate.
+  - **Dev/preview builds only** (stripped from the `family` variant by `APP_VARIANT`; 14 PQ-T-06,
+    PQ-DEV-04/06): `olam://dev/fixture?id=FX-..` loads a fixture family/child from
+    `apps/mobile/e2e-maestro/fixtures/` and resets the local DB; `olam://dev/setNow?ts=` injects the
+    clock (`window.__olam.setNow` equivalent); `olam://dev/moveTo?x=&z=`, `olam://dev/route?id=`,
+    `olam://dev/cycle?scene=&n=` drive the world/perf loops. In the `family` build these links are
+    ignored and logged as `app.error{kind:'deeplink_rejected'}`.
+  - A child-facing route is never a deep-link target: every link lands on setup or behind the parent
+    gate, so a link in an email cannot open a session.
 - `RestGate` (in `(child)/_layout` and `picker`) applies 00 B7's family mode from
   `family.prefs.shabbatMode` (`soft` default / `full` / `off`) during the pause window
   `[candle − 30 min, havdalah + 30 min]` computed by `@hebcal/core` for the family city
@@ -644,6 +682,7 @@ this table from `app/` so a new screen without a route fails CI):**
 | SCR-18 pause | modal sheet inside `(child)/_layout` | `episode/pause/` |
 | SCR-19 movement | `/(child)/[id]/move/[activityId]` | `movement/` |
 | SCR-20 rest | `/rest` | `rest/` |
+| SCR-21 car mode (P2, flag `carMode`) | `/(child)/[id]/car` | `car/` |
 | chest reveal | `/(child)/[id]/chest/[chestId]` | `economy/chest/` |
 | parent dashboard screens (10 §6) | `/(parent)/…` | `parent/<area>/` mirrors 10's PA-* ids |
 
@@ -745,6 +784,16 @@ Load flow:
 5. Atomic switch: `content_pack.active_version = new` in one SQLite transaction. Old versions are
    deleted after 7 days, or immediately when storage is low.
 6. `minAppRuntime`/`minEngine` guard: a pack that needs a newer engine stays `pending_app_update`.
+   **Parent-facing (GAP-27):** a `pending_app_update` pack appears in the device health line (10
+   FAM-04: "חבילה ממתינה לעדכון האפליקציה") and raises `AL-11{variant:'app_update_needed'}` at most
+   once per 7 days per device; on a free-signed install the same line names the re-sign routine.
+7. **`revoked` (12 §2.7.1, S0):** the catalog carries `status` per `{packId, version}`; a pack marked
+   `revoked` is removed from selection on the **next catalog pull** (every sync, ≤ 5 min while online,
+   also mid-episode: the current item finishes, the next item comes from another pack, and the map
+   node disappears at the next picker). Its files are deleted at the next picker, `content_pack.status
+   = 'revoked'`, and an `app.update`-class telemetry row `pack.revoked{packId, version}` is written.
+   The E-22 "no downloads mid-episode" rule does not delay a revocation (hiding costs no bandwidth).
+   Test (§16 #20): a revoked pack is unselectable within 5 min on a connected device.
 
 **Bundled core content** (letters, numbers, core VO, hub assets) ships inside the binary under
 `assets/`, so a fresh install works fully offline.
@@ -839,6 +888,12 @@ It's a no-op on iPad (no Taptic Engine) and on web. Per-child toggle. Rate-limit
   **in memory** (events buffered in `useSession().pendingEvents`), the child is not interrupted, and
   the buffer is flushed on the next successful write; the parent gets `AL-11` ("אין מקום"). Telemetry
   `app.storage_full` is emitted once per day.
+  - **Storage low (GAP-40):** at `free < 500 MB` the device reports `storageFreeMb` in the `/sync`
+    `device` block and the Worker raises `AL-11{variant:'storage_low'}` (≤ 1 per 7 days per device);
+    new packs still download while `free ≥ packBytes × 2 + 200 MB`. The downloaded audio/TTS cache
+    (`documentDirectory/audio-cache/`, per-item VO fetched outside packs) is an **LRU capped at 400 MB**
+    (evict oldest-played first; bundled core VO is never evicted). A map node whose pack is
+    `pending_storage` shows the 09 §9.4 line "האזור עוד נטען" — never an error.
 - **Low Power Mode (E-17):** `expo-battery` `useLowPowerMode()` → `perfTier = 'low'`: ambient Rive
   loops at 30 fps, particles ≤ 3, 3D DPR capped at 1.5, `frameloop="demand"` after 1 s idle instead of
   3 s, music stems reduced to `bed` + `melody`. Gameplay still targets 60 fps; the screen refresh is

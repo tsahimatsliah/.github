@@ -65,7 +65,7 @@ export type ChildId = string; export type SkillId = string; export type ItemId =
 export type TemplateId = string; export type TopicId = string; export type SessionId = string;
 export type StrandId = string;            // ראו את הרשימה הקנונית בהמשך הסעיף
 export type EpochMs = number;
-export type DayKey = string;              // 'YYYY-MM-DD' לפי Asia/Jerusalem. ימים קלנדריים נמדדים לפי DayKey בלבד
+export type DayKey = string;              // 'YYYY-MM-DD' = היום הקלנדרי *המקומי של המכשיר* בזמן האירוע (ts + tzOffsetMin, 11 §5.7/§6.4; מונוטוני לכל מכשיר, 02 §2.1; 01 DD-31/32). גבול היום = חצות מקומית, לא 04:00 (§6.10). ימים קלנדריים נמדדים לפי DayKey בלבד
 export type SubjectId = 'math' | 'hebrew' | 'english' | 'science' | 'world' | 'ai_literacy' | 'sel' | 'logic' | 'art' | 'music' | 'motor';
 export type Tier = 'K1' | 'K2' | 'K3';    // שכבת הגיל של הפרופיל (A2), לא זהות
 export type Band = 'T' | 'G' | 'S';       // 00 A6: רצועת גיל של *תוכן* (T 2–4, G 5–6, S 7–10). מיוצא מ-packages/shared/bands.ts
@@ -118,8 +118,8 @@ export interface StrandMeta { id: StrandId; subject: SubjectId; placementRole: '
 | `introduced` | `level === 'new' && firstSeenAt` | הוצגה (למשל בלוק מודרך/דוגמה) ועדיין אין תצפית מנוקדת. ← C15 `introduced→new` |
 | `practicing` | `level ∈ {beginner, advancing}` | ← C15 `practicing→beginner\|advancing` |
 | `proficient` | `level === 'proficient'` | תג ארד (02) |
-| `mastered` | `level === 'master' && ladder[rung] < 30` | "Mastered" של C11/D9. תג כסף ויהלום (D1) |
-| `retained` | `level === 'master' && ladder[rung] ≥ 30` | עבר את שלב החזרה של 30 יום (02 §4.1). תג זהב |
+| `mastered` | `level === 'master' && card.maxPassedDays < 30` | "Mastered" של C11/D9. תג כסף ויהלום (D1) |
+| `retained` | `level === 'master' && card.maxPassedDays ≥ 30` | **חזרה במרווח של 30 יום עברה** (02 §4.1; `ReviewCard.maxPassedDays`, §1.6). לא `ladder[rung] ≥ 30`: ב-K2 הסולם נגמר ב-30, ולכן "rung נוכחי = 30" מתקיים כבר אחרי חזרת 14 הימים. 08 פולט `review_rung_passed{skillId, rungDays}` בכל מעבר (§5.4), ו-02 מסמן `retained` על `rungDays ≥ 30`. תג זהב |
 
 ```ts
 // packages/shared/levels.ts — מקור אחד לשני הסולמות (00 C15, E11)
@@ -128,13 +128,14 @@ export type EconomySkillState = 'locked' | 'ready' | 'introduced' | 'practicing'
 export const LEVEL_ORDER: readonly LevelId[] = ['new', 'beginner', 'advancing', 'proficient', 'master'];
 export const LEVEL_LABEL_HE: Record<LevelId, string> = { new: 'חדש', beginner: 'מתחיל', advancing: 'מתקדם', proficient: 'שולט', master: 'מאסטר' };
 export const LEVEL_CHILD_HE: Record<LevelId, string> = { new: 'זרע', beginner: 'נבט', advancing: 'שתיל', proficient: 'עץ', master: 'עץ פורח' };
-export function toEconomyState(level: LevelId, ready: boolean, seen: boolean, reviewRungDays: number | undefined): EconomySkillState {
+export function toEconomyState(level: LevelId, ready: boolean, seen: boolean, maxPassedDays: number | undefined): EconomySkillState {
+  // maxPassedDays = ReviewCard.maxPassedDays (§1.6): המרווח הגדול ביותר שחזרה בו *עברה*. לא ה-rung הנוכחי (ראו הטבלה למעלה)
   switch (level) {
     case 'new':        return !ready ? 'locked' : !seen ? 'ready' : 'introduced';
     case 'beginner':
     case 'advancing':  return 'practicing';
     case 'proficient': return 'proficient';
-    case 'master':     return (reviewRungDays ?? 0) >= 30 ? 'retained' : 'mastered';
+    case 'master':     return (maxPassedDays ?? 0) >= 30 ? 'retained' : 'mastered';
   }
 }
 export function fromEconomyState(s: EconomySkillState): LevelId | null {   // לייבוא נתונים ישנים ולבדיקות בלבד. null = קדם-מצב בלי רמה
@@ -244,7 +245,7 @@ export interface Attempt {
 | `attempt` | `attemptsCount` | §4.1 (תיקון עצמי = attempt 2) |
 | `hintUsed` / `hintsUsed` | `hintsUsed` | §4.1, §5.1 "נקי" |
 | `workedExample` | `workedExampleShown`, `context.afterWorkedExample` | §4.1 (×0.5) |
-| `rtMs` | `responseMs` (אם אין `answerableAt`/`firstResponseAt`) | §4.4 סינון, §4.5 HSHS. אם שניהם קיימים, `firstResponseAt − answerableAt` גובר |
+| `rtMs` | `responseMs` (אם אין `answerableAt`/`firstResponseAt`) | §4.4 סינון, §4.5 HSHS. אם שניהם קיימים, `firstResponseAt − answerableAt` גובר. **`rtMs` תמיד על החוט, גם בגן** (§4.4 צריך אותו לסינון ניחושים ב-K2 ול-§3.8). `toEngineEvent` מוסיף נגזרת **`rtMsScored = rtPolicy === 'ignore' ? null : rtMs`** (F2 #9): 02 §2.6 קורא רק את `rtMsScored`, ולכן "ניחוש מהיר = 0 מטבעות" לא פועל מתחת לכיתה א' |
 | `isReview`, `stretch` | `context.role` (`review` / `stretch`; אחרת לפי `blockId` בתוכנית) | §5.2, §6 |
 | `embodied` | לא נצרך במנוע (02 בלבד) | — |
 | `skill`, `template`, `itemId`, `packId/packVer` | `skillId`, `templateId`, `itemId` (+ גרסת חבילה לאיתור β) | §2 |
@@ -293,6 +294,7 @@ export interface ReviewCard {
   lastReviewAt: EpochMs; lastReviewDay: DayKey; dueDay: DayKey;
   implicitCredit: number;                   // FIRe-lite ∈ [0,1)
   lapses: number; checkSoon: boolean;
+  maxPassedDays: number;                    // המרווח הגדול ביותר (ימים) שחזרה בו *עברה*. 0 בפתיחה. ≥30 ⇒ 'retained' של 02 (§1.1א; §5.4 פולט review_rung_passed)
 }
 export interface ReviewSchedule { childId: ChildId; cards: Record<string, ReviewCard> }
 ```
@@ -363,6 +365,7 @@ export type BehaviorSignal = SignalBase & (
   | { kind: 'error'; retried: boolean; quitWithinMs?: number }
   | { kind: 'hint_request'; msSinceAnswerable: number; attemptsBefore: number }
   | { kind: 'hint_available_unused'; errorsOnItem: number }
+  | { kind: 'nikud_lens'; wordId: string; lexId: string }   // 01 MX-H06 `hint:lens` (AC-MX-11): השאלת ניקוד ל-2 ש'. לא רמז לעניין §4.1 (x לא משתנה); 04 §6.4 כלל 4 קורא אותו: ≥8 ל-100 מילים = אות קושי לדעיכת הניקוד
   | { kind: 'challenge_choice'; offered: ('easy' | 'medium' | 'hard')[]; chosen: 'easy' | 'medium' | 'hard' }
   | { kind: 'topic_choice'; offered: TopicId[]; chosen: TopicId; position: number }
   | { kind: 'revisit'; topic: TopicId; prompted: boolean }
@@ -400,6 +403,7 @@ export type ParentInput = { type: 'parent_input'; id: string; deviceId: string; 
   | { kind: 'interest_override'; topic: TopicId; value: 'loves' | 'not_really' | 'clear' }
   | { kind: 'disposition_correction'; key: DispositionKey; context?: string; value: unknown }
   | { kind: 'external_evidence'; evidence: 'paperProbe' | 'teacherNote' | 'transfer'; subject?: SubjectId; valueJson: unknown }
+  | { kind: 'cap_bonus'; minutes: 10; dayKey: DayKey }                                   // 01 DD-09 "+10 דקות" (§6.10). על החוט: `cap.bonus_granted` (cls admin, 11 §5.8). guardianId = 'device-local' כשהשער מקומי (10 RB-0 מצב L)
 );
 ```
 
@@ -419,17 +423,21 @@ export interface Session {
   anomaly?: { kind: 'identity_suspect'; score: number; reasons: string[] };   // §10.5.3, מחושב בסיום המפגש
   stats: { scored: number; firstTryCorrect: number; rapidGuesses: number; timeouts: number; frustrationEpisodes: number; celebrationMs: number };
 }
-// הרשימה הקנונית של סיבות סיום. 11 §5.8 (`session.ended{reason}`), 10 §4.1 ו-02 משתמשים בה כפי שהיא (אין 'childQuit'/'natural'/'windDown' מקבילים):
+// הרשימה הקנונית של סיבות סיום (15 GAP-24: enum אחד ב-`packages/shared/events.ts`, 08 הבעלים). 11 §5.8 (`session.ended{reason}`), 10 §4.1, 02 ו-01 משתמשים בה כפי שהיא:
 export type SessionEndReason =
-  | 'completed'          // הפרק הסתיים בבלוק closing (10: "טבעי")
-  | 'daily_cap'          // תקרה יומית (§6.10)
-  | 'child_exit'         // הילד יצא (10 AL-04: "childQuit")
-  | 'parent_exit'        // הורה סגר / החלפת שחקן (11 §4.16: 'switch')
+  | 'completed'          // הפרק הסתיים בבלוק closing (10: "טבעי"; 01: "natural"/"windDown"; 11: 'done')
+  | 'daily_cap'          // תקרה יומית (§6.10; 11: 'cap'). כולל "נחיתה" אחרי תקרה שהורדה באמצע פרק (01 DD-35)
+  | 'child_exit'         // הילד יצא, כולל "חזרה למחנה" מתפריט ההשהיה (01 §15.1; 10 AL-04: "childQuit", עם secondsSinceLastError ב-payload)
+  | 'parent_exit'        // הורה סגר / החלפת שחקן (11 §4.16: 'switch'; 15: 'parentStop'). ויתור לאח: 01 §12.5 `turn.yielded` נגזר מזה
   | 'frustration_break'  // הצעת הפסקה התקבלה (§6.7)
   | 'disengaged'         // ניחושים/idle (§4.4)
-  | 'bedtime_lock'       // נעילת שינה (11 §5.5)
-  | 'inactivity'         // 5 דקות בלי מגע → חזרה לבורר (11 §4.16)
-  | 'app_killed';        // לא התקבל session.ended; נסגר בפתיחה הבאה עם endedAt = ts האירוע האחרון + 30 ש'
+  | 'bedtime_lock'       // נעילת שינה או "אפליקציה ישנה" (11 §5.5; 15: 'bedtime'); גם סוף חלון 30 הדקות של שחרור השער (10 FAM-04)
+  | 'inactivity'         // 5 דקות בלי מגע בחזית → חזרה לבורר (11 §4.16; 15: 'idle')
+  | 'backgrounded'       // האפליקציה ברקע > 10 דק' (11 E-16: 'background'); תיבה/קבלה נשמרות
+  | 'coop_ended'         // חדר CO-3 נסגר / הצד השני עזב (11 §10; 15: 'coopEnd')
+  | 'app_killed';        // לא התקבל session.ended; נסגר בפתיחה הבאה עם endedAt = ts האירוע האחרון + 30 ש' (15: 'crash'; 01 DD-27 'abandoned' אחרי 24 ש')
+// אין 'shabbat': כניסת שבת באמצע פרק לא סוגרת אותו (11 E-24: הפרק מסתיים רגיל ב-`completed` במצב frozen; ב-`full` הפרק *הבא* נחסם ב-rest.tsx ונרשם `launch.blocked{reason:'shabbat_full'}`).
+// כל שם אחר שמופיע במסמכים (natural, windDown, childQuit, switch, idle, bedtime, parentStop, crash, coopEnd, background, done, cap, parent) הוא כינוי לאחד מאלה, והמיפוי חי ב-`packages/shared/events.ts` בלבד.
 export interface Block {
   id: string; role: BlockRole; subject: SubjectId; skillIds: SkillId[];
   itemCount: number; targetP: number; scored: boolean;
@@ -437,7 +445,8 @@ export interface Block {
   activityKind: string; wrapperTopic?: TopicId; wrapperIsExploration: boolean;
   reasons: string[];
 }
-export interface EpisodePlan { childId: ChildId; minutes: number; itemBudget: number; blocks: Block[]; targetP: number; reasons: string[] }
+export interface EpisodePlan { childId: ChildId; mode: Session['mode']; minutes: number; itemBudget: number; blocks: Block[]; targetP: number; reasons: string[] }
+// `mode` (15 GAP-13): זהה ל-`Session.mode`. 02 §2.7 קורא אותו: `placement` | `benchmark` = `neverEarns` (חילוצים כן נספרים לאוסף, תיבות ומטבעות לא); `boss` = מענקי הבוס של 02; `reentry` = פרק רגיל לכלכלה. 01 מעתיק אותו ל-`level.mode` של סכמת השלב (01 §6.6).
 export interface ClassTopic { id: string; skillIds: SkillId[]; phase: 'upcoming' | 'teaching' | 'taught'; setAt: EpochMs; expiresAt: EpochMs; source: 'parent_pick' | 'photo_tag' }
 export interface Plan {
   childId: ChildId; schoolYear: '2026-27';
@@ -554,6 +563,8 @@ K_tmpl = 0.01;                           τ_T ← clamp(τ_T − K_tmpl·w·(x �
 | יעד הצלחה בשלב R | — | ~0.70 (offset 0.55) | ~0.63 (offset 0.35) |
 
 המספרים מעוגנים ב-ALEKS Adventure (≤9 פריטים לגן, ≤14 לכיתות א'–ג') וב-`placement_assessment.md` §1. עם prior של שאלון, K1 מגיע בסימולציה ל-SE ≤ 0.45 אחרי 8–11 פריטים לציר. ‏K2 נעצר לרוב במקסימום, עם SE של 0.50–0.55. במקרה כזה מוצג להורה טווח ("בערך…") עד שהמשחק השוטף מצמצם אותו (בנוסח IXL).
+
+**יחס ל-01 §14.2 ("אין מבחן מיקום מפורש") — 15 GAP-12.** שני המשפטים נכונים ברמות שונות, ו-08 קובע את המבנה (00 J1: מנוע → 08; 00 H2: "placement expeditions start per child"). **מבנית** המסעות הם שלבים עטופי-סיפור נפרדים עם `Session.mode = EpisodePlan.mode = 'placement'` (§1.10; 02 לא משלם עליהם, GAP-13), באורך ובפריסה של הטבלה למעלה, ו-01 §14.3 מקצה להם משבצות בשבוע הראשון (K2 א'–ג' מסע אחד ביום בתוך משבצת השלב; K1 א'–ד'). **חווייתית** הילד לא פוגש "מבחן": כללי §3.6 (בלי נכון/לא נכון, התחלה וסיום קלים, בלי טיימר, "קשה לי") הם מה ש-01 מכנה "play-based placement". 01 מתבקש לנסח כך ("אין *תחושת* מבחן; המסעות של 08 §3 הם שלבים במצב `placement`"), לא "אין מבחן". ‏10 ON-12 ("2–4 ימים קצרים") תואם לטבלה.
 
 ### 3.2 מבנה המסעות
 
@@ -972,14 +983,20 @@ onDelayedCheckItem(s, cleanCorrect: boolean) {
 
 ```ts
 function onReviewResult(card: ReviewCard, first: boolean, second?: boolean, day: DayKey) {
-  if (first)                        card.rung = Math.min(card.rung + 1, card.ladder.length - 1);       // עבר
-  else if (second === true)         { /* "עבר רך": השלב נשאר */ }
+  if (first) {                                                                                          // עבר
+    const passedDays = card.ladder[card.rung];
+    card.maxPassedDays = Math.max(card.maxPassedDays, passedDays);
+    emit({ t: 'review_rung_passed', skillId: card.skillId, rungDays: passedDays });                     // 02 §2.1/§4.1 (F2 #8): rungDays ≥ 30 ⇒ retained
+    card.rung = Math.min(card.rung + 1, card.ladder.length - 1);
+  }
+  else if (second === true)         { /* "עבר רך": השלב נשאר; אין review_rung_passed */ }
   else { card.rung = Math.max(0, card.rung - (card.ladder[card.rung] >= 30 ? 2 : 1)); card.lapses++; }  // נכשל
   card.lastReviewDay = day; card.dueDay = addActiveDays(day, card.ladder[card.rung]); card.implicitCredit = 0;
 }
 ```
 
 * חזרה = פריט אחד. אם הוא שגוי, מגיע פריט שני מאותה מיומנות.
+* **`review_rung_passed`** (02 §2.1, F2 #8): נפלט בכל מעבר אמיתי (1/3/7/14/30/60 לפי הסולם של השכבה), כולל מעבר דרך קרדיט עקיף (§5.5 קורא ל-`onReviewResult(card, true)`), ולא ב"עבר רך". ב-`reviewMode:'item'` הוא נפלט **לכל כרטיס** (כל אות/עובדה/מילה), ו-02 מצרף לפי `skillId` (`paysOncePerSkill`: רק ה-`rungDays` הראשון לכל ערך משלם). לעולם לא פעמיים לאותו `(card.key, rungDays)` (הקיפול אידמפוטנטי, §10.5.4).
 * `reviewMode:'item'` (אותיות, עובדות, מילים): כרטיס לכל פריט. ‏`'skill'`: כרטיס למיומנות, עם פריט אקראי מבין אלה שלא נראו לאחרונה.
 * `dueDay` שנופל על יום מנוחה זז ליום הפעיל הבא.
 * FSRS ו-HLR מחוץ להיקף, כי עם שלושה משתמשים הם לא יעלו על Leitner (gap audit §4.4). נוסחת FSRS שמורה ביומן המחקר לעתיד.
@@ -1027,7 +1044,8 @@ function budget(child, plan, today, cfg): { minutes: number; items: number; mode
 }
 ```
 
-* תקרות יומיות כברירת מחדל: K3 15 דק', ‏K2 25 דק', ‏K1 40 דק' (D4). ההורה משנה אותן.
+* תקרות יומיות כברירת מחדל: K3 15 דק', ‏K2 25 דק', ‏K1 40 דק' (D4; 10 §6.13 הבעלים, OPD-26). ההורה משנה אותן. **`plan.dailyCapMin` הוא התקרה האפקטיבית ליום:** `min(child_settings.dailyCapMin, device_settings.childOverrides[childId].dailyCapMin ?? ∞)` (10 RB-0 מצב L, 15 GAP-22) **+ 10 אם יש `cap_bonus` ל-DayKey הזה** (§6.10). ימי חול / שישי-שבת הם שני ערכים (10 §6.13).
+* **`focusedMinutesToday`** = דקות ממוקדות (10 M-01: Σ min(gap, 30 ש') בין קלטים) על `DayKey` של היום, **מכל המכשירים** (11 §4.16: מיזוג בסנכרון; חריגה offline נסלחת). לכן idle, רקע ו"החדר השקט" (09 SCR-16) **לא צורכים תקרה** (15 GAP-06/19b); משחק משותף נספר 50% לכל משתתף (01 §12.1).
 * `itemsPerMinute` הוא EWMA של פריטים מנוקדים לדקה ממוקדת (prior 2.0).
 
 ### 6.2 הרכב לפי שכבה
@@ -1084,7 +1102,7 @@ function composeEpisode(state, childId, ctx): EpisodePlan {
   insertDelayedChecks(blocks, c, today);                        // §5.2, בתוך review/boss בלבד
   interleaveSubjects(blocks, c.plan.subjectWeights);            // §6.8
   assignWrappers(blocks, c.interests, ctx);                     // §7.4
-  return { childId, minutes: b.minutes, itemBudget: b.items, blocks, targetP: targetP(c), reasons };
+  return { childId, mode: 'episode', minutes: b.minutes, itemBudget: b.items, blocks, targetP: targetP(c), reasons };   // miniPlan → 'mini'; §3 → 'placement'; §10.2 → 'boss'; §10.3 → 'benchmark'; §10.4 → 'reentry'
 }
 ```
 
@@ -1188,11 +1206,16 @@ function updateBandController(bc, sessionFirstTry: number[], target: number) {
 | `taught` | עדיפות החזרה ×1.5, ושליפה בתוך 1–3 ימים |
 
 * `expiresAt = setAt + 42 ימים` אלא אם חודש. ההעדפה לא דורסת את הגרף: מיומנות לא מוכנה אף פעם לא מוצגת ישירות.
+* **תאריך מבחן (`ClassTopic.testDate`, 10 §6.13.1):** כשיש תאריך, החזרות של מיומנויות הנושא מתוזמנות כך שהאחרונה נופלת 1–2 ימים לפני המבחן (`dueDay` נדחף, לא נמשך), ולכל היותר 30% מהפרק (`nearTestReviewShare`). **מבחן בעוד פחות מ-3 ימים** (`testDate − today < cfg.classTopics.nearTestDays`, 15 GAP-72): אין פריסה; הפרק הבא מקבל **בלוק `review` אחד** עם מיומנויות הנושא שברמת `advancing`+ (עד 30% מהפרק, `reasons: ['near_test']`), ואחריו הנושא מטופל כ-`taught`. אין `AL-13` (10 מדכא אותה כשהתאריך הוזן < 3 ימים לפני; ההורה כבר יודע), ו-10 מציג "המבחן קרוב, חזרה קצרה היום" ב-W-CH-09. מבחן שעבר: הנושא עובר ל-`taught` אוטומטית למחרת.
 
 ### 6.10 תקרה יומית וסיום
 
 * לא חותכים באמצע פריט. כשעברו 85% מזמן הפרק, עוברים לבלוק `closing`.
-* אם נגמרה התקרה בזמן הסיום: עד 60 ש' חסד, ואז סיום חם (תיבה, סיכום, "נתראה מחר").
+* **התקרה נגמרת באמצע פרק (01 §15.1 + 15 GAP-02, כלל אחד):** (1) כש-`focusedMinutesToday ≥ plan.dailyCapMin` באמצע beat של שלב (01), הקטע הנוכחי מסתיים **עד 90 ש'** (01: "לא חותכים באמצע beat"), ואז "נחיתה": מעבר ישיר ל-`closing`. (2) בתוך `closing` יש **עד 60 ש' חסד** לפריט הסיום (P ≥ 0.95), לתיבה ולסיכום ("נתראה מחר"). סך החריגה המותרת: ≤ 150 ש', ונמדדת (`stats.capOvertimeMs`). (3) `session.ended{reason:'daily_cap'}`. אזהרת 2 הדקות (01 ניצי) נורית על `plan.dailyCapMin − focusedMinutesToday ≤ 2`.
+* **גבול היום (15 GAP-44):** "היום" לתקרה, לבונוס ולהפתעות הוא **`DayKey` של המכשיר** (§1.1: תאריך קלנדרי מקומי, חצות–חצות, מונוטוני לכל מכשיר). **לא** 04:00–04:00: `DayKey` כבר מחייב ב-02 §2.1 (תשואה פוחתת), 11 §6.4 ו-01 DD-31/32, ושני "ימים" שונים לתקרה ולכלכלה היו שוברים את AC-40 של 10. ילדי 2–8 לא משחקים אחרי חצות, ונעילת השינה (11 §5.5) סוגרת את הפער ממילא. שבוע היעד המשפחתי נשאר ראשון 00:00 (02 §10.1).
+* **חוסר פעילות (15 GAP-06):** 5 דק' בלי מגע בחזית (11 §4.16) → הפריט הפתוח `excluded:'idle'`, `session.ended{reason:'inactivity'}`, `child_resume` נשמר, והשלב מתחדש מנקודת הביקורת שלו (01 DD-26: 7 ימים). דקות idle לא נכנסות ל-`focusedMinutesToday` (§6.1) ולכן לא צורכות תקרה. רקע > 10 דק': אותו דבר עם `reason:'backgrounded'` (11 E-16).
+* **בונוס "+10 דקות" (01 DD-09, 15 GAP-02):** `ParentInput.cap_bonus{minutes:10, dayKey}` (§1.9א; על החוט `cap.bonus_granted`, cls `admin`, שורת ביקורת ב-11). אפקט: `plan.dailyCapMin += 10` ל-`dayKey` הזה בלבד; **לכל היותר אחד לילד ליום** (הקיפול מתעלם מהשני לאותו `dayKey`, אידמפוטנטי); **לא מוסיף פרק**: `budget()` מחזיר `episode`/`mini`/`none` לפי היתרה כרגיל, ו-`episodeTargetMin` לא משתנה. הילד לא רואה הודעה (01: לא מוצג לילד). הבונוס לא נספר ב-`AL-06` של 10 ("פגיעה במגבלה") כפעם נוספת.
+* **שינוי הגדרות באמצע פרק (01 §15.1, 15 GAP-66, F2 #10):** `Plan` נקרא ב-`composeEpisode`, ולכן **הגדרות תוכן** (משקלים, ניקוד, חקר, חוגה, `breakMode`, מלווה AI) חלות מהפרק הבא. **תקרות וחלונות** (`dailyCapMin`, "אפליקציה ישנה", `childOverrides`) נבדקים מחדש ב-`EpisodeRuntime` **בכל גבול בלוק/beat** (= "segment boundary" של 01, ≤ 90 ש'): תקרה שהורדה מתחת למה ששוחק → כלל "התקרה נגמרת" למעלה (01 DD-35); תקרה שהועלתה → היתרה זמינה מיד. **נעילת שינה מרחוק** (`bedtime_lock`, 11 §5.5) היא פקודת מכשיר, לא `Plan`: אזהרת 2 דק' וסיום בנקודה הטבעית, `reason:'bedtime_lock'`. שום הודעה לילד על השינוי; הקבלה לא נפגעת.
 * בלי autoplay ובלי "עוד אחד" (C3). פרקים נוספים באותו יום מותרים רק בתוך התקרה.
 * **שבת וחגים (00 B7, מצב משפחתי `soft` | `full` | `off`, ברירת מחדל `soft`, OPD-04):** בחלון [הדלקת נרות − 30 דק', הבדלה + 30 דק'] לפי `@hebcal/core` ועיר המשפחה:
   * `soft`: המנוע **כן** מרכיב פרקים (תרגול חופשי), ו-θ/u/רמות **כן** מתעדכנים (ראיה היא ראיה). **לא** מתוזמנים: בוס, בנצ'מרק, בדיקה מושהית (`insertDelayedChecks` מדלג), אתגר דילוג. היום לא נספר ב-`elapsedActiveDays` ולא ב-`availableDays` (02 §10.1), `dueDay` שנופל בו זז (§5.4). מטבעות/יהלומים: 0 (02). הודעות: אין (10 Q-2).
@@ -1388,6 +1411,8 @@ export interface StrengthsNarrativeInput {
 | `HEB_K1_HANDWRITING` (בקשת 04 §13.4) | K1 | מיד, `maxStatus:'watch'`, `provisional` | מדפי עבודה שצולמו/דווחו (10 PA-PROBE): אי-קריאוּת ≥30% ב-3 דפים רצופים, **או** אותיות/דקה ≥40% מתחת לשיא האישי במשך 6 שבועות, **או** היפוכי ראי ≥20% בכיתה ג' | 6 שבועות | 10 שבועות → מחנכת, ו**ריפוי בעיסוק** דרך רופא/ת ילדים (C8) |
 
 **הערה:** פענוח חלש בגיל 5.5 **אינו** דגל, כי פענוח פורמלי מתחיל בכיתה א'.
+
+**צ'ק-אין רגשי — כלל אחד, שלושה מסמכים (15 GAP-32, בדיקת איחוד בסבב 2):** `EMO_CHECKIN` מוגדר **רק כאן** (`RULES` של §9.3). 07 §10 הוא בעל הנוסח והספים (RF-01+RF-02 אוחדו לכלל הזה; RF-03 בוטל לטובת `EMO_DISTRESS`), ו-10 §6.9 מפנה לשניהם בלי להגדיר סף משלו ("3 מתוך 5" בוטל). **תדירות הצ'ק-אין** (07 §2.4 = 01 §5.3): S כל פרק, G כל יום שני, T אופציונלי; חלון "7 הצ'ק-אינים האחרונים בתוך 14 יום" מתאים לשני הקצבים (G: ~7 ב-14 יום; S: ~7 ב-10 ימים), ולכן אין צורך בסף לפי שכבה. "לא רוצה להגיד" לא נספר (07). 07 AC-38 בודק שאין נתיב דגל מחוץ ל-`evaluateFlags`.
 
 **`maxStatus`:** לכל כלל יש `maxStatus` ב-config (`'watch' | 'parent_note' | 'referral_suggested'`). כלל שנוסף אחרי הגרסה הראשונה של המסמך מתחיל ב-`'watch'` (המנוע מתאים את עצמו, ההורה לא רואה כלום) עד שההורה מאשר את הנוסח שלו ב-10 PA-FLAG ("כללים חדשים ממתינים לאישור"). האישור נרשם ב-`ParentInput.flag_action` ומעלה את `maxStatus`.
 
@@ -1651,6 +1676,8 @@ export const DEFAULT_CONFIG: EngineConfig = {
   cadence: { bossEveryDays: 28, bossAfterProficient: 3, reentryGapDays: 21, vacationGapDays: 14, longAbsenceDays: 90, skipChallengeAcc: 0.95, probeDownAcc: 0.60,
              rolloverShortTripDelta: 0.8 },
   clock: { maxGapDays: 400, maxDueAheadDays: 90 },           // §10.5.5
+  cap: { bonusMinutes: 10, bonusPerDay: 1, beatOvertimeSec: 90, closingGraceSec: 60, warnBeforeMin: 2, inactivityMin: 5, backgroundEndMin: 10 },   // §6.10 (01 §15.1, DD-09)
+  classTopics: { expiryDays: 42, nearTestDays: 3, nearTestReviewShare: 0.30, lastReviewDaysBeforeTest: [1, 2] },   // §6.9
   checkpoints: { everyEvents: 200, keep: 30 },               // §1.11
   firstWeek: { episodes: 3, budgetFactor: 0.8, closingAt: 0.80 },   // §10.5.12
   celebrationMaxShare: 0.15, honeymoonEpisodes: 2,
