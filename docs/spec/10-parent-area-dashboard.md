@@ -171,7 +171,7 @@ PA-PRIV  פרטיות ונתונים (§8)                       SET-01 שבת �
 | אשכול שגיאות (`itemType`) | `Attempt.chosenErrorTag`, ואם חסר אז `templateId` | 08 | תג המסיח מקטלוג הטעויות |
 | סיום מפגש וסיבתו | `session.ended{reason: SessionEndReason}` לפי 08 §1.10 (`completed`, `daily_cap`, `child_exit`, `parent_exit`, `frustration_break`, `disengaged`, `bedtime_lock`, `inactivity`, `app_killed`) + `plannedMinutes`, `blocksCompleted`, `focusedMs` | **08** (11 מגדיר רק `reason?` חופשי ו-`'switch'`) | "טבעי" במסמך זה = `completed`. "childQuit" = `child_exit` |
 | פרק הושלם (M-03) | `session.ended{reason:'completed'}` או `blocksCompleted ≥ plan.blocks.length − 1` | 08 | — |
-| **טווח מיקוד** (M-01) | **`focus.span`** `{start, end, focusedSec, screenType}`, cls `learn` | **חסר** → מבוקש מ-11 §5.8 | מחושב על המכשיר. הקשות גולמיות לא נשמרות (C8a, `local_only`) |
+| **טווח מיקוד** (M-01) | **`focus.span`** `{start, end, focusedSec, screenType}`, cls `learn`, **מחייב ב-11 §5.8**: `screenType ∈ {episode, world, hub, shop, base, collection, coop, move}`, אירוע אחד לכל ביקור ≥ 10 ש' | קיים (11) | מחושב על המכשיר. הקשות גולמיות לא נשמרות (C8a, `local_only`). **M-01 סופר רק `episode`, `coop`, `move`**; `world` נספר ב-M-02 כ"חקירה"; `hub`/`base`/`collection` = "יצירה ובסיס"; `shop` = "חנות" |
 | זמן רקע ומסכים (M-02) | **`screen.enter`/`screen.exit`** `{screenType, ms}` (cls `learn`, מצטבר לכל מסך, לא לכל מעבר), **`app.background`/`app.foreground`** | **חסר** | בלי זה M-02 הוא רק `session_end − session_start` |
 | אותות התנהגות (M-07, M-08 סגנון, M-12, M-13 "אני תוהה", AL-04 rageTap) | **`behavior.signal`** = `BehaviorSignal` של 08 §1.9 | **08** (לא ב-11) | `emotion_checkin` נשאר `local_only` |
 | מעברי שלב (M-05 היסטוריה V-07, M-10) | **`skill.level_changed`** `{skill, from: LevelId, to: LevelId, reason}` ו-**`skill.level_reverted`** (08 §10.5.3); `skill.mastered` קיים | **חסר** (רק `mastered` קיים) | נפלט על ידי המנוע, דטרמיניסטי. בלעדיו V-07 נבנה מנקודות ביקורת ליליות בלבד |
@@ -188,7 +188,7 @@ PA-PRIV  פרטיות ונתונים (§8)                       SET-01 שבת �
 | מדדי מכשיר (MD-01) | טבלאות `devices`, `device_children`, `/sync` meta, `app.start` | קיים | — |
 | צ'ק-אין רגשי | `checkin.mood` (`local_only`, 11) = `behavior.signal{kind:'emotion_checkin'}` (08) | קיים | שני שמות לאותו דבר; 11 מתבקש לאחד לשם של 08 |
 
-`LearningScreen ∈ {learn, review, placement, boss, probe, photoGame, coopLearn, story_interactive}`. מחוץ לרשימה: hub, myspace, shop, avatar, celebration, menu, safeRoom.
+`LearningScreen` (ל-M-01) = `focus.span.screenType ∈ {episode, coop, move}` לפי ה-enum של 11 §5.8; תתי-סוגים (placement, boss, probe, photoGame, story) נגזרים מ-`session.started.mode`, לא משם המסך. מחוץ למיקוד: `world` (חקירה), `hub`, `base`, `collection`, `shop`.
 
 **סיכום האירועים החסרים ב-11 §5.8 (לבקשה):** `focus.span`, `screen.enter/exit`, `app.background/foreground`, `behavior.signal`, `skill.level_changed`, `skill.level_reverted`, `benchmark.result`, `placement.finished`, `creation.saved`, `launch.blocked`, `parent.tonight_done`; ושדרוג `item.answered` ל-v2 ו-`session.ended` ל-`SessionEndReason`.
 
@@ -587,6 +587,8 @@ PA-PRIV  פרטיות ונתונים (§8)                       SET-01 שבת �
 | תוכן | **סדר נושאים לפי בית הספר** (`classTopics[].order:'school'`, 03 §7.5) | כבוי (סדר המנוע) | כשמופעל, "מה למדו" קובע גם את סדר ה"הבא בתור" בכפוף לקדם-דרישות |
 | שפה | **ניקוד: שחרור "החזקה"** (`fadeHold`, 04 §6.4) | אוטומטי | כשהמנוע מחזיק ניקוד מלא (אחרי נסיגה), ההורה רואה "המשחק מחזיק ניקוד מלא עד {date}" ויכול לשחרר ידנית |
 | זהות | **יד דומיננטית** (`handedness`, 00 H2) | לא ידוע | ימין / שמאל. משנה מיקום לוח מקשים וכפתור "סיימתי" (09) ודפי עבודה (04). לא משפיע על המנוע |
+
+**עריכה מקבילה (11 §6.5 E-11):** ההגדרות הן docs עם **LWW ברמת השדה** (hlc לכל שדה). כששני הורים עורכים את אותו מסך, שדה שהשתנה אצל ההורה השני מתעדכן במקום עם טוסט "עודכן על ידי {name} לפני רגע" (3 שניות, לא חוסם), והשדה מהבהב פעם אחת. שינוי מקומי שעוד לא נשמר לא נדרס: מוצג "ערך חדש מ-{name}: {v}. להחליף / להשאיר שלי". שתי הגרסאות ביומן הביקורת (RB-5).
 
 #### 6.13.1 "מה למדו החודש" (Class topics input)
 
@@ -1318,7 +1320,7 @@ child_skill_week(child_id, iso_week, skill_id, n_first, c_first, hints, pae_num,
 | API-15 | `GET /children/:id/observations`, `POST /observations/:id/feedback` | חדש | child.reports.read | ✔ | PA-STR |
 | API-16 | `GET /children/:id/assessments`, `POST /children/:id/evidence` (`{kind:'paperProbe', probeId, items:[{skillId, correct}]} \| {kind:'teacherNote', unitId?, text} \| {kind:'transfer', text}`), `GET /children/:id/probes/next` (PDF מהמחוללים) | חדש | child.reports.read / child.settings | ✔ | PA-ASM, PA-PROBE |
 | API-17 | `GET /children/:id/flags`, `POST /flags/:id/action {talkedToTeacher\|notRelevant\|snooze\|print}` | חדש (נתונים מ-08 §9) | child.reports.read | ✔ | PA-FLAG |
-| API-18 | `GET /approvals?status=`, `GET /approvals/:id`, `POST /approvals/:id/decision {approve\|reject\|approveSome, itemIds?, edits?[], reasons?[]}` | חדש (מאחד packs ו-photos מ-11 §7.6 ו-§7.9) | content.approve | — | PA-APPR |
+| API-18 | `GET /approvals?status=`, `GET /approvals/:id`, `POST /approvals/:id/decision {approve\|reject\|approveSome, itemIds?, edits?[], reasons?[]}` | חדש (מאחד packs ו-photos). **11 §7.10a:** `/content/packs/:id/:ver/approve\|reject` ו-`/photos/*` נשארים כ-aliases דקים שכותבים לאותה שורת `approvals` | content.approve | — | PA-APPR |
 | API-19 | `GET/POST/PATCH /rewards`, `POST /children/:id/appreciation` | חדש (נתונים מ-02 §11) | rewards.manage | ✔ | PA-RWD |
 | API-20 | `GET /reports/children/:id/economy?week=`, `POST /econ/refund/:purchaseId`, `POST /children/:id/sticker`, `POST /missions/:id/confirm` | חדש (חוקים מ-02) | child.settings | ✔ | PA-ECO, W-HOME-09 |
 | API-21 | `GET /ai/log?child=&from&to`, `GET /ai/log/:id`, `POST /ai/log/:id/flag` | חדש (נתונים מ-`ai_log`) | ai.log.read | — | PA-AI |
