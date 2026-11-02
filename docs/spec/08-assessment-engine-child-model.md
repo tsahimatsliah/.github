@@ -232,7 +232,23 @@ export interface Attempt {
   representation?: 'concrete' | 'pictorial' | 'abstract';               // מועתק מהתבנית בזמן ההצגה, לשער O.REP (§5.1)
   context: { role: BlockRole; mode: AttemptMode; assisted: 'none' | 'parent' | 'sibling'; wrapperTopic?: TopicId; afterWorkedExample: boolean };
 }
-// שם האירוע על החוט (11 §5.8): `item.answered` v2 = בדיוק המבנה הזה. השדות שחסרים ב-v1 של 11 (outcome, role, mode, chosenErrorTag, touchesBeforeAnswer, idleMaxMs, appBackgrounded, assisted, steps, representation) מתווספים (ראו fable-issues-F5 → 11).
+```
+
+**מהחוט למנוע (`packages/shared/events.ts` → `toEngineEvent`, 11 §5.8 מחייב את המיפוי):** שמות האירועים על החוט מנוקדים (`item.answered`), ושמות אירועי המנוע ב-snake_case (`Attempt`, `BehaviorSignal`, `ParentInput`, `SessionEvent`). `toEngineEvent(envelope)` הוא הפונקציה היחידה שבונה `EngineEvent`, והמנוע לא קורא payload גולמי. מה ש-08 **צורך** מ-`item.answered` של 11 (השדות של 02 §2.1 + התוספות):
+
+| שדה על החוט (11) | שדה במנוע | שימוש |
+|---|---|---|
+| `correct`, `firstTry` | `outcome`, `firstTryCorrect` | §4.1 |
+| `attempt` | `attemptsCount` | §4.1 (תיקון עצמי = attempt 2) |
+| `hintUsed` / `hintsUsed` | `hintsUsed` | §4.1, §5.1 "נקי" |
+| `workedExample` | `workedExampleShown`, `context.afterWorkedExample` | §4.1 (×0.5) |
+| `rtMs` | `responseMs` (אם אין `answerableAt`/`firstResponseAt`) | §4.4 סינון, §4.5 HSHS. אם שניהם קיימים, `firstResponseAt − answerableAt` גובר |
+| `isReview`, `stretch` | `context.role` (`review` / `stretch`; אחרת לפי `blockId` בתוכנית) | §5.2, §6 |
+| `embodied` | לא נצרך במנוע (02 בלבד) | — |
+| `skill`, `template`, `itemId`, `packId/packVer` | `skillId`, `templateId`, `itemId` (+ גרסת חבילה לאיתור β) | §2 |
+| **עדיין חסרים ב-11 ומבוקשים** (fable-issues-F5): `outcome:'too_tricky'\|'timeout'\|'abandoned'`, `chosenErrorTag`, `touchesBeforeAnswer`, `idleMaxMs`, `appBackgrounded`, `context.{mode, assisted, wrapperTopic}`, `steps`, `representation`, `answerableAt`, `firstResponseAt` | — | בלעדיהם: "קשה לי" לא ניתן להבחנה מטעות, אין תגי טעות (§5.5), אין גלאי זעם (§6.7), אין O.STEP/O.REP |
+
+עד שהשדות מתווספים, `toEngineEvent` ממלא ברירות מחדל בטוחות (`outcome` מ-`correct`, `touchesBeforeAnswer=1`, `idleMaxMs=0`, `assisted:'none'`), והמנוע עובד בפונקציונליות מופחתת (בלי O.STEP/O.REP, בלי תגי טעות).
 // נגזר, לא נשמר:
 export interface ScoredObservation { x: number; w: number; useRt: boolean; excluded?: ExclusionReason; responseMs?: number }
 export type ExclusionReason = 'rapid_guess' | 'timeout' | 'idle' | 'backgrounded' | 'abandoned' | 'not_scored_template' | 'disengaged_block';
@@ -1391,6 +1407,7 @@ function evaluateFlags(state, childId, ctx): FlagState[] {
 
 * `watch` מפעיל התאמות מיידיות: עוד תרגול ממוקד בסמן, צעדים קטנים יותר ופרקים קצרים יותר (ATTN).
 * כשהדפוס נעלם 4 שבועות, הסטטוס יורד ל-`none` בשקט. להורה מוצג "נראה שזה הסתדר".
+* **איפה זה רץ (11 §9.8, 00 E6a/C8a):** `evaluateFlags` רץ **על המכשיר** בלבד (מכשירי הילדים אחרי כל מפגש; מכשירי ההורים בפתיחת אזור ההורה), על `EngineState` המקומי (שהוא קיפול של יומן האירועים המסונכרן) ועל המונים המקומיים של 14 יום (רק `EMO_CHECKIN`). הפלט נכתב כ-doc **`flags/<childId>`** (LWW לפי hlc), **מוצפן למפתח המשפחה** (X25519; המפתח הפרטי רק ב-Keychain של ההורים, 11 §9.8) **לפני** הסנכרון. ה-Worker מאחסן אותו כ-blob אטום ולא קורא אותו. **הריצה הלילית ב-Worker לא מריצה `evaluateFlags`** (היא לא יכולה; אין לה מפתח), אלא רק את ה-rollups הלא-רגישים (`child_skill_week`) — תיקון ל-10 §15.3. אם שני מכשירים מחשבים דגלים לאותו ילד, התוצאה זהה (דטרמיניזם, E11a) ומי שכותב אחרון זוכה בלי סתירה.
 
 ### 9.4 נוסחי הודעות (עברית, להורה)
 
@@ -1961,6 +1978,7 @@ export const DEFAULT_CONFIG: EngineConfig = {
 סקירת F5 (2026-11-02). כל השינויים בתוך המסמך, בלי שינוי מבנה. בקשות למסמכים אחרים ב-`docs/review/fable-issues-F5.md`.
 
 * **יישור ל-00 גרסה 2 (F1):** `Band` + `bandOf` ו-`Skill.band` (A6); המיפוי ל-02 בדיוק לפי C15 (`introduced→new`, `practicing→beginner|advancing`; `locked/ready` קדם-מצבים) והחזרת שמות הצמיחה לילד (זרע…עץ פורח) ש-C15 קובע; `EMO_CHECKIN` על מונה מקומי ל-14 יום (C8a); מצבי שבת `soft/full/off` וימים שקטים במנוע (B7/B7a, §6.10, §10.2); ספירה כפולה של TPR (F1 #11); §14 מסומן "התקבל ב-00".
+* **יישור ל-F6 (11):** טבלת `toEngineEvent` (מה 08 צורך מ-`item.answered` של 11, ומה עדיין חסר, עם ברירות מחדל בטוחות); `evaluateFlags` רץ על המכשיר וכותב doc מוצפן `flags/<childId>` (11 §9.8), לא שורת D1 ולא ב-cron הלילי; `LevelId`/`bandOf` מיוצאים מ-`packages/shared`.
 * **יישור ל-F3 (03/04):** `Skill.subBand`, `ChildProfile.handedness` (UI בלבד, מחוץ ל-`EngineChildView`), `StrandMeta` עם `priorFrom` ו-`scoring:'wcpm'` (ל-`hebrew.fluency`) וארבעת צירי ההמשך של 04; פריסת שאלון דרך `aliases`; **גלאי אחד** לאח-בפרופיל (`identity_suspect` = `possible_profile_swap`) עם ספי 03/04 (0.35/0.98, RT 0.4×/2.5×, 10 דק') ותהליך `pending_attribution` (✓/✗/48 ש', תמונת-PIN אחרי 2 אישורים ב-30 יום); `Plan.breakMode` ו-§6.2א "מצב חופשה"; `HEB_K1_FADE_STALL` ו-`HEB_K1_HANDWRITING` ב-`watch`; `itemKey` לפי lexId.
 * **§1.1 — `SubjectId` סגור, רשימת צירים קנונית.** הוחלט **לא** להוסיף `coding`/`finance` (הערת 06): ההבחנה נשמרת בציר (`logic.coding`, `world.finance`), והדשבורד מקבץ לפי ציר. נוספה טבלת כל הצירים לפי מקצוע (כולל 5 הצירים החדשים של 03) ובדיקת טעינה. הצירים של 04 מסומנים ⟂VERIFY.
 * **§1.1א — שמות שלבים: ההגדרה הקנונית והמיפוי ל-02** (בעיה חוצת-מסמכים 3 בבריף). 08 נשאר המקור (`new…master`); 7 מצבי 02 ממופים כנגזרות (`locked/ready` = גרף, `retained` = rung 30), עם `packages/shared/levels.ts` (`toEconomyState`/`fromEconomyState`). עמודת "תצוגה לילד" הועברה ל-02 §4.2 (הבעלים של המיפוי החזותי) במקום שני סולמות צמיחה סותרים.

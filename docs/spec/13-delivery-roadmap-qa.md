@@ -491,6 +491,7 @@
    - ‏`04/K2-LETTER-SOUND` בגבעת האותיות (`R-03`, ‏`MX-H01`), 6–8 אותיות.
    - ‏probes של אמצע השנה.
    - **דדליין קשיח: 17.1.**
+   - **סדר בניית המכניקות (01 §7.1, F2 #26):** Tier A (11 מכניקות ה-MVP) נשאר כפי שהוא ב-VS; **Tier B (20 מכניקות) נבנה עד סוף ספרינט 1**, Tier C (השאר) עד סוף ספרינט 3; תקציב chunk 12 ל-A+B, 6 ל-C. היקף ה-VS לא משתנה.
 2. **18–31.1:**
    - ‏C5: צינורות תוכן וחבילות ראשונות (`12/P1`, ‏`12/P5`).
    - ‏`08/PLACEMENT-PLAYFUL`: משלחות מיקום (H2).
@@ -608,7 +609,7 @@
 | **e. אינטגרציה וליטוש** | חיבור הרמות, ‏juice, ביצועים, ‏playtests, ‏QA | ‏builds על המכשיר, דוחות | מה-VS ואילך | הכול |
 
 **עבודה במקביל:**
-- **ב-Phase 0** ‏a ו-c רצים מהיום הראשון, ו-b מצטרף ביום 2. בשלב הזה b ו-c חולקים את ה-Mac, ולכן התקנות על מכשירים עוברות תור אחד, `tools/device/queue`.
+- **ב-Phase 0** ‏a ו-c רצים מהיום הראשון, ו-b מצטרף ביום 2. בשלב הזה b ו-c חולקים את ה-Mac, ולכן התקנות על מכשירים עוברות תור אחד, `tools/mac/queue`.
 - **ב-VS** ‏e מוביל, ו-a ו-d רצים לצידו.
 - **ב-MVP** ‏c, ‏d ו-e רצים במקביל.
 - **לכל היותר 3 סשנים פעילים בו-זמנית.** המגבלה מונעת קונפליקטים בריפו, עומס על ה-Mac והצפה של ההורה.
@@ -668,7 +669,7 @@ C1–C7  O מפרסם artifact ושאלות; ממשיך ב-streams שלא תלו
 - **סשנים:** לכל היותר 3 עובדים + 1 מתזמר. המתזמר לא כותב קוד (רק docs/STATUS/backlog/questions/report), ולכן ה-context שלו נשאר קטן לאורך שבועות; כשהוא מתמלא — handoff ל-`docs/handoff/orchestrator.md` וסשן מתזמר חדש.
 - **Handoffs:** `docs/handoff/<stream>.md` (§18.2) נכתב **לפני** כל סיום סשן, גם סיום יזום. סשן שנקטע באמצע story: ה-branch וה-commit האחרון הם ה-handoff; O מזהה branch "יתום" (ללא commit 12 שעות ולא ממוזג) ופותח סשן שממשיך אותו.
 - **STATUS.md** (§18.1) הוא המקור היחיד ל"מה המצב". O מעדכן אותו אחרי כל מיזוג; סשני עבודה מוסיפים רק שורה בסעיף "streams פעילים" ו"בקשות בין streams".
-- **ריפו:** branch לכל story (`<stream>/<story-id>`), PR → CI → O ממזג (squash). קבצים משותפים רק ב-PR `shared:` אחרי rebase (§6.3). ה-Mac הוא משאב יחיד: `tools/device/queue` — סשן שצריך מכשיר נרשם לתור, ו-O מריץ את התור פעם ביום (18:00) דרך Remote Control. **ההורה מאשר חיבור Remote Control פעם ביום** (בקשה אחת מהמתזמר).
+- **ריפו:** branch לכל story (`<stream>/<story-id>`), PR → CI → O ממזג (squash). קבצים משותפים רק ב-PR `shared:` אחרי rebase (§6.3). ה-Mac הוא משאב יחיד: `tools/mac/queue` — סשן שצריך מכשיר נרשם לתור, ו-O מריץ את התור פעם ביום (18:00) דרך Remote Control. **ההורה מאשר חיבור Remote Control פעם ביום** (בקשה אחת מהמתזמר).
 - **עבודת לילה:** Cron של P1 ו-P5, ‏CI מלא, ‏resign.sh, ‏Playwright מלא — כולם ב-GitHub Actions / Mac, בלי סשן פעיל.
 
 **6.4.3 נקודות עצירה בריצה אחת (ההגדרה המדויקת)**
@@ -791,7 +792,7 @@ C1–C7  O מפרסם artifact ושאלות; ממשיך ב-streams שלא תלו
 | ID | Story | AC |
 |---|---|---|
 | P0-E2-S1 | אימות מהיר של Expo Go | ‏ADR-0002 מתעד את הגרסה המקסימלית של Expo Go ב-App Store, ואם יש דרך בלי תשלום. לא בונים על הדרך הזו (§3) |
-| P0-E2-S2 | חיבור Remote Control | הסוכן רואה את תיקיית ה-Mac. ‏`xcodebuild -version` ו-`xcrun devicectl list devices` מחזירים את מכשירי המשפחה. נוצר מלאי מכשירים `tools/device/devices.json` עם דגם, ‏iOS ושבב. ה-UDID נשמר ב-`private/` |
+| P0-E2-S2 | חיבור Remote Control | הסוכן רואה את תיקיית ה-Mac. ‏`xcodebuild -version` ו-`xcrun devicectl list devices` מחזירים את מכשירי המשפחה. נוצר מלאי מכשירים `tools/mac/devices.json` עם דגם, ‏iOS ושבב. ה-UDID נשמר ב-`private/` |
 | P0-E2-S3 | ‏dev build ראשון | ‏`expo-dev-client` ו-`npx expo run:ios --device` מתקינים app "שלום" על האייפד. האפליקציה מציגה מסך מנוקד, אנימציית Skia, צליל ורטט (באייפון). ‏Metro מעדכן JS בזמן אמת |
 | P0-E2-S4 | ‏release build ‏`family` ו-OTA | ‏release עם bundle מוטמע רץ בלי Metro. ‏`eas update --channel family` (חשבון Expo, Q-04) מגיע למכשיר באתחול הבא, תוך 2 דקות לכל היותר |
 | P0-E2-S5 | תרגיל חתימה מחדש ושמירת נתונים | יוצרים נתוני בדיקה ומתקינים מחדש מעל: הנתונים נשמרים. במכשיר בדיקה אחד מחכים לפקיעה (יום 7–8), מתעדים מה קורה, מתקינים מחדש ומוודאים שהנתונים נשמרו. התוצאה ב-ADR-0003 |
@@ -1145,7 +1146,8 @@ Story נחשבת גמורה **רק** כשכל הסעיפים הרלוונטיי�
 **התקנה וחתימה**
 - [ ] ה-build מותקן על כל המכשירים הרשומים, והנתונים נשמרו (מספר פרופילים, מטבעות, ניצוצות).
 - [ ] תאריך פקיעת החתימה נרשם, והתזכורת מתוזמנת.
-- [ ] עדכון OTA מגיע ומוחל באתחול.
+- [ ] עדכון OTA מגיע ומוחל באתחול (לא באמצע פרק, E-05).
+- [ ] באנר "תוקף ההתקנה: עוד יום" מופיע בשער ההורה ב-≤ 1 יום; הילדים לא רואים אותו (UC-076).
 
 **רינדור ושפה**
 - [ ] ★ ניקוד במסך הבדיקה ובמחרוזות האמיתיות: אין התנגשות עם השורה הבאה, הדגש בתוך האות, השווא והחטפים במקומם.
@@ -1168,7 +1170,13 @@ Story נחשבת גמורה **רק** כשכל הסעיפים הרלוונטיי�
 - [ ] ‏Guided Access עובד. ‏K3 לא יכולה לצאת לבד ממצב משותף.
 - [ ] ★ רגע תנועה: החיישן או ההקשה מזהים, והחלופה בישיבה עובדת.
 
+**תוכן ומגבלות**
+- [ ] אי אנגלי: מכסת הזמן של האי (05 §2) נאכפת ויוצאת לעברית בנקודה סיפורית, לא באמצע מילה (UC-025).
+- [ ] ★ רגרסיית ניקוד: שתי שורות מנוקדות רצופות (חֲנֻכָּה / שֶׁלָּהּ) ב-Noto 500 28pt בלי נגיעה בין סימני השורה העליונה לאותיות התחתונה (04 §7.4, 09 GATE-UX-2).
+
 **זהות והורה**
+- [ ] איפוס picture-PIN של K1 מהשער ההורי; 3 ניסיונות אחים נספרים ב-M-14 (UC-010).
+- [ ] מחיקת משפחה: חלון חרטה (grace) לפי 10 PRIV-04 לפני מחיקה בלתי הפיכה (UC-072).
 - [ ] ‏onboarding מלא על מכשיר נקי (מכשיר הבדיקה): מתחת ל-5 דקות.
 - [ ] צימוד מכשיר שני בקוד: הצליח, וקוד שפג תוקפו נדחה.
 - [ ] שער הורה: Face ID, ‏PIN, ו-3 כשלונות מובילים להשהיה.
@@ -1826,7 +1834,7 @@ pnpm e2e:update (only when the visual change is intended; say so in the PR)
 Device (on the parent's Mac via Remote Control, inside the shared folder):
   npx expo prebuild --clean && npx expo run:ios --device <name>            # dev-client
   npx expo run:ios --device <name> --configuration Release                  # "family" build
-  tools/device/resign.sh                                                    # weekly re-sign, all devices
+  tools/mac/resign.sh                                                       # re-sign (launchd daily 18:40; manual: --all --force)
   xcrun devicectl list devices
 OTA: CI publishes to channel `preview` (branch main) → canary on the parent's phone ≥24h (spec 14 PQ-REL-02)
      → `promote.yml` republishes to `family` (parent approves). Rollback: `rollback.yml` (PQ-REL-04).
@@ -1874,7 +1882,7 @@ Missing evidence → time-boxed research (≤2h) → `docs/research-log/<topic>.
 ## Streams
 a creative · b mechanics/3D · c tech/identity · d content · e integration/polish. Max 3 concurrent sessions.
 Shared files (schema, tokens, app.config) change only in `shared:` PRs after a rebase.
-Device installs go through `tools/device/queue` (one Mac).
+Device installs go through `tools/mac/queue` (one Mac).
 
 ## Git
 Branch from main; PRs only; small commits; Conventional Commits; never force-push main.
@@ -2054,3 +2062,34 @@ AI $x · TTS $y · תמונות $z · Cloudflare $5
 - **לוח החופשות:** [mako](https://www.mako.co.il/home-family-recreation/Article-33b7e14799af651006.htm), [Israel Hayom](https://www.israelhayom.co.il/vacation-calendar)
 - **כלי השטף של משרד החינוך:** [fluency-assessment-2021](https://meyda.education.gov.il/files/Mazkirut_Pedagogit/HebrewPrimary/assessment/fluency-assessment-2021.pdf)
 - **CLAUDE.md:** [DEV guide 2026](https://dev.to/nishilbhave/claudemd-best-practices-the-complete-2026-guide-435j)
+
+---
+
+## Fable review changelog
+
+סוקר F7, 2026-11-02. שינויים במקום (שפה ומבנה נשמרו; סעיפים חדשים מסומנים):
+
+- **מוסכמות / מחלקות טוקנים:** נוספה מחלקה XXL וכלל אצבע מדוד (יום-סוכן ≈ 3–8M טוקנים).
+- **§3.1:** זהות יושרה ל-00 E7/H2/H6 (קוד הקמה חד-פעמי + קוד במייל 6 ספרות דרך Resend; Cloudflare Access אופציונלי ולא בתוכנית; SIWA בשלב 2). "tunnel מהקונטיינר" הוסר (חסום); OTA ל-`family` עובר `calendar-guard.mjs` (11 §11.5).
+- **§3.2 (הוחלף):** שגרת החתימה יושרה ל-11 §3.3 — LaunchAgent יומי 18:40 ב-≤ 6 ימים הוא המנגנון; "חתימה שבועית" של ההורה (OPD-07, חמישי 20:00) היא הגיבוי; תוקף גלוי להורה בלבד; כלל "לא מוחקים, לא מחליפים Apple ID בלי סנכרון".
+- **§3.3 (הורחב):** הגדרה חד-פעמית מלאה (Mac ~45 דק׳ + 5 דק׳/מכשיר): Homebrew, doctor.sh, Remote Control ואישור חיבור יומי, Developer Mode, Connect via network, Trust developer, Guided Access, `tools/mac/devices.json`; כללי "Unable to Verify App" ו"לא מוחקים"; ⟂VERIFY שימור מיכל הנתונים + צעד `preInstallSync` אם צריך (F2 #22, F6 #9).
+- **§4.3 C3:** onboarding מול staging עם משפחת placeholder (F1 #29).
+- **§5.3:** סדר בניית מכניקות Tier A/B/C (F2 #26).
+- **§5.6 (חדש):** היקף התוכן והמערכת לפי המפרטים הסופיים — 233 מיומנויות מתמטיקה, ~160 עברית, 13 צעדי פוניקה + 534 מילים, 132 מיומנויות ו-36 חבילות (06, ⟂VERIFY), 72 (07, ⟂VERIFY), 11 מודולי מנוע, 48 רכיבים / 20 מסכים (09), ~22 מסכי הורה (10), 11, 12, 14 — ומה מזה נכנס ל-VS / MVP / v1 / v2.
+- **§6.4 (חדש):** ריצה אוטונומית ארוכה אחת: מה נבנה בלי אף תשובה (~80–85% קוד, ~50% ממה שהילדים מרגישים), מבנה הריצה (מתזמר + ≤ 3 עובדים, boot/handoff/STATUS, תור Mac, עבודת לילה), **שלוש** עצירות קשיחות בלבד (יום 0, moodboard C1-Q3, "זה הרף" C4-Q1) מול עצירות רכות, מה הריצה מייצרת אם ההורה לא עונה, ומדדי בריאות יומיים. זו התשובה ל"אפשר לבנות 80–90% בלי לעצור?".
+- **§7.1 (הוחלף):** הערכה מחודשת וכנה לכל נקודת ביקורת: ימי-סוכן (26–32 ל-Phase 0, 30–38 ל-VS, 55–70 ל-MVP, 50–65 ל-v1; מצטבר ~170–215 עד C7 לעומת 125–160 קודם), שעות-סוכן, ימי לוח, מחלקת טוקנים (XL/XXL; ~0.6–1.0 מיליארד עד C7), זמן הורה, המתנות שלא ניתנות למילוי, רמת ביטחון; §7.1.1 מצטבר. המסקנה: הלוח לא זז (חנוכה/ינואר/פסח), העבודה בכל חלון גדלה 25–35% → 3 streams + צמצום היקף מתוכנן (§5.6).
+- **§8.1 P0-E1-S3:** CI לפי 14 §6 (vitest/jest-expo, lint:assets, Docker נעוץ, viewports לפי 09 §13.2, layout-shift, workflows nightly/baselines/ota→preview/promote/rollback, calendar-guard). **P0-E7-S2/S6:** קוד הקמה + קוד במייל, נקודות קצה של 11 §7. **P0-E6-S3:** `window.__olam`.
+- **§8.2 VS-E13 (חדש):** גרפים וסכמות מלאים (03/04/05/06/07) + טבלת 13a. **§8.3 (חדש):** 13 epics ל-MVP עם ספרינטים וימי-סוכן (80–98 ברוטו → מה שנדחה מוגדר). **§8.4 (חדש):** 9 epics ל-v1 (56–68).
+- **§9 DoD:** מפרט 14 כפלייבוק המחייב (00 E12) במקום שני פתקי המחקר; Reassure delta, layout shift = 0, תור `PQ-DEV`; עוצמה −18 LUFS (09 §6.7 / 14) ופורמט לפי 12 V21.
+- **§10.1:** vitest+fast-check / jest-expo+RNTL+Reassure / Stryker; Playwright בתמונה נעוצה עם `window.__olam.*`; שורת Maestro; שורת חבילת מקרי קצה `E-01…E-24` (11 §4.18; מינימום לפני C4, הכול לפני MVP); שורת קריטריוני הקבלה של 03/04/05/12 (`MATH-AC-20…25`, `HEB-AC-19…30`); מיפוי סימפטום→חומרה מ-14 §9 ותהליך `PQ-TRI`.
+- **§10.2 #4:** ערוץ `preview` (branch main) → `family`; `PQ-REL-01..04`; rollback ע"י הסוכן ב-S0.
+- **§10.3:** זיכרון כיעד/שער (300/400/650), 20 מחזורי כניסה-יציאה ≤ 20MB, אתחול 2.5 ש׳ שער; שורות חדשות: OTA לא באמצע פרק, באנר תוקף ≤ 1 יום, מכסת אי אנגלי, רגרסיית ניקוד בשתי שורות, איפוס picture-PIN, חלון חרטה למחיקת משפחה (F9).
+- **§15.5:** מזהה קנוני `OPD-nn` + מיפוי מלא Q-xx → OPD-nn; placeholders `TODO-PARENT:OPD-nn`. **§15.6:** דוח הסטטוס השבועי יוצא בשישי (B7) יחד עם הדוח הפדגוגי.
+- **§16.2 (הוחלף):** הצ'קליסט המאוחד — 46 פריטים מכל המפרטים (00 OPD-01…34 + 2 מוצעים), מסודרים לפי מועד (אצווה 0 / שבוע 1 / חשבונות / C1 / C2 / C3 / VS / MVP / v1 / טריגר), לכל אחד: מה בדיוק, ברירת מחדל (00 גובר), עד מתי, פורמט, זמן, מקורות; כולל Mac/Xcode/Remote Control, כל מכשיר, `familyslug`, GitHub Environments, Recraft/OpenAI/Rive/Resend, allow-list, שלושת מפגשי ההקלטה, bake-off, שערי טעם, ומה אפשר לדלג עליו. סה"כ ~9–10 שעות הורה ב-8 חודשים.
+- **§16.5 / §16.6:** OPD-12 / OPD-16; תסריט ההורה ~20 דק׳ עם חלוקה לקטגוריות.
+- **§16.7 (חדש):** לוח שערי הטעם המאוחד (09 GATE-UX-1..10 ↔ 12 G1–G7 + G4b ↔ 01/02/10) עם מועד, ברירת מחדל, זמן, חוסם. **§16.8 (חדש):** רשימת ההרשאות לרשת לפי 00 E13 + hosts של ספקי AI/קול/מודלים/תוכן/נכסים, מקובצת לפי מועד. **§16.9 (חדש):** סיכום שלושת מפגשי ההקלטה (OPD-12/13/15) + bake-off.
+- **§17 CLAUDE.md:** `tools/mac/resign.sh`, `tools/mac/queue`, OTA preview→family דרך promote/rollback, viewports לפי 09 §13.2, סעיף "Performance & quality (spec 14)" עם `PQ-AGT-01…12` ו-`pnpm verify` כשער "done", hooks תחת `window.__olam`.
+- **§18.4 (חדש):** תבנית `docs/parent/questions.md` שנוצרת מטבלת OPD של 00 (סטטוס בלבד, בלי תוכן אישי).
+- **§19 #1:** נוסח עודכן ל-"קוד חד-פעמי במייל"; סטטוס: כל 7 ההצעות התקבלו ב-00 רוויזיה 2 (#5 כמעטפת).
+- **RK-05:** קוד במייל במקום magic link; Cloudflare Access אופציונלי.
+- סוגיות למסמכים אחרים: `docs/review/fable-issues-F7.md`. פריטי F1 (#7, #8, #20, #21, #25, #29), F3 (#27, #28), F6 (#1–#9), F8 (#1–#9), F9 (GAP-48 ושורות §10.3/§3.2) ו-F2 (#22, #26) יושמו כאן.

@@ -212,6 +212,7 @@ PA-PRIV  פרטיות ונתונים (§8)                       SET-01 שבת �
 | **M-13** | **סוכנות ויצירה** | % הפעילויות שהילד בחר בעצמו; מספר יצירות (בניות, ציורים, סיפורים); שאלות "אני תוהה" | שבוע | — | כולם (ב-K3 "מה בחר/ה לשחק") | PA-STR, דוח |
 | **M-14** | **בריאות מפגש** | אורך פרק ממוצע מול היעד (C3); % מפגשים שהסתיימו טבעית (`natural`/`windDown`); מספר פגיעות במגבלה היומית; ניסיונות כניסה בשעות שקט; דקות סולו של K3 בפרקי למידה (היעד הוא 0) | שבוע | — | כולם | PA-CSET, AL-06 |
 | **M-15** | **חילוצים ואוספים** | חברים שחולצו, חלקי פאזל וחדרים סודיים (G2). זו התקדמות במשחק, לא בלמידה, ומשמשת מקור ל"ניצחון" | שבוע | — | כולם | PA-CHILD, דוח |
+| **M-16** | **פער נייר** (`paperGap`, C10) | לכל מיומנות שנבדקה בבדיקת הנייר החודשית (PA-PROBE): `FTA_app(20 אחרונות, לפני תאריך הבדיקה) − acc_paper(פריטי המיומנות בדף)`. מוצג בקפיצות של 5%, עם סימן. ללא השוואה בין אחים | בדיקה | ≥3 פריטי נייר למיומנות ו-N ≥ 8 באפליקציה | K2, K1 | PA-SKILL, PA-ASM, מבט חודשי (קטע 7) |
 | **MD-01** | **מדדי מכשיר** (H5) | לכל `deviceId`: M-02 לפי ילד, מפגשים, `lastSyncAt`, אירועים ממתינים, `appVersion` ו-`otaUpdateId`, נפח חבילות תוכן, מצב (shared-kids / single-child / parent-only), ילדים מותרים, מצב נעילת שינה, `lastSeenAt` | יום, שבוע | — | הורים | FAM-04, PA-LOG |
 
 **היעד השבועי האישי** הוא יעד הימים של המטרה המשפחתית (02 §10.1): **K1 3 · K2 3 · K3 2** ימי הרפתקה, ו-`effTarget` מותאם לשבוע עם חגים. **אין יעד דקות.** דקות ממוקדות מוצגות למידע בלבד, כדי לא לייצר לחץ של זמן (PD-P10). המקסימום נקבע במגבלה היומית (§6.13).
@@ -581,6 +582,11 @@ PA-PRIV  פרטיות ונתונים (§8)                       SET-01 שבת �
 | AI | מלווה AI | פעיל (K1, K2) | כשכבוי: רמזים מתוסרטים בלבד |
 | זהות | תמונת-PIN | K1 פעיל; K2 ו-K3 כבוי | H3 |
 | תצוגה | ציון שליטה 0–100 | כבוי | K1 בלבד |
+| תוכן | **מצב חופשה** (`plan.breakMode`, 08 §6.2א) | אוטומטי (מלוח בית הספר, חופשה ≥5 ימי לימוד) | "בחופשה המשחק חוזר יותר ומלמד פחות חדש". אפשר להדליק/לכבות ידנית. מוצג שבב "חופשה" ב-PA-CHILD כשפעיל |
+| תוכן | **סימון בכיתה** (`notation.mulSign` × / ·, `divSign` : / ÷, `carryRow`, `borrowMark`; 03 §1.5) | × ו-:, לפי ברירות המחדל של 03 | משתנה **רק** באישור ההורה; צילום דף שמזהה סימון אחר מציע "לעדכן?" (12) ולא משנה לבד |
+| תוכן | **סדר נושאים לפי בית הספר** (`classTopics[].order:'school'`, 03 §7.5) | כבוי (סדר המנוע) | כשמופעל, "מה למדו" קובע גם את סדר ה"הבא בתור" בכפוף לקדם-דרישות |
+| שפה | **ניקוד: שחרור "החזקה"** (`fadeHold`, 04 §6.4) | אוטומטי | כשהמנוע מחזיק ניקוד מלא (אחרי נסיגה), ההורה רואה "המשחק מחזיק ניקוד מלא עד {date}" ויכול לשחרר ידנית |
+| זהות | **יד דומיננטית** (`handedness`, 00 H2) | לא ידוע | ימין / שמאל. משנה מיקום לוח מקשים וכפתור "סיימתי" (09) ודפי עבודה (04). לא משפיע על המנוע |
 
 #### 6.13.1 "מה למדו החודש" (Class topics input)
 
@@ -794,7 +800,7 @@ PA-PRIV  פרטיות ונתונים (§8)                       SET-01 שבת �
 | ID | כלל |
 |---|---|
 | **SEC-01 נקודת כניסה** | במכשירי ילדים יש אייקון הורה קטן בפינת בורר הפרופילים וב-hub. **לחיצה ארוכה של 2 שניות** פותחת את GATE-01, כדי למנוע כניסה מקרית של פעוט. אין שער חשבוני (E7). |
-| **SEC-02 Face ID** | `expo-local-authentication`, כשהוא זמין בנתיב ההתקנה. **00 E7 (מחייב):** במכשירי `shared_kids` ‏`disableDeviceFallback:true` (קוד הנעילה של האייפד לעולם לא פותח את שער ההורים, כי הילדים מכירים אותו); ב-`parent_only` מותר `false`. לכן השאלה ב-ON-06 נשארת רק כהסבר, לא כמתג. אחרי הצלחה מוצג בורר הורה, כדי שיומן הביקורת יידע מי נכנס |
+| **SEC-02 Face ID** | `expo-local-authentication`, כשהוא זמין בנתיב ההתקנה. **לפי 11 §5.3 S4 (מחייב, 00 E7):** `disableDeviceFallback:true` במכשירי `shared_kids` **ו-`single_child`** (קוד הנעילה של האייפד לעולם לא פותח את שער ההורים, כי הילדים מכירים אותו); `false` רק ב-`parent_only`. לכן השאלה ב-ON-06 נשארת רק כהסבר, לא כמתג. אחרי הצלחה מוצג בורר הורה, כדי שיומן הביקורת יידע מי נכנס. **ה-cooldown של PIN (SEC-03) נשמר גם אחרי הפעלה מחדש של האפליקציה** (11 S4) |
 | **SEC-03 PIN** | PIN אישי בן 6 ספרות לכל אפוטרופוס, ולכן הוא מזהה את ההורה. scrypt בצד הלקוח, N=2^15, r=8, p=1 (11 §7.3). ה-hash מסונכרן למכשירים לצורך אימות מקומי. **5 שגיאות: המתנה של 60 שניות, ואחר כך כפול בכל פעם** (11 S4). אין שער חשבוני (E7) |
 | **SEC-04 סשן הורה** | לפי 11 §5.1: access JWT ל-15 דקות, ו-refresh מתחלף ל-60 יום ב-Keychain עם `requireAuthentication:true`. במכשירי `shared_kids` **אין סשן של אפוטרופוס כברירת מחדל**. השער פותח מצב **L** (מקומי ומוגבל, RB-0), ופעולות מלאות דורשות "התחברות הורה במכשיר זה" פעם אחת. קריאות admin ממכשיר משפחתי נושאות JWT ו-`X-Olam-Device` |
 | **SEC-05 סשן** | אזור ההורים ננעל אחרי 3 דקות ללא פעילות, או במעבר לרקע. ביציאה המכשיר חוזר לבורר הפרופילים, לא לילד האחרון. במכשיר `parent-only`: Face ID בכל פתיחה, או אחרי 15 דקות, לפי בחירה. |
@@ -1279,7 +1285,7 @@ type CoachCard = { id:string; title:string; triggers:{ alerts?:AlertRule[]; ages
 ```
 alerts(id, family_id, child_id?, rule, key, payload_json, created_at, status:'queued'|'sent'|'report'|'expired', feedback?)
 deliveries(id, ref_type:'alert'|'report', ref_id, guardian_id, channel:'push'|'email'|'telegram'|'inbox', scheduled_for, sent_at?, error?)
-reports(id, family_id, kind:'weekly'|'monthly', period_from, period_to, json, created_at)
+reports — **לפי 11 §6.2 (מחייב):** id = `<family>:<isoWeek>` (שבועי) / `<family>:<yyyy-mm>` (חודשי), kind, period_from, period_to, body_json, summary_he, send_at, sent_at, created_at. **`sent_at` הוא סמן האידמפוטנטיות** של המייל השבועי (לא שורת deliveries נפרדת); `deliveries` נשארת לערוצים האחרים (push/telegram/inbox) ולניסיונות חוזרים
 report_feedback(report_id, guardian_id, vote, at)
 observation_feedback(observation_id, guardian_id, vote, correction?, at)
 external_evidence(id, child_id, kind:'paperProbe'|'teacherNote'|'transfer', subject?, value_json, created_by, ts)
@@ -1310,7 +1316,7 @@ child_skill_week(child_id, iso_week, skill_id, n_first, c_first, hints, pae_num,
 | API-13 | `GET /reports/children/:id/sessions?from&to&device=&subject=&mode=`, `GET /reports/sessions/:id`, `POST /children/:id/sessions/:sid/reattribute {to: childId\|'unknown'\|'revert'}` | חדש | child.reports.read / child.settings | ✔ | PA-LOG, W-LOG-05 |
 | API-14 | `GET/PATCH /children/:id/interests[/:topicId]`, `POST …/interests/seeds` | חדש | child.settings | ✔ | PA-INT |
 | API-15 | `GET /children/:id/observations`, `POST /observations/:id/feedback` | חדש | child.reports.read | ✔ | PA-STR |
-| API-16 | `GET /children/:id/assessments`, `POST /children/:id/evidence` | חדש | child.reports.read / child.settings | ✔ | PA-ASM |
+| API-16 | `GET /children/:id/assessments`, `POST /children/:id/evidence` (`{kind:'paperProbe', probeId, items:[{skillId, correct}]} \| {kind:'teacherNote', unitId?, text} \| {kind:'transfer', text}`), `GET /children/:id/probes/next` (PDF מהמחוללים) | חדש | child.reports.read / child.settings | ✔ | PA-ASM, PA-PROBE |
 | API-17 | `GET /children/:id/flags`, `POST /flags/:id/action {talkedToTeacher\|notRelevant\|snooze\|print}` | חדש (נתונים מ-08 §9) | child.reports.read | ✔ | PA-FLAG |
 | API-18 | `GET /approvals?status=`, `GET /approvals/:id`, `POST /approvals/:id/decision {approve\|reject\|approveSome, itemIds?, edits?[], reasons?[]}` | חדש (מאחד packs ו-photos מ-11 §7.6 ו-§7.9) | content.approve | — | PA-APPR |
 | API-19 | `GET/POST/PATCH /rewards`, `POST /children/:id/appreciation` | חדש (נתונים מ-02 §11) | rewards.manage | ✔ | PA-RWD |
@@ -1334,9 +1340,8 @@ child_skill_week(child_id, iso_week, skill_id, n_first, c_first, hints, pae_num,
 
 | שעה (ישראל) | Cron (UTC) | משימה |
 |---|---|---|
-| 02:10 כל לילה | `10 0 * * *` (11) | rollup ל-`child_skill_week`, ‏AL-02..06, ‏`evaluateFlags` (08 §9.3), גיבוי וניקוי (11 §5.9), וחבילות התוכן של הלילה |
-| כל 15 דקות | `*/15 * * * *` (**מחייב לפי 00 E5**; מחליף לצורך זה את `0 */6 * * *` של 11) | שליחת תור ההתראות לפי §10.2. ביום א' ב-07:30 משתחרר מה שנאגר בשבת |
-| שישי (וערב חג) 09:00–14:00 | `*/15 6-12 * * *` (**מחייב לפי 00 E5/B7**; מחליף את `41 4 * * 0` של 11) | הכנת הדוח השבועי ושליחתו, לפי §11.1 |
+| 02:10 כל לילה | `10 0 * * *` (11) | rollup ל-`child_skill_week`, ‏AL-02..06 (מהאגרגטים הלא-רגישים), גיבוי וניקוי (11 §5.9), וחבילות התוכן של הלילה. **לא** `evaluateFlags`: הדגלים מחושבים על המכשיר ומגיעים כ-doc מוצפן `flags/<childId>` (08 §9.3, 11 §9.8); AL-09 נוצר במכשיר ההורה בקריאת ה-doc |
+| כל 15 דקות | `*/15 * * * *` (**טריגר אחד**, 11 §7.1; 00 E5) | בתוך הריצה: (א) תור ההתראות לפי §10.2, וביום א' ב-07:30 שחרור מה שנאגר בשבת; (ב) **ביום שישי וערב חג, 09:00–14:00 ישראל (מסנן חלון בקוד):** הכנת הדוח השבועי ושליחתו כש-`now ≥ send_at && !sent_at` (§11.1); (ג) poll ל-Batch ונודניק תפוגה (11). שתי השורות הישנות (`*/15 6-12 * * *`, `41 4 * * 0`) מאוחדות לטריגר הזה, זהה פונקציונלית |
 | ה-1 בחודש, 03:00 | בתוך הריצה הלילית | הכנת המבט החודשי. הוא יוצא יחד עם הדוח של יום שישי הבא |
 
 ---
@@ -1363,7 +1368,7 @@ child_skill_week(child_id, iso_week, skill_id, n_first, c_first, hints, pae_num,
 | AC-14 | "לתשומת לב" לא מופיע ב-Push, בשורת נושא, ב-preheader, בדוח השבועי או בטלגרם. במצב `shared_kids` הוא מטושטש עד לחיצה. |
 | AC-15 | סטטוס של דגל מגיע רק מ-`evaluateFlags` של 08. האזור מציג רק `parent_note` ו-`referral_suggested`, ולכל היותר הודעה אחת לילד ב-28 יום. |
 | AC-16 | צילום-למשחק לא נפתח לילד לפני אישור הורה. התמונה הגולמית נמחקת תוך 5 דקות מהאישור. |
-| AC-17 | שער: 5 שגיאות PIN מובילות להמתנה של 60 שניות, שמוכפלת בכל פעם. אין שער חשבוני. מכשיר שסומן ב-ON-06 "ילדים מכירים את הקוד" פתוח ב-PIN בלבד. |
+| AC-17 | שער: 5 שגיאות PIN מובילות להמתנה של 60 שניות, שמוכפלת בכל פעם ונשמרת אחרי הפעלה מחדש (11 S4). אין שער חשבוני. במכשירי `shared_kids`/`single_child` קוד הנעילה של המכשיר לא פותח את השער (`disableDeviceFallback:true`); ב-`parent_only` כן. |
 | AC-18 | טוקן ילד שקורא לנקודת קצה `/children/:id/flags` מקבל 403. Viewer שקורא ל-`overview` מקבל 403. |
 | AC-19 | כל קריאה משנה ב-API-02..04, 12, 14, 18..23 יוצרת שורה ב-`audit_log` עם `diff_json` (11 §5.6). |
 | AC-20 | `unpair`: הקריאה הבאה מהמכשיר מקבלת 401, והמכשיר עובר להגדרה עם הנתונים המקומיים. `wipe`: המכשיר דוחף אירועים לפני המחיקה. מכשיר לא מחובר מקבל `wipe_pending`, וההרשאה שלו מבוטלת אחרי 7 ימים (11 S5). |
@@ -1520,6 +1525,7 @@ child_skill_week(child_id, iso_week, skill_id, n_first, c_first, hints, pae_num,
 * **C2/08 §6.6:** חוגת האתגר 85/80/75 (היה 90/80/70) ב-M-04b וב-PA-CSET; משקלי המקצועות מצביעים על ברירות המחדל של 08 §6.8 (אנגלית 25/15) עם ולידציה עברית ≥ אנגלית.
 * **§4.1 ביקורת חישוביות:** כל מדד נבדק מול 11 §5.8; טבלה עם סטטוס (קיים / 08 / חסר) ורשימת 11 אירועים חסרים + שדרוג `item.answered` ו-`session.ended` (סיבות סיום קנוניות מ-08 §1.10; "childQuit" → `child_exit` ב-AL-04). מדד בלי אירוע מציג ES-1 (AC-38).
 * **PA-FLAG (§6.9):** `EMO_CHECKIN` עבר מ"הצעה" לכלל של 08 §9.2 עם מונה 14 יום (C8a); נוספו שני כללי 03 ומנגנון "כללים חדשים ממתינים לאישור" (`maxStatus`, AL-16); ההשלכה של כל פעולת הורה (08 §9.7) מוצגת לפני האישור. PRIV-01/02 עודכנו בהתאם (T4b = `checkinNudge`, OPD-27).
+* **יישור ל-F3 (03/04):** AL-15 הפך לכרטיס אישור ✓/✗ (48 שעות, תמונת-PIN אחרי 2 אישורים ב-30 יום), תואם לגלאי האחד של 08 §10.5.3; **PA-PROBE** (רשת ✓/✗ לפריט, "המורה אמרה…", M-16 `paperGap`, API-16 מורחב); הגדרות ילד חדשות: מצב חופשה, סימון בכיתה, סדר לפי בית הספר, שחרור `fadeHold`, יד דומיננטית.
 * **מקרי קצה:** כלי תיקון **W-LOG-05 "לא {name} שיחק/ה"** (שיוך מחדש של מפגש, באנר חשד, AL-15, API-13 חדש); FAM-03 עם עליית כיתה באישור בלבד, "להשהות", ושני סוגי איפוס עם הסבר; **§16.1** טבלת "איך כל מקרה קצה נראה להורה" (15 מקרים) ו-**AC-38..AC-53**.
 * **Onboarding (H2):** יעד ≤5 דקות עד שער ההורים, שאר השלבים נדחים; "יד דומיננטית" ב-ON-04; מסעות מיקום לא מתחילים לפני ON-10.
 * **נגישות (§14.4):** A11Y-1..7 (Dynamic Type עד AX5 עם כללי המרה לרשימות וטקסט, VoiceOver, ניגודיות, Reduce Motion, מגע, web) ו-AC-51.

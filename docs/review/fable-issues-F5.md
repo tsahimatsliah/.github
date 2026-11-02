@@ -35,11 +35,26 @@ Each row: file · section · problem · proposed fix. Decisions that 08/10 alrea
 | 3 | §6.0א `band` | 00 A6 / 08 §1.2 now require `Skill.band: 'T'\|'G'\|'S'` as a mandatory field (derived from the band column T/T+/G/G+/S-R/S/S+). | Add to the parser derivation table (`T*→T`, `G*→G`, `S*→S`). |
 | 4 | §14.3 `MATH_K1_READ_VS_LISTEN` | 08 makes it a marker feeding `HEB_K1_LISTEN_READ_GAP` (counts a week as "met" when θ-gap ≥ 0.7 and the read-vs-listen delta ≥ 15 pts), not a standalone note. | Reference 08 §9.2 wording. |
 
+## To 03 / 04 — answers to fable-issues-F3 (all applied in 08/10)
+
+| F3 # | Decision in 08/10 |
+|---|---|
+| 1 | `Skill.band` + `subBand?: 'T+'\|'G+'\|'S-R'\|'S+'`, `extraGates?: ExtraGateId[]`; `bandOf` in `packages/shared/bands.ts` (08 §1.1–1.2). |
+| 2 | 04's four strands registered as `continuation` with `priorFrom` siblings; `hebrew.fluency` is `scoring:'wcpm'` (no θ, no fringe) — 08 §1.1 `StrandMeta`, §3.7. |
+| 3 | Aliases fan-out with weights 0.7 / 0.35 — 08 §3.3א. |
+| 4 | `O.STEP` row in 08 §4.1 (incl. self-correction ×0.5). |
+| 5 | **One detector** `identity_suspect` (= `possible_profile_swap`) with your thresholds (acc ≤0.35/≥0.98 inside the band, RT 0.4×/2.5×, 10-min adjacency), scoring held from item 10 (`identity_pending`), parent ✓/✗ card (10 AL-15), 48 h auto-exclude, picture-PIN offer after 2 ✓ in 30 days — 08 §10.5.3. **Difference from 03 §14.4:** 08 puts the suspension at `excluded:'identity_pending'` (not `disengaged_block`, which triggers the break offer) so the child sees nothing; please align the wording. |
+| 6 | Four rules added, `maxStatus:'watch'`, `provisional` — 08 §9.2 (`HEB_K1_HANDWRITING` referral = teacher + OT via pediatrician). |
+| 7 | `Plan.breakMode` + 08 §6.2א (K1 15/25/50/0/10, K2 20/30/30/0/20, monthAlign frozen, ≤6 reviews after reentry); 10 §6.13 toggle. Note: 03's "K2 20/30/40/10 incl. fun 20%" did not sum; 08 uses review 30 / fun 20. |
+| 8 | `ChildProfile.handedness`, excluded from `EngineChildView` — 08 §1.7; 10 ON-04 / §6.13. |
+| 9 | Confirmed: `ReviewCard.itemKey` is free-form; `H.WR.UNP.FAM#lx_…` is fine — 08 §1.6. |
+| 23–25 | PA-PROBE grid + teacher note + M-16 `paperGap` + API-16; new settings rows; AL-15 confirmation card — 10 §4.2, §6.8, §6.13, §10.1. |
+
 ## To 04 — Hebrew
 
 | # | Section | Problem | Proposed fix |
 |---|---|---|---|
-| 1 | Skill IDs / strands | 04 does not publish `StrandId`s nor a placement spine. 08 §1.1 reserves `hebrew.pa`, `hebrew.letters`, `hebrew.listening`, `hebrew.decoding`, `hebrew.comprehension`, `hebrew.spelling_morph`, `hebrew.writing` (⟂VERIFY) and 08 §3.3א needs a `questionId → H.*` map for T1–T5, T8, G1–G6, G12, S1–S6. | Add a derivation table like 03 §6.0א (strand, anchor, band, spine, questionnaire map). |
+| 1 | §2.7 strands | 08 §1.1 now lists `primary`: `hebrew.pa`, `hebrew.letters`, `hebrew.listening`, `hebrew.decoding`, `hebrew.comprehension`, `hebrew.spelling_morph`; `continuation`: `hebrew.oral`, `hebrew.writing`, `hebrew.ran`, `hebrew.fluency`. 08 §3.3א still needs the `questionId → H.*` map for T1–T5, T8, G1–G6, G12, S1–S6 in the same alias format as 03 §6.0א. | Confirm the strand names match §2.7 exactly and publish the questionnaire map. |
 | 2 | Error-code namespace | 04 uses `E.VIS.*`, `E.PA.*` for **error codes**, while 05 uses `E.*` (`E.PH.SAT.GPC`) for **skill IDs**. `Skill.errorTags` and `chosenErrorTag` share one string space in the engine. | Prefix Hebrew error codes (`HE.*` or `ERR.H.*`) or namespace by subject in the content schema. |
 
 ## To 05 — English
