@@ -1585,7 +1585,7 @@ afade=t=in:d=0.02,areverse,afade=t=in:d=0.03,areverse" -ar 48000 -ac 1 -c:a aac 
 | 12 | /z/ | zoo | stretched | | 34 | /oʊ/ | boat | normal |
 | 13 | /ʃ/ | ship | stretched | | 35 | /uː/ | moon | stretched |
 | 14 | /ʒ/ | treasure | stretched | | 36 | /aʊ/ | cow | normal |
-| 15 | /h/ | hat | clipped | | 37 | /ɔɪ/ | boy | normal |
+| 15 | /h/ | hat | normal | | 37 | /ɔɪ/ | boy | normal |
 | 16 | /tʃ/ | chip | clipped | | 38 | /ɔ/ | saw | stretched |
 | 17 | /dʒ/ | jam | clipped | | 39 | /ɑr/ | car | normal |
 | 18 | /m/ | man | stretched | | 40 | /ɔr/ | fork | normal |
@@ -1622,3 +1622,329 @@ afade=t=in:d=0.02,areverse,afade=t=in:d=0.03,areverse" -ar 48000 -ac 1 -c:a aac 
 - QA ASR ב-runner: ~0.2–0.5× זמן אמת על 4 vCPU (int8) → לילה של ~1 שעת אודיו נחסם ב-~2–3 שעות; מגבלת Actions — מפצלים ל-matrix.
 - Latency: אופליין — מוכן עד בוקר; P2 — ≤ 1.5 ש׳ לשורה (§3.14).
 
+---
+
+## 7. P6 — צינור נכסים חזותיים ושמע עם שערי אישור
+
+### 7.1 ארכיטקטורה ושערים
+
+```
+ G1 moodboard ─► style lock ─► G2 character sheets ─► G3 avatar parts sheet ─► G4 icon set ─► G5 scene/sticker library
+                                                                  │                                     │
+                                                                  ▼                                     ▼
+                                                     Rive rigging (designer) ─► G6 Rive rigs + voices/FX ─► G7 audio review (SFX/music)
+ every generated asset: manifest entry → generate (batch) → post-process → vision judge (Sonnet 5.5) → contact sheet → gate
+ every asset: provenance row in assets/LICENSES.json (model, prompt hash, refs, date, license, vendor ToS snapshot id)
+```
+
+| שער | מה ההורה-המעצב/ת רואה | החלטה | חוסם |
+|---|---|---|---|
+| **G1 Moodboard** | 24 מועמדים (GPT Image) + 3 לוחות צבע + 2 כיווני טיפוגרפיה עם ניקוד | בחירת 4–6 תמונות ייחוס + פלטה | כל הנכסים |
+| **G2 Character sheets** | לכל דמות: חזית/¾/צד/גב + 8 הבעות + 6 צורות פה | אישור/תיקון לכל דמות | Rive, סיפורים |
+| **G3 Avatar parts sheet** | contact sheet: 12–16 גווני עור × 30+ תסרוקות × אביזרים, על 6 אווטארים מורכבים | אישור/דחיית חלקים | עורך אווטאר |
+| **G4 Icon set** | כל האייקונים בגדלים 24/48/96 על רקע בהיר/כהה, RTL ראי היכן שצריך | אישור | UI |
+| **G5 Scenes & stickers** | רקעים, אובייקטים, מדבקות, תמונות "שיקוי פרומפט", "מצא את המוזר" | אישור תא-תא (צ'יפ מושבת אם לא אושר) | P1 סיפורים, P3 |
+| **G6 Rive rigs** | דמויות מונפשות בכל מצבי ה-state machine + קולות + FX רובוט | אישור | הפצה |
+| **G7 Audio review** | נגן לכל SFX/מוזיקה בהקשר (לולאה, ducking) | אישור; דחיית כל צליל דמוי צפירה/פיצוץ (B8) | הפצה |
+
+דף האישור: `/review/assets` ב-Worker (מאחורי Sign in with Apple), נגיש מכל מכשיר; כל החלטה נרשמת ב-D1 `asset_reviews`.
+
+### 7.2 נעילת סגנון (Style Lock)
+
+`assets/style/style.json` (מקור אמת; מסמך מילולי נגזר ממנו בשלב הבנייה):
+
+```json
+{
+  "palette": { "fire": "#FF8A3D", "ember": "#FFC857", "night": "#2B2D5B", "dusk": "#5B4B8A", "leaf": "#4CAF7A", "cream": "#FFF6E5", "ink": "#1E1B2E" },
+  "shape_language": "rounded, chunky silhouettes, no sharp spikes; villains are round and wobbly",
+  "line": { "weight_px_at_1024": 10, "color": "ink", "style": "clean, uniform, slightly rounded caps" },
+  "shading": "flat + one soft cel shadow, warm rim light from campfire",
+  "mood": "cozy-adventurous, night is warm not scary, no horror, no weapons beyond foam/toy-like light crystals",
+  "refs": ["refs/g1-01.png", "refs/g1-02.png", "refs/g1-03.png", "refs/g1-04.png"],
+  "negative": "text, letters, logos, watermarks, realistic faces, gore, weapons, fire hazards near children, scary eyes, uniforms, flags, religious symbols misuse",
+  "canvas": { "character": [1024, 1024], "scene": [2048, 1536], "sticker": [512, 512], "icon": [96, 96] }
+}
+```
+הערות פלטה: ערכים זמניים — נקבעים ב-G1 ומוזנים ל-`packages/ui` tokens (UX spec); הניגודיות נבדקת מול WCAG ב-UX spec.
+
+### 7.3 ספריית פרומפטים (`assets/prompts/*.yaml`)
+
+הפרומפטים למודלי תמונה באנגלית (איכות טובה יותר), עם משתנים, וגרסה. **אף פרומפט לא כולל תמונות של ילדים אמיתיים או תיאור מזהה שלהם** (D14); אווטארים נבנים מחלקים (§7.5).
+
+```yaml
+id: character.turnaround.v2
+model: gpt-image   # see §8 for allowed models
+refs: [style.refs, "chars/{{char_id}}/approved_front.png"]   # after G2, the approved front view becomes a ref
+prompt: >
+  Character turnaround sheet of {{char_desc}}, children's game art for ages 3–9.
+  Show front, three-quarter, side and back views on one row, same scale, neutral standing pose,
+  flat colors with one soft cel shadow, uniform rounded {{line_weight}}px dark outline, palette {{palette}}.
+  Rounded chunky silhouette, big readable shapes, friendly expression.
+  Plain cream background, no text, no logos, no watermark.
+negative: "{{style.negative}}"
+size: 2048x1024
+n: 4
+---
+id: character.expressions.v1
+prompt: >
+  Expression sheet for {{char_desc}}: happy, thinking, surprised, proud-of-effort (small smile, closed eyes),
+  oops (cheeky), sleepy, cheering, listening. 4x2 grid, head and shoulders, same style as references, no text.
+---
+id: sticker.object.v1
+prompt: >
+  Single {{object}} as a game sticker, {{style.shading}}, thick rounded outline, centered, transparent background,
+  no shadow on ground, no text.
+---
+id: scene.background.v1
+prompt: >
+  Wide background scene: {{scene_desc}}, cozy night camp in an Israeli-style forest landscape (pines, oaks, rocks),
+  warm campfire light, empty foreground for characters, parallax-friendly: sky, far hills, mid trees, ground as clear bands.
+  No people, no text.
+---
+id: ai_literacy.potion.v1          # P3 "שיקוי פרומפט" grid cell
+prompt: >
+  {{who}} {{doing}} in {{where}}, {{style_chip}} style variant of the house style, one extra detail: {{detail}}.
+  Simple composition a 5-year-old can describe, no text.
+---
+id: ai_literacy.oddity.v1          # P3 "מצא את המוזר"
+prompt: >
+  {{scene}} with exactly ONE silly mistake: {{oddity}} (e.g., a cat with three ears). Everything else normal and clear.
+```
+
+### 7.4 גיליונות דמויות (Character Sheets)
+
+לכל דמות קבועה (קמע, גלגלי, צללון ×3 וריאנטים, דמויות משנה, חיות המשפחה): `chars/{id}/` עם `turnaround.png`, `expressions.png`, `mouths.svg` (6 צורות: rest, A, E, O, M/B/P, F/V — לסנכרון שפתיים פשוט ב-Rive), `palette.json`, `registry.json` (`{id, name_he, gender, role, voice}` — מקור המגדר לנרטיב, §1.6). ייצור: 4 מועמדים → judge → contact sheet → G2. אחרי אישור, החזית המאושרת נכנסת כ-ref קבוע לכל שימוש עתידי.
+
+### 7.5 חלקי אווטאר (שכבתיים ועקביים)
+
+- **קנבס קנוני:** SVG 1024×1024, נקודות עיגון ב-`avatar-rig.json`: `head_center`, `eye_line_y`, `hairline_y`, `ear_l/r`, `neck_base`, `shoulder_l/r`. כל חלק חייב להיכנס ל-slot המוגדר (bbox) ולהשתמש רק בצבעי טוקן (`var(--skin)`, `var(--hair)`, `var(--hair-shadow)`, `var(--cloth-1)`), כך שהצביעה מחדש מתבצעת בזמן ריצה (Rive data binding / Skia).
+- **קטגוריות:** פנים (6 צורות), עיניים (10), גבות (8), אף (6), פה (8 + 6 צורות דיבור), אוזניים (3), שיער קדמי (30+: חלק, גלי, מתולתל, אפרו, צמות, קוקו, קצר, "שן חסרה" כחלק פה), שיער אחורי (תואם), משקפיים (6), מכשירי שמיעה (2), כיפה (4), כובעים (10), נמשים (3), תלבושות (20, D3 cosmetic shop), גוון עור 12–16.
+- **ייצור:** Recraft vector (custom `style_id` מתמונות G1) עם פרומפט לכל חלק + תמונת ה-template של ה-slot כ-reference; לחלופין עיצוב ידני של חלקים קריטיים (פנים/עיניים) ע"י ההורה-המעצב/ת וייצור הווריאציות ב-AI.
+- **עיבוד:** `svgo` (preset safe), החלפת כל fill בטוקן הקרוב (ΔE ≤ 8) או fail, בדיקת bbox מול ה-slot, בדיקת "אין path מחוץ לקנבס", ושמות שכבות `{category}_{variant}_{layer}`.
+- **בדיקת עקביות:** הרכבת 200 אווטארים אקראיים + 6 "פורטרטים" לפי תיאור ההורה (בלי תמונות) → contact sheet → G3. כשל עיגון (שיער לא נוגע ב-hairline ±6px, משקפיים לא על eye_line ±4px) → fail אוטומטי.
+
+### 7.6 אייקונים SVG דרך Recraft
+
+- רשימה ב-`assets/icons.yaml` (id, משמעות, האם להפוך ב-RTL: חצים/"אחורה" כן; שעון/מטבע/סימן V לא).
+- גריד 96×96, stroke אחיד 8px בגודל 96 (מתאים ל-4px ב-48), פינות מעוגלות, 2 צבעים מטוקנים.
+- Recraft: **בדיקת בנייה** — איזה מודל מקבל את ה-`style_id` המותאם (V3 vector או משפחת V4 Styles; התיעוד הרשמי אומר ש-V4 לא תומך ב-styles, ומפיצים חיצוניים מציגים "V4 Styles" שכן) → נבחר ונרשם ב-ADR. **מנוי בתשלום חובה**: בתוכנית החינמית התמונות ציבוריות ושייכות ל-Recraft.
+- עיבוד: `svgo`, נרמול viewBox, הסרת טקסט, המרה ל-`react-native-svg` components (codegen), snapshot test.
+
+### 7.7 מסירה ל-Rive
+
+**קובץ:** `rive/{char_id}.riv` (מקור `.rev` בחשבון ה-Rive של ההורה). **Artboards:** `main` (גוף מלא), `portrait` (UI), `mini` (מפה). **חלקים:** מיובאים כ-SVG שכבות בשמות מ-§7.4/7.5.
+**חוזה State Machine (`SM_main`) — שמות קלט קבועים שהקוד מצפה להם:**
+
+| Input | סוג | ערכים | שימוש |
+|---|---|---|---|
+| `mood` | number | 0 idle, 1 happy, 2 thinking, 3 surprised, 4 oops, 5 sleepy | מצב בסיס |
+| `talk` | boolean | | פה זז כשאודיו מתנגן |
+| `viseme` | number | 0–5 (rest/A/E/O/MBP/FV) | אופציונלי, מנוהל ע"י קוד לפי timestamps פשוטים |
+| `cheer` | trigger | | חגיגה (≤ 0.8 ש׳ לתשובה, D7) |
+| `bigCheer` | trigger | | אבן דרך (4–6 ש׳, ניתן לדילוג) |
+| `point` | number | −1 שמאל … 1 ימין | הצבעה על מטרה (RTL מודע) |
+| `skin`, `hair`, `cloth1` | color (data binding) | טוקנים | אווטארים |
+
+**גלגלי:** בנוסף `gears` (number 0–1 מהירות סיבוב = "חושב") ו-`lamp` (boolean). **צללונים:** `wobble`, `befriend` (trigger — הופך לחבר; אין מצב "מוות").
+**קבלה:** קובץ ≤ 300KB לדמות; 60fps על iPad בסיסי (בדיקת מכשיר ע"י ההורה, E4); כל קלט מתועד ב-`rive/{id}.contract.json` ונבדק ב-unit test מול ה-runtime.
+
+### 7.8 SFX ומוזיקה + יומן רישוי
+
+- **בסיס:** Kenney CC0 (UI clicks, pops) — ללא חובת ייחוס.
+- **SFX מותאמים / מוזיקה:** ElevenLabs SFX/Music **רק אם יש אישור כתוב** (E8a; ראו §13). ברירת מחדל ללא אישור: Freesound עם מסנן CC0 בלבד; ספריות בתשלום עם רישיון ברור (לבדוק בזמן בנייה); הקלטה עצמית (פולי ביתי — מטבעות, פופ, רשרוש עלים) ע"י ההורה; Stable Audio — **לא** עד שהרישיון יאומת (סתירה במקורות).
+- **אסור (B8):** צפירות, אזעקות, פיצוצים, ירי, נפילות פצצה, צלילי מלחמה, sweep עולה-יורד דמוי צפירה. בדיקה: תגיות אסורות בשם/מטא-דאטה + האזנת G7 חובה ל-100% מה-SFX.
+- **מוזיקה:** 3–5 לולאות 60–90 ש׳ (מחנה בערב, בנייה, הרפתקה, שקט/שינה, ג'ינגל כניסה לאי האנגלית — B2) + סטינגרים קצרים. לולאות: חיתוך לגבול תיבה + crossfade 50 ms, −23 LUFS.
+
+**`assets/LICENSES.json` — רשומה לכל נכס:**
+
+```json
+{ "assetId": "sfx.crystal_pop.03", "kind": "sfx", "file": "assets/sfx/crystal_pop_03.m4a",
+  "source": "kenney.nl/ui-audio", "author": "Kenney", "license": "CC0-1.0", "attributionRequired": false,
+  "generator": null, "promptHash": null, "refs": [], "createdAt": "2026-11-20",
+  "tosSnapshot": "vendor-terms/kenney-2026-11.pdf", "approvedGate": "G7", "approvedAt": "2026-11-22" }
+```
+לנכס מחולל: `generator: {vendor, model, version}`, `promptHash`, `refs[]`, `plan: "paid"` (Recraft), `seed` אם יש. מסך "קרדיטים" באפליקציה נבנה מהקובץ (CC BY / CC BY-SA, Phonikud CC BY 4.0 וכו').
+
+### 7.9 שופט חזותי (`asset.judge`, Sonnet 5.5 vision)
+
+קריטריונים 1–4: `style_match` (מול refs), `no_text_artifacts`, `anatomy_ok` (ידיים/אצבעות/עיניים), `age_safe` (לא מפחיד), `silhouette_readability` (ממוזער ל-64px), `transparency_ok` (מדבקות), `cultural_ok`. hard-fail: `age_safe < 4`, `no_text_artifacts < 3`. ממוצע ≥ 3.2 → ל-contact sheet; אחרת יצירה מחדש עד 3 פעמים, ואז ידני. השופט לא מאשר — רק מסנן לפני השער האנושי.
+
+### 7.10 עלויות נכסים (חודשי ייצור)
+
+GPT Image ~300 תמונות ≈ $10–25 (מחירים מאגרגטורים, לא מאומת); Recraft מנוי בתשלום + ~150 וקטורים ≈ $15–25; Rive — לפי תוכנית החשבון של ההורה; שופט חזותי ≈ $1–2; Kenney/Freesound CC0 — $0. מצב יציב ≈ $0–5.
+
+---
+
+## 8. ציות לתנאי ספקים וחלופות
+
+> מצב התנאים נכון ל-2026-11-02. שורות שמסומנות "לא אומת" נחסמו מהסביבה הזו וחייבות בדיקה בזמן בנייה (research log §Re-verify). קובץ `docs/vendor-terms/` (בשלב הבנייה) שומר צילום של כל מסמך תנאים עם תאריך.
+
+| ספק / רכיב | שימוש | דרישה/מגבלה רלוונטית | איך עומדים בה | חלופה |
+|---|---|---|---|---|
+| **Anthropic** (Opus/Sonnet/Haiku 5.5) | P1–P4, שופטים | הנחיות לארגונים שמשרתים קטינים: אמצעי הגנה נוספים, **child-safety system prompt אם יסופק**, ציות לחוקי פרטיות + הצהרה פומבית, **גילוי AI**; איסור CSAM/מיניות קטינים; Batch לא ZDR (29 יום) | Safety Core + slot לפרומפט הרשמי; ולידטורים; תור הורה; רובוט מסומן; עמוד "על ה-AI"; כינויים במקום שמות; תמונות רק מהורה מאומת, טשטוש פנים | אין (Claude הוא המודל היחיד שנבחר ב-E8) — במקרה חסימה: תוכן P1 קיים ממשיך לעבוד, P2/P3 עוברים להקלדה/מתוסרט |
+| **Dicta Nakdan** | ניקוד | תנאי API ושימוש — **לא אומתו** (אתר חסום) | adapter; לא בשימוש לפני אישור תנאים | **Phonikud** (CC BY 4.0) |
+| **Phonikud** | ניקוד, הטעמה, IPA | CC BY 4.0 — ייחוס; מאגרי ILSpeech/SASPEECH לא-מסחריים (לא בשימוש) | ייחוס במסך קרדיטים | DictaBERT char-menaked (לבדוק רישיון) |
+| **ivrit.ai Whisper** | QA קולי, קריאה בקול K1 (E9) | Apache-2.0 | — | Apple SpeechTranscriber (אם he זמין) |
+| **Mishkefet-v1** (אופציונלי, שלב 2) | OCR כתב יד, מעבר שני | משקלות **CC-BY-NC-SA-4.0** | שימוש פרטי-משפחתי בלבד, לא להפצה | ללא (Claude בלבד) |
+| **Azure Speech** | TTS בסיס, P2 בזמן אמת | Code of Conduct + Product Terms AUP; **לא נמצא סעיף קטינים** (לא אומת סופית); הסכמה נדרשת רק לקולות מותאמים/משובטים | קולות מובנים בלבד; לא שולחים קולות ילדים | Cartesia / MiniMax |
+| **Cartesia / MiniMax** | מועמדים ב-bake-off | תנאי קטינים **לא נבדקו** | שימוש רק אחרי בדיקת תנאים (פריט מפתח) | Azure |
+| **ElevenLabs** (TTS, SFX, Music, Voice Design) | — | אסור לאפליקציות שמכוונות לקטינים ללא **אישור כתוב**; אסור קולות ילדיים; אסור להעלות קול של קטין | **כבוי** עד שההורה מקבל אישור כתוב (`ELEVENLABS_WRITTEN_APPROVAL_REF`) | Azure/Cartesia/MiniMax; Kenney/Freesound CC0 |
+| **Google Gemini / GenAI / Vertex** (כולל Nano Banana, Gemini TTS) | — | איסור על שירותים "directed towards or likely to be accessed by" מתחת ל-18 | **לא בשימוש** (E8a) | GPT Image, Recraft; Azure |
+| **Google Chirp 3 HD** | — | לא ברור אם נחשב "Generative AI Service" | כבוי עד אישור מפורש | Azure |
+| **OpenAI GPT Image** | נכסים אופליין בלבד | Under-18 API guidance (הגנות, COPPA, תוכן מותאם, ביקורות); הימנעות מעיבוד מידע אישי של ילדים מתחת ל-13 ללא ZDR | שימוש ע"י חשבון המפתח, אופליין, **ללא מידע/תמונות של ילדים**, תוכן ילדים-בטוח, שער אישור | Recraft raster; ציור ידני |
+| **Recraft** | וקטורים, אייקונים, חלקי אווטאר | תוכנית חינמית: תמונות ציבוריות ושייכות ל-Recraft; בתשלום: בעלות מלאה; אסור לאמן AI אחר על הפלט; סעיף קטינים לא נמצא | **מנוי בתשלום חובה**; לא מאמנים על הפלט | ציור ידני; GPT Image + vectorize |
+| **Rive** | אנימציה | רישיון editor לפי תוכנית; runtime MIT | — | Lottie לחד-פעמיים |
+| **Kenney** | SFX/UI | CC0 | — | Freesound CC0 |
+| **Wikimedia IPA clips** | חלופת פוניקה | CC BY-SA 3.0/4.0 — ייחוס + share-alike לקבצים עצמם | מסך קרדיטים; הקבצים לא משונים מעבר לנרמול (שינוי = שיתוף תחת אותו רישיון) | הקלטה אנושית |
+| **Apple** (VisionKit, Vision, AVFoundation) | עיבוד על המכשיר | — | — | — |
+
+**כלל תפעולי:** כל ספק ב-`workers/api/src/ai/vendors.ts` עם `enabled` + `termsCheckedAt` + `termsRef`. CI נכשל אם `termsCheckedAt` ישן מ-180 יום לספק פעיל (תזכורת לבדיקה מחדש, E8a "Re-verify terms at build time").
+
+---
+
+## 9. יעדי ביצועים ועלויות (ריכוז)
+
+| צינור | יעד latency | עלות חודשית — ייצור | יציב |
+|---|---|---|---|
+| P1 תוכן | מוכן לאישור עד 07:00; במכשיר ≤ 10 דק׳ מאישור | ≈ $20 | $5–8 |
+| P2 צלם-ושחק | חילוץ ≤ 25 ש׳/דף (P95); **אחרי אישור: P50 ≈ 14 ש׳, P95 ≤ 60 ש׳ (קשיח)**; סיבוב ראשון ≤ 15 ש׳ | ≈ $2–3 (30 תמונות) | כנ"ל |
+| P3 סוקרטי | P95 ≤ 4 ש׳, timeout 6 ש׳ | < $0.5 | < $0.5 |
+| P4 הורה | ראשון 07:30 | < $0.1 | < $0.1 |
+| P5 קול | אופליין עד בוקר; P2 ≤ 1.5 ש׳/שורה | $0–4 (Azure) | ≈ $0 |
+| P6 נכסים | לפי שערים | $25–50 | $0–5 |
+| **סה"כ** | | **≈ $50–80** | **≈ $8–20** |
+
+תקרות: יומית $3, חודשית $40 ל-LLM (§1.9); נכסים ותמלול מחוץ לתקרה האוטומטית (הפעלה ידנית).
+
+---
+
+## 10. קריטריוני קבלה
+
+**משותף**
+- [ ] כל קריאת Claude עוברת דרך `callStructured` עם `output_config.format`; אין `tool_choice` כפוי, אין prefill, אין `temperature` (בדיקת lint על הקוד).
+- [ ] סכמות פלט עומדות במגבלות: 0 שדות אופציונליים, ≤ 16 unions, אין `minimum/maxLength` (בדיקת CI על כל סכמה).
+- [ ] אין שמות אמיתיים של ילדים בשום payload לספק (בדיקת יחידה + סריקת לוגים בדגימה).
+- [ ] ולידטורים V01–V18 עם בדיקות יחידה, כולל מקרי קצה בעברית (קידומות, סופיות, ניקוד, סימני Phonikud).
+- [ ] סט כיול השופט (40 פריטים): ≥ 85% זיהוי פגמים, ≤ 10% דחיות-שווא.
+- [ ] תקרת $ נבדקת בבדיקת אינטגרציה (מעל 80% → Batch נדחה; מעל 100% → P2 נחסם בעדינות).
+
+**P1**
+- [ ] 100% מהפריטים המתמטיים: תשובה מחושבת בקוד = התשובה בפריט; 0 מספרים "מומצאים" בטקסט.
+- [ ] מגדר: 0 שגיאות בדגימת הורה של 50 פריטים × 3 גרסאות.
+- [ ] ניקוד: ≤ 1 שגיאת ניקוד ל-100 מילים בתוכן K2 (בדיקת הורה על 300 מילים); אפס סימני Phonikud בתצוגה.
+- [ ] K2 decodability: 100% מהמילים בסיפורי K2 ⊆ מילון הפענוח של הילד.
+- [ ] ≥ 40 וריאנטים חיים לכל צומת כישור פעיל.
+
+**P2**
+- [ ] סט הערכה של 30 דפים אמיתיים של המשפחה (20 מודפסים, 10 כתב יד): מודפס — ≥ 95% מהמילים נכונים לפני תיקון; כתב יד — כל מילה לא ודאית מסומנת (0 שגיאות "שקטות" ב-`confidence:high`).
+- [ ] P95 "זמן עד משחק" אחרי אישור ≤ 60 ש׳ על 20 ריצות; P50 ≤ 20 ש׳.
+- [ ] בדיקת פרטיות: EXIF/GPS לא קיים בקובץ ב-R2; פנים מטושטשות ב-100% מ-10 תמונות מבחן עם פנים; שמות מרשימת "לא-משפחה" לא מופיעים במשחק.
+- [ ] מצב "שיעורי בית להגשה": אף פריט מקורי ואף תשובה מקורית לא מוצגים לילד לפני "הוגש"/06:00 (בדיקת E2E).
+- [ ] ≥ 15 תבניות פעילות עם `meetsMinimum` ובדיקות snapshot לכל גיל רלוונטי.
+- [ ] סיפור ילד: הטקסט המקורי נשמר מילה במילה; אין סימון שגיאות בצד הילד.
+
+**P3**
+- [ ] 0 דליפות תשובה ב-500 תורות סינתטיות אדברסריות ("תגיד לי את התשובה", "מה זה 7 כפול 8?").
+- [ ] 100% מקלטי מצוקה/פרטים אישיים בסט מבחן (60 משפטים) נחסמים לפני LLM ומפעילים את השורה המתוסרטת + דגל.
+- [ ] K2/K3: אין שום קריאת LLM בזמן ריצה (בדיקת רשת).
+- [ ] הרובוט מוצג תמיד עם סימון מכונה; שורת הפתיחה מושמעת בפעם הראשונה בכל יום.
+
+**P4**
+- [ ] 0 השוואות בין ילדים, 0 מונחים אבחוניים, 100% מהמספרים תואמים ל-WeeklyFacts (על 12 דוחות מבחן).
+
+**P5**
+- [ ] bake-off הורץ ותועד (`docs/decisions/ADR-voice-vendor.md`), כולל צפיפות ניקוד ו-gain לכל קול.
+- [ ] כל קליפ ב-manifest: −16 ±1 LUFS (או gain מכויל לקצרים), ≤ −1 dBTP, CER ≤ 0.05 או אושר ע"י הורה.
+- [ ] 44 צלילי פוניקה (או חלופת Wikimedia עם ייחוס) זמינים; אף צליל בודד לא מ-TTS.
+- [ ] שם ילד לא נשלח לעולם ל-TTS.
+
+**P6**
+- [ ] G1–G7 עברו ונרשמו; `LICENSES.json` מלא לכל נכס בחבילה (בדיקת CI: נכס בלי רשומה → build נכשל).
+- [ ] אין נכס מ-Gemini/ElevenLabs ללא אישור (בדיקת CI על שדה `generator.vendor`).
+- [ ] 0 SFX עם תגיות אסורות (B8); G7 האזנה 100%.
+
+---
+
+## 11. פריטים פתוחים להורה (מינימום, באצווה אחת — F2)
+
+1. **חשבונות ומפתחות:** Anthropic API (+ הגדרת תקרת הוצאה בקונסול), Azure Speech (משאב באזור West Europe/Israel Central אם זמין), OpenAI (לנכסים בלבד), Recraft **מנוי בתשלום**, Rive. אופציונלי: Cartesia/MiniMax לניסיון ב-bake-off.
+2. **ElevenLabs — להחליט אם לבקש אישור כתוב.** אם כן, טיוטת פנייה (לשלוח מהחשבון שלך):
+   > "Hi ElevenLabs team — I'm a parent building a private, non-distributed learning app used only by my own three children (ages 2.5–8.5) at home. All audio would be pre-generated offline by me (an adult account holder) using adult stock or designed adult voices; no child voices, no uploads of children's voices, no child users interacting with your API. I'd like written approval under your Prohibited Use Policy for this use (TTS in Hebrew/English, and SFX/Music). Happy to share details."
+   בלי אישור — הכל עובד בלי ElevenLabs.
+3. **מפגש האזנה ל-bake-off** (2–3 שעות, שני ההורים; K1 ו-K2 ל-10 דקות A/B).
+4. **הקלטות קול ההורה** (~20 דקות): שמות הילדים, 15 שורות שבח, לילה טוב, צלילי עברית (אופציונלי).
+5. **פוניקה אנגלית:** להזמין דובר/ת en-US ילידי/ת לשעה (הערכה $100–250) **או** לאשר את חלופת Wikimedia.
+6. **30 צילומי דפים אמיתיים** (20 מודפסים, 10 כתב יד, עם תשובות מחוקות או לא — כמו שהם) לסט ההערכה של P2. נשמרים מקומית לבדיקה בלבד.
+7. **שערי טעם G1–G7** (לפי לוח הזמנים של הבנייה).
+8. **Dicta Nakdan:** אם האתר דורש הרשמה/פנייה לשימוש ב-API — לבצע (אחרת Phonikud בלבד).
+9. (מ-00) מגדר דקדוקי של K3 + שמות הילדים; רשימת שמות "לא-משפחה" נפוצים (חברי גן/כיתה, מורות) לטשטוש — אופציונלי.
+
+---
+
+## 12. נספחים
+
+### 12.1 טבלת מספרים (קטע; הטבלה המלאה 0–100 + מאות/אלפים ב-`packages/content/hebrew/numerals.json`, נבדקת ידנית)
+
+| n | ספירה / נקבה עצמאי | נקבה לפני שם עצם | נקבה נסמך (מיודע) | זכר עצמאי | זכר לפני שם עצם | זכר נסמך |
+|---|---|---|---|---|---|---|
+| 1 | אַחַת | (אחרי שם העצם) …אַחַת | — | אֶחָד | …אֶחָד | — |
+| 2 | שְׁתַּיִם | שְׁתֵּי | שְׁתֵּי | שְׁנַיִם | שְׁנֵי | שְׁנֵי |
+| 3 | שָׁלוֹשׁ | שָׁלוֹשׁ | שְׁלוֹשׁ | שְׁלוֹשָׁה | שְׁלוֹשָׁה | שְׁלוֹשֶׁת |
+| 4 | אַרְבַּע | אַרְבַּע | אַרְבַּע | אַרְבָּעָה | אַרְבָּעָה | אַרְבַּעַת |
+| 5 | חָמֵשׁ | חָמֵשׁ | חֲמֵשׁ | חֲמִשָּׁה | חֲמִשָּׁה | חֲמֵשֶׁת |
+| 6 | שֵׁשׁ | שֵׁשׁ | שֵׁשׁ | שִׁשָּׁה | שִׁשָּׁה | שֵׁשֶׁת |
+| 7 | שֶׁבַע | שֶׁבַע | שְׁבַע | שִׁבְעָה | שִׁבְעָה | שִׁבְעַת |
+| 8 | שְׁמוֹנֶה | שְׁמוֹנֶה | שְׁמוֹנֶה | שְׁמוֹנָה | שְׁמוֹנָה | שְׁמוֹנַת |
+| 9 | תֵּשַׁע | תֵּשַׁע | תְּשַׁע | תִּשְׁעָה | תִּשְׁעָה | תִּשְׁעַת |
+| 10 | עֶשֶׂר | עֶשֶׂר | עֶשֶׂר | עֲשָׂרָה | עֲשָׂרָה | עֲשֶׂרֶת |
+| 11 | אַחַת־עֶשְׂרֵה | אַחַת־עֶשְׂרֵה | | אַחַד־עָשָׂר | אַחַד־עָשָׂר | |
+| 12 | שְׁתֵּים־עֶשְׂרֵה | שְׁתֵּים־עֶשְׂרֵה | | שְׁנֵים־עָשָׂר | שְׁנֵים־עָשָׂר | |
+| 13 | שְׁלוֹשׁ־עֶשְׂרֵה | | | שְׁלוֹשָׁה־עָשָׂר | | |
+| 20 | עֶשְׂרִים | עֶשְׂרִים | | עֶשְׂרִים | עֶשְׂרִים | |
+
+הטבלה חייבת לעבור **בדיקה ידנית של דובר/ת עברית** לפני שימוש (קבלה); צורות הנסמך מסומנות בה כ-`verified:false` עד אז. ספירה רוטינית (B4): עמודת "ספירה/נקבה עצמאי".
+
+### 12.2 קטלוג טעויות — פירוט נבחר
+
+| קוד | כלל יצירה | דוגמה | הגבלות |
+|---|---|---|---|
+| `MATH_OP_SWAP` | a op' b כאשר op' הפוך | 9−4 → 13 | רק אם התוצאה חיובית ובטווח |
+| `MATH_OFF_BY_ONE` | ans ± 1 | 7+5 → 11/13 | |
+| `MATH_DIGIT_REVERSAL` | היפוך ספרות | 21 → 12 | רק לדו-ספרתי עם ספרות שונות |
+| `MATH_PLACE_VALUE` | חיבור יחידות לעשרות | 25+7 → 95 | K1 |
+| `MATH_CARRY_OMIT` | בלי העברה | 38+25 → 53 | רק כשיש העברה |
+| `MATH_BORROW_OMIT` | "קטן מגדול" בכל עמודה | 52−27 → 35 | רק כשיש פריטה |
+| `MATH_TABLE_NEIGHBOR` | a×(b±1) | 7×8 → 49/63 | |
+| `MATH_ADD_FOR_MULT` | a+b | 7×8 → 15 | |
+| `HE_SOUNDALIKE_T` | ט↔ת | תפוח → טפוח | לא מילה אמיתית |
+| `HE_SOUNDALIKE_K` | כ↔ק, כ↔ח (רפה) | כלב → קלב | לא מילה אמיתית |
+| `HE_FINAL_FORM` | סופית↔רגילה | שלום → שלומ | |
+| `HE_MATER_OMIT` | השמטת ו/י | שולחן → שלחן | שים לב: כתיב חסר תקני — מותר רק אם המילה מופיעה בכתיב מלא בחומר הכיתה |
+| `HE_VISUAL` | אות דומה חזותית | דג → רג | K2 קריאה |
+| `EN_SHORT_VOWEL_SWAP` | החלפת תנועה קצרה | bat → bet | אם המילה המוסחת קיימת — עדיף (זוג מינימלי) בתרגיל שמיעה; אסור בתרגיל כתיב |
+
+### 12.3 רשימות חסומות (התחלה; מורחבות ע"י ההורה)
+
+- `security` (B8): אזעקה, צפירה, טיל, רקטה, מקלט, ממ"ד, פיגוע, מחבל, חטוף/חטופים, מלחמה, פצצה, יירוט, כיפת ברזל, צבע אדום, הרוג/הרוגים, פצוע/פצועים, חייל בקרב, רובה, נשק, מוות, ירי.
+- `violence/fear`: דם, להרוג, לרצוח, שד, רוח רפאים מפחידה, מפלצת אוכלת, סכין (חוץ מבישול עם מבוגר — אסור בכל זאת לתוכן ילדים), חטיפה, ללכת לאיבוד לבד בלילה.
+- `praise_trait` (C4): גאון, גאונה, אלוף, אלופה, חכם, חכמה, מוכשר, מושלם, הכי טוב, מדהים, תותח, מלך, מלכה.
+- `comparison`: "יותר טוב מ", "לעומת אחותך/אחיך", "כמו אחיך", דירוג, מקום ראשון.
+- `body_food`: שמן/שמנה (על אדם), דיאטה, "לא לאכול כי משמין", מכוער.
+- `personal_info_requests`: "מה הכתובת", "באיזה בית ספר", "מה הטלפון", "תשלח תמונה".
+- `distress` (P3 קלט): עצוב/ה מאוד, מפחד/ת, מרביצים לי, כואב לי, אף אחד לא אוהב אותי, סוד, אל תספר, רוצה למות, פוגעים בי.
+
+### 12.4 Prompt versions
+כל פרומפט בקובץ `packages/content/prompts/{job}.v{n}.md` עם front-matter: `job, version, schemaVersion, model, effort, changelog`. שינוי ⇒ גרסה חדשה ⇒ כיול שופט מחדש (P1) / סט אדברסרי (P3).
+
+---
+
+## 13. Proposed change to 00
+
+> לפי כללי 00: ההחלטות נשארות בתוקף עד שינוי מפורש; המסמך הזה פועל לפי ההצעות רק היכן שהן מצמצמות סיכון בלי לסתור את 00 (סעיפים 1, 2 — כי E8a גובר ממילא; 3 — כניתוב נוסף בתוך "Sonnet 5.5 … with mandatory parent confirm").
+
+1. **E10 — להסיר "Nano Banana" מרשימת כלי התמונה.** Nano Banana הוא מודל Gemini; E8a קובע "do not use Gemini APIs", כך ש-E10 סותר את E8a. **הצעה:** "GPT Image (אופליין, חשבון מפתח, בלי מידע על ילדים) לסצנות ודמויות; Recraft (מנוי בתשלום) לווקטורים/אייקונים/חלקי אווטאר; ציור ידני כחלופה." ראיה: Gemini API Additional Terms (בפתקי voice_tech_he_en §2, נבדק מאז Feb 2024).
+2. **E10 — "ElevenLabs SFX/Music" להתנות באישור כתוב.** E8a מתיר ElevenLabs רק עם אישור כתוב, אבל E10 מונה אותו ללא תנאי. **הצעה:** "Kenney CC0 + Freesound (CC0 בלבד) + הקלטות פולי ביתיות; ElevenLabs SFX/Music רק אם התקבל אישור כתוב." ראיה: ElevenLabs Prohibited Use Policy (פתקים קודמים) + research log §9.
+3. **E8 — ניתוב כתב יד ל-Opus 5.5 במקביל ל-Sonnet 5.5.** בלוח heb-ocr (ספט׳ 2026) claude-opus-5 הגיע לכיסוי מילים של 0.335 בעמוד כתב יד מלא מול 0.210 של claude-sonnet-5; Claude בכלל נמוך (Mishkefet-v1 0.463). **הצעה:** "דפי כתב יד: Sonnet 5.5 + Opus 5.5 במקביל עם פיוס בקוד ומסך אישור הורה חובה; שלב 2 אופציונלי: מעבר שני Mishkefet-v1 (משקלות CC-BY-NC-SA — מותר לשימוש פרטי) בקונטיינר." עלות נוספת ≈ $0.03–0.06 לדף. **חובה לאמת על 30 הדפים של המשפחה** (§10) — אם Opus 5.5 לא משפר על הסט, מבטלים את הקריאה הכפולה.
+4. **E8 — הבהרה: Batch API אינו ZDR (שמירה 29 יום).** **הצעה להוסיף:** "אין שמות אמיתיים, תמונות או טקסט חופשי של ילדים בבקשות Batch; כינויים K1/K2/K3 בלבד." ראיה: Anthropic batch-processing docs (research log §2).
+5. **E9 — הבהרה לגבי P2:** "All narration pre-generated & cached" — **הצעה להוסיף:** "ב'צלם וקבל משחק', אודיו מרונדר בשרת אחרי אישור ההורה ולפני שהמשחק נפתח, נשמר ב-R2 ומנורמל מחדש בלילה; אין TTS חי ממכשיר הילד, ואין AVSpeechSynthesizer לקריינות לילדים." (תואם את רוח E9; מונע פרשנות שסוגרת את P2 בלי קול.)
+6. **E8 — "Anthropic child-safety system prompt" — הבהרה:** נכון ל-2026-11-02 Anthropic לא פרסמה טקסט כזה ("we may provide"). **הצעה:** "להשתמש בו אם וכאשר יסופק (slot במערכת), ועד אז Safety Core פנימי + ולידטורים + תור הורה." ראיה: support.claude.com 9307344, 15591275.
