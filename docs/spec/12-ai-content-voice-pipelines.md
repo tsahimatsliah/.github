@@ -420,6 +420,7 @@ export function numeral(n: number, gender: NGender, form: NForm): { plain: strin
 | `V18 piiResidual` | שמות מרשימת "לא-משפחה" / טלפון / כתובת | P2, P4 | fail (מוחלף בממלא מקום) |
 | `V19 payloadPiiLint` | **לפני שליחה לספק:** אין שם/כינוי/גן/בית ספר/מורה מ-`private/family-names.json`, אין טלפון/כתובת/ת"ז/אימייל, אין base64 של תמונה שלא עברה את §3.3 (hash רשום) | כל קריאת LLM/TTS/תמונה | fail (הבקשה לא נשלחת; נרשם `failure:"pii_guard"`) |
 | `V20 answerKeyGuard` | במצב `homework_practice`: אף פריט/תשובה מקוריים לא נכנסים לחבילת הילד; במצב `exam_page`: אין פריט מקורי בכלל (§3.10) | P2 | fail (החבילה לא נבנית) |
+| `V21 audioFormat` | פורמט ותקציב לפי 14 `PQ-R-36`/`PQ-B-24` (אותו כלל ב-`content:validate` וב-`lint:assets`): SFX ≤ 1 ש׳ = WAV/CAF PCM 44.1 kHz מונו אם ≤ 150 KB, אחרת AAC-LC; VO = AAC-LC 64–96 kbps מונו 48 kHz; מוזיקה = AAC 128 kbps סטריאו; עוצמה לפי §6.9 (VO −18 LUFS ±1, שיא ≤ −1 dBTP); **חבילת 2D ≤ 8 MB בדיסק** (יעד 5 MB) — חבילה גדולה יותר מפוצלת לפי `skillId` | כל חבילה / נכס שמע | fail |
 
 #### 1.6.1 חישוב מתמטי מחדש (V02)
 
@@ -1462,7 +1463,7 @@ CREATE TABLE ai_turns (
         ├── offline (media runner, nightly) ─────────────────────────────┐
         │     engine adapter (bake-off winner) → 2–3 takes               │
         │     → ASR round-trip QA (ivrit.ai Whisper) → pick best take    │
-        │     → post: trim · FX (robot only) · loudness −16 LUFS/−1 dBTP │
+        │     → post: trim · FX (robot only) · loudness −18 LUFS/−1 dBTP │
         │     → AAC mono → R2 (content-addressed) → audio-manifest       │
         │     → parent listening sample (review queue)                   │
         │                                                                │
@@ -1618,7 +1619,7 @@ interface TtsEngine {
 const key = sha256(canonicalJSON({
   engine, model, voice, settings,          // e.g. { rate:"-10%", nikudDensity:"selective" }
   script: renderedEngineInput,             // exact SSML/text sent
-  post: { lufs: -16, tp: -1, fx: voice === "robot" ? "robot.v1" : "none", codec: "aac64m" },
+  post: { lufs: -18, tp: -1, fx: voice === "robot" ? "robot.v1" : "none", codec: "aac64m" },
 })).slice(0, 24);
 // R2 object:  audio/v1/{lang}/{voice}/{key.slice(0,2)}/{key}.m4a      (immutable; Cache-Control: public, max-age=31536000, immutable)
 // P2 realtime: audio/v1/{lang}/{voice}/rt/{key}.mp3 → replaced nightly by the .m4a with the same logical lineId
@@ -1630,7 +1631,7 @@ const key = sha256(canonicalJSON({
 
 ```json
 { "lineId": "math.k1.mult.story#8f2c:setup", "variant": "f", "voice": "narrator",
-  "key": "audio/v1/he/narrator/a3/a3f9…c1.m4a", "durMs": 2810, "lufs": -16.1, "tp": -1.4,
+  "key": "audio/v1/he/narrator/a3/a3f9…c1.m4a", "durMs": 2810, "lufs": -18.1, "tp": -1.4,
   "qa": { "cer": 0.02, "takes": 1, "review": "sampled_ok" }, "engine": "azure:he-IL-HilaNeural" }
 ```
 
@@ -1641,17 +1642,17 @@ const key = sha256(canonicalJSON({
 
 | סוג | יעד | הערות |
 |---|---|---|
-| קריינות/דיאלוג (VO) | **−16 LUFS integrated, ≤ −1.0 dBTP**, מונו 48 kHz → AAC-LC 64 kbps מונו `.m4a` | יעד מקובל לדיבור במובייל (Apple podcast best practice) |
+| קריינות/דיאלוג (VO) | **−18 LUFS integrated ±1, ≤ −1.0 dBTP** (מיושר ל-09 §6.7 ו-14 `PQ-R-36`; 09 הוא בעל טבלת המיקס — הערך הקודם כאן, −16, בוטל), מונו 48 kHz → AAC-LC 64–96 kbps מונו `.m4a` | מתחת ל-master −18 של המיקס במובייל; ducking של המוזיקה שומר על יחס |
 | קליפים קצרים (< 3 ש׳) | gain קבוע לכל קול (מכויל על 60 ש׳ רצופים של אותו קול) + limiter ל-−1 dBTP | integrated LUFS לא אמין בקליפ קצר (gating) |
 | מוזיקת רקע | −23 LUFS integrated; ducking דינמי −8 dB תחת VO בזמן ריצה (`expo-audio` שכבות) | לולאות חלקות (חיתוך לגבול תיבה + crossfade) |
 | SFX | peak ≤ −1 dBTP; short-term max −14 LUFS; "חגיגות גדולות" עד −12 LUFS short-term | ללא צפירות/פיצוצים (B8) |
-| הקלטות הורה | −16 LUFS, high-pass 80 Hz, de-noise עדין (RNNoise) אם SNR < 25 dB | |
+| הקלטות הורה / HREC | −18 LUFS (קליפים קצרים: gain מכויל), high-pass 80 Hz, de-noise עדין (RNNoise) אם SNR < 25 dB | |
 
 ```bash
 # two-pass loudnorm (runner)
-ffmpeg -hide_banner -i in.wav -af loudnorm=I=-16:TP=-1.0:LRA=7:print_format=json -f null - 2> pass1.json
+ffmpeg -hide_banner -i in.wav -af loudnorm=I=-18:TP=-1.0:LRA=7:print_format=json -f null - 2> pass1.json
 ffmpeg -i in.wav -af "silenceremove=start_periods=1:start_threshold=-50dB:stop_periods=1:stop_threshold=-50dB,\
-loudnorm=I=-16:TP=-1.0:LRA=7:measured_I=$I:measured_TP=$TP:measured_LRA=$LRA:measured_thresh=$TH:offset=$OFF:linear=true,\
+loudnorm=I=-18:TP=-1.0:LRA=7:measured_I=$I:measured_TP=$TP:measured_LRA=$LRA:measured_thresh=$TH:offset=$OFF:linear=true,\
 afade=t=in:d=0.02,areverse,afade=t=in:d=0.03,areverse" -ar 48000 -ac 1 -c:a aac -b:a 64k out.m4a
 ```
 
@@ -1667,7 +1668,7 @@ afade=t=in:d=0.02,areverse,afade=t=in:d=0.03,areverse" -ar 48000 -ac 1 -c:a aac 
 
 #### 6.10.1 מפגש A — אנגלית (תסריט לדובר/ת, "session brief")
 
-**מפרט טכני (05 §12.3):** חדר שקט, מיקרופון קונדנסר/USB + pop filter; מאסטר **WAV 48 kHz / 24-bit**; רצפת רעש < −60 dBFS; 1 ש׳ שקט בין פריטים; slate קולי לפני כל פריט ("p, take one"). נגזרת: AAC m4a מונו 96 kbps, −16 LUFS (קליפים קצרים: gain מכויל, §6.9), שיא −1 dBTP, 30 ms שקט לפני / 50 ms אחרי. **לא ילד, לא קול "ילדותי"** (E8a).
+**מפרט טכני (05 §12.3):** חדר שקט, מיקרופון קונדנסר/USB + pop filter; מאסטר **WAV 48 kHz / 24-bit**; רצפת רעש < −60 dBFS; 1 ש׳ שקט בין פריטים; slate קולי לפני כל פריט ("p, take one"). נגזרת: AAC m4a מונו 96 kbps, −18 LUFS (קליפים קצרים: gain מכויל, §6.9), שיא −1 dBTP, 30 ms שקט לפני / 50 ms אחרי. **לא ילד, לא קול "ילדותי"** (E8a).
 
 **סגנונות:** `norm` (400–600 ms); `str` מתוח (רציפים בלבד, 1.2–1.5 ש׳: /sss/, /mmm/, /fff/…); `clip` קטוע (פוצצים — פרץ ≤ 150 ms **בלי schwa**: /b/ ולא "buh"); `kw` מילת המפתח מיד אחרי הצליל ("/m/… moon"); `seg` פירוק+מיזוג (צלילים ברווח 0.5 ש׳ ואז המילה). כל פריט **2 takes** (3 לפוצצים).
 
@@ -2001,8 +2002,8 @@ GPT Image ~300 תמונות ≈ $10–25 (מחירים מאגרגטורים, ל�
 
 **P5**
 - [ ] bake-off הורץ ותועד (`docs/decisions/ADR-voice-vendor.md`), כולל צפיפות ניקוד ו-gain לכל קול.
-- [ ] כל קליפ ב-manifest: −16 ±1 LUFS (או gain מכויל לקצרים), ≤ −1 dBTP, CER ≤ 0.05 או אושר ע"י הורה.
-- [ ] **בנק A (אנגלית, §6.10.1):** 45 פונמות × 2 סגנונות + 26 שמות אותיות + 45 מילות מפתח + ~60 מומצאות + שירים ב-`en-hrec.json`, כל פריט עם take נבחר ו-QC (פוצצים ≤ 150 ms בלי שווא; −16 LUFS ±1; רישיון רשום) — או חלופת Wikimedia עם ייחוס לפונמות בלבד; אף צליל בודד לא מ-TTS (בדיקת manifest `engine:"human"`).
+- [ ] כל קליפ ב-manifest: −18 ±1 LUFS (או gain מכויל לקצרים), ≤ −1 dBTP, CER ≤ 0.05 או אושר ע"י הורה.
+- [ ] **בנק A (אנגלית, §6.10.1):** 45 פונמות × 2 סגנונות + 26 שמות אותיות + 45 מילות מפתח + ~60 מומצאות + שירים ב-`en-hrec.json`, כל פריט עם take נבחר ו-QC (פוצצים ≤ 150 ms בלי שווא; −18 LUFS ±1; רישיון רשום) — או חלופת Wikimedia עם ייחוס לפונמות בלבד; אף צליל בודד לא מ-TTS (בדיקת manifest `engine:"human"`).
 - [ ] **בנק B (עברית, §6.10.2):** ~300 קטעים ב-`he-hrec.json`, 100% `parent_ok`; 0 עיצורי סגר עם שווא נשמע; `first_sound`/`nikud_sort` משמיעים HREC בלבד; צירופי CV זמניים מ-TTS מסומנים `temporary:true` ונעלמים כשההקלטה מגיעה.
 - [ ] **בנק C (הורה, §6.11):** `name_clip` לכל ילד ב-3 אינטונציות; בלי הקלטה — אף שורה לא "ממציאה" שם (בדיקת snapshot על ניסוח ללא שם).
 - [ ] שם ילד לא נשלח לעולם ל-TTS.

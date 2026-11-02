@@ -238,8 +238,13 @@ Rules:
 | react-native-vision-camera | 5.2.3 | **later phase** (camera pose, G6) |
 
 **Dev/test (mobile):** jest 30.5.2, jest-expo 58.0.13, @testing-library/react-native 14.1.0,
-@playwright/test 1.64.1, serve 14.2.6, drizzle-kit 0.31.11, fast-check 4.10.2, eas-cli 25.3.0
-(invoked via `npx eas-cli@25.3.0`).
+**reassure 1.6.1** (package name `reassure`, not `@callstack/reassure`; render-count/duration gate per
+UI PR), @playwright/test 1.64.1, serve 14.2.6, drizzle-kit 0.31.11, fast-check 4.10.2,
+**@stryker-mutator/core + @stryker-mutator/vitest-runner 10.1.1**, **pixelmatch** (Maestro
+double-screenshot layout-shift diff, 14 PQ-T-06), eas-cli 25.3.0 (invoked via `npx eas-cli@25.3.0`).
+The Maestro CLI is installed on the Mac by `tools/mac/doctor.sh`. Note: `react-native-worklets`
+0.13.1 was published 2026-11-01 (< 7 days old), so 0.13.0 is the correct pin today; Renovate bumps it
+after the 7-day window — do not hand-edit.
 
 **workers/api:** hono 4.13.14, @hono/zod-validator 0.9.1, zod 4.6.7, drizzle-orm 0.45.4
 (`drizzle-orm/d1`), jose 6.2.13, @anthropic-ai/sdk 1.3.0, aws4fetch 1.0.20 (R2 presigned URLs),
@@ -302,6 +307,11 @@ Blender is installed in CI via apt; spike gate #4 decides whether it's used.
     `packages/content` (`no-restricted-globals` + `no-restricted-imports`).
   - `olam/no-skipped-tests` (quality playbook §4): `.only`/`.skip`/`xit` fail lint; deleting a test
     file needs the PR label `tests-removed` with a reason (checked by `tools/ci/test-delta.mjs`).
+  - From 14 §3: `olam/no-layout-prop-animation` (no `width/height/margin/padding/top/left` in
+    `withTiming/withSpring`), `olam/no-blur-on-animated`, `olam/no-sync-io` (no `*Sync(` from
+    expo-sqlite/expo-file-system outside `src/boot`), `olam/no-nondeterminism` (= `engine-purity`
+    above, extended to `src/games/*/logic.ts` and `src/world/sim`), `olam/no-unsafe-cast` (no `as`
+    on a `JSON.parse`/network/DB result — zod only), plus `eslint-plugin-no-only-tests`.
   - `@typescript-eslint/switch-exhaustiveness-check`, `no-floating-promises`,
     `react-hooks/exhaustive-deps` as **errors**.
   - `react-hooks` rules plus the React Compiler lint; zero compiler bail-outs allowed in
@@ -711,7 +721,7 @@ The pack manifest is versioned, immutable and content-addressed:
 ```json
 {
   "packId": "he.letters.bet-gimel", "version": "1.3.0", "schema": 3,
-  "minAppRuntime": "fp:7c1e…", "minEngine": 2, "locale": "he-IL", "ageBands": ["K2"],
+  "minAppRuntime": "fp:7c1e…", "minEngine": 2, "locale": "he-IL", "bands": ["G"],   // T|G|S (00 A6), never K1/K2/K3
   "skills": ["he.letter.bet", "he.letter.gimel"],
   "approvedBy": "guardian:01J…", "approvedAt": "2026-11-02T18:00:00Z",
   "files": [
@@ -766,9 +776,11 @@ Load flow:
   - `ui`: a pool.
 
   Volumes are per-bus and per-child (`audio_prefs`).
-- **Low-latency SFX:** at scene mount, preload the hot set (≤ 12 sounds), creating
+- **Low-latency SFX:** at scene mount, `preload(source)` the hot set (≤ 12 sounds, expo-audio's
+  first-class preload API; `clearAllPreloadedSources()` on scene exit — 14 PQ-P-06) and create
   `createAudioPlayer(src)` × 2 instances each (round-robin). Playing means `seekTo(0)` + `play()`.
-  Players are created at scene mount, never inside event handlers (lint rule), and released on exit. The latency target is **p95 tap→sound ≤ 50 ms** (hard release gate ≤ 80 ms, measured with 240 fps video per the device protocol), measured by the device test screen
+  Players are created at scene mount, never inside event handlers (lint rule), and destroyed on exit
+  with **`player.remove()`** (there is no `release()` in expo-audio 58.0.11). The latency target is **p95 tap→sound ≤ 50 ms** (hard release gate ≤ 80 ms, measured with 240 fps video per the device protocol), measured by the device test screen
   `/(parent)/debug` → "audio latency" (records `performance.now()` deltas with the native playback
   callback).
   - **Gate:** if p95 > 50 ms on the oldest device, implement `AudioService` on `react-native-audio-api`
@@ -808,11 +820,13 @@ It's a no-op on iPad (no Taptic Engine) and on web. Per-child toggle. Rate-limit
   unmount, and at most 3 are kept alive.
 - **3D:** `useGLTF.preload()` for the next zone during wind-down of the current one. Geometries,
   materials and textures are disposed on zone exit, and `renderer.info.memory` is checked in debug.
-- **Memory budget** (oldest device, Instruments footprint):
-  - home steady ≤ 250 MB
-  - gameplay steady ≤ 400 MB
-  - **per-scene peak ≤ 650 MB**
-  - growth after 20 scene enter/exit cycles ≤ 20 MB
+- **Memory budget** (oldest device, Instruments footprint; "target / gate" tiers from 14 PQ-B-10…13 —
+  a target miss is a ticket, a gate miss blocks the release):
+  - home steady: target 200 MB / gate 250 MB
+  - 2D gameplay steady: target 200 MB / gate 300 MB
+  - 3D gameplay steady: target 300 MB / gate 400 MB
+  - per-scene peak: target 500 MB / gate 650 MB
+  - growth after 20 scene enter/exit cycles ≤ 20 MB (gate)
 
   A memory-warning handler (`AppState` `memoryWarning`) drops image, Rive and GLB caches. `AppState`
   `inactive`/`background` pauses the render loop, persists resume state and releases music.
@@ -950,7 +964,7 @@ src/features/world/
 | textures | ≤ 1024², total GPU textures ≤ 64 MB; toon/Lambert only; blob shadows; DPR `[1, 2]` |
 | hero | 3–6k tris, ≤ 40 bones, one skinned mesh |
 | level assets | ≤ 50 MB each; cold zone load ≤ 3 s |
-| memory | ≤ 400 MB steady, ≤ 650 MB peak, ≤ 20 MB growth over 20 zone enter/exit cycles |
+| memory | **target** 300 MB steady (3D) / **gate** 400 MB; **peak target** 500 MB / **gate** 650 MB; ≤ 20 MB growth over 20 zone enter/exit cycles (14 PQ-B-10…13 tiers; 13 §10.3's "≤ 300 MB" is the target) |
 
 **glTF asset pipeline (`tools/assets/glb`):**
 1. Sources: Kenney/Quaternius CC0 (spike) → custom hero later (Meshy/Tripo or designer; Rive stays
@@ -1000,6 +1014,13 @@ Data-binding property names are shared with the designer in `assets/rive/contrac
   - Per-route boundaries for `(child)` and `(parent)`.
   - Mini-game boundary → returns the child to the hub with **no loss**: the attempt is discarded, no
     penalty.
+  - **Per-canvas boundary** (Skia / GL / Rive surfaces, 14 PQ-P-10): on a throw inside a canvas the
+    boundary (1) releases that scene's audio players (`remove()`) and Rive instances, (2) retries the
+    canvas **once in place** from `child_resume`, (3) on a second failure swaps to the 2D fallback
+    (Skia 2.5D for GL, the sprite placeholder for Rive, a static image for a Skia game) for the rest
+    of the session and emits `app.error{kind:'canvas', surface}`, (4) a third failure → hub, no loss.
+    Native crashes (GL/Rive/Skia) are not catchable here; they surface as `app.start{prevExitClean:
+    false}` (§13).
 - **Classes and handling:**
 
   | Class | Example | Handling |
@@ -1164,7 +1185,7 @@ polyfill if that fails.
   | 3 | gestures as UI-thread worklets; `scheduleOnRN` only on end/hit | review; lint `runOnJS` in `onUpdate` |
   | 4 | animate transform/opacity only | lint `olam/perf-bans` (layout props in `withTiming`) |
   | 5 | time-based motion (`dt`), 60/120 Hz; `CADisableMinimumFrameDurationOnPhone` | app.config; sim fixed step (§4.9) |
-  | 6 | Reanimated `IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS` + `USE_COMMIT_HOOK_ONLY_FOR_REACT_COMMITS` | app.config `expo-build-properties` ⟂VERIFY no conflict with Skia 2.14 |
+  | 6 | Reanimated `IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS` (opt-in; `USE_COMMIT_HOOK_ONLY_FOR_REACT_COMMITS` is already the default in 4.7.1) | `package.json` → `"reanimated": {"staticFeatureFlags": {"IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS": true}}`; A/B on device is ADR-0006 (14 PQ-R-06); ⟂VERIFY no conflict with Skia 2.14 |
   | 7 | React Compiler on, zero bail-outs in `src/games/**`, `src/world/**`; atomic selectors | CI `react-compiler-healthcheck` |
   | 8 | no `InteractionManager`; `requestIdleCallback`/`startTransition` | lint |
   | 9 | one Skia Canvas per scene; atlases ≤ 2048²; paints/shaders/paths created once | review; asset linter |
@@ -1176,7 +1197,7 @@ polyfill if that fails.
   | 15 | fonts via config plugin; splash held until fonts + home essentials, **4 s timeout** | §4.7 (3 s target, 4 s hard) |
   | 16 | explicit image size/aspectRatio; sprites `transition={0}` | lint |
   | 17 | RTL set natively; world never mirrored; LTR isolation for numbers/math | §4.14 |
-  | 18 | nikud: lineHeight ≥ 1.5×, vertical padding, tested at max scale; in-game labels capped | R-11; Playwright at 150 %/AX3 |
+  | 18 | nikud: lineHeight per the 09 §3.6 tokens (1.6 K2 read styles, 1.55 K1 pointed, 1.45 K1 unpointed — never a single ratio), vertical padding, `FixedSlot` containers, tested at max scale; in-game labels capped | R-11; Playwright at 150 %/AX3 |
   | 19 | fixed logical game resolution scaled into the safe area; orientation locked per route | §4.9 orientation |
   | 20 | error boundary at root and per scene; scenes rebuild from persisted state | §4.11 |
   | 21 | pause everything on `inactive`; persist; resume to "tap to continue" | §4.5 interruptions; §4.18 |
@@ -1196,7 +1217,11 @@ polyfill if that fails.
 - Selecting a child opens a `play_session` event (`session.started`). All events carry `childId` and
   `sessionId`.
 - Per-child **resume state** (last zone, last hero position, pending chest) is a doc
-  `child_resume/<childId>`, saved on every background/switch.
+  `child_resume/<childId>`, saved on every background/switch **and every ≤ 20 s checkpoint during
+  play**. Each save also writes the previous good copy as `kind='child_resume_bak'` in the same
+  transaction (14 PQ-P-11). Fallback order on resume: `child_resume` (zod-valid) → `child_resume_bak`
+  → hub spawn with the episode's earned items intact (`app.resume_fallback` telemetry). A resume doc
+  is never blank-reset.
 - **Switching** has three entry points:
   - Long-press (1.5 s) on the avatar badge → "החלפת שחקן" → back to the picker. This saves resume and
     closes the session (`session.ended{reason:'switch'}`).
@@ -2270,7 +2295,7 @@ The access JWT is signed with jose, HS256 using `SESSION_SIGNING_KEY`:
 | GET `/invites` · DELETE `/invites/:id` | guardian.invite | list / revoke |
 | POST `/invites/accept` | none (RL_AUTH) | `{code}` → 200 `{familyName, role, next:'email_verify'}` (the email step completes) |
 | GET `/children` | family.read | → `{children[]}` (device scope: allowed only) |
-| POST `/children` | child.create | `{name, nickname?, birthdate, grammaticalGender:'f'\|'m'\|'n', grade, avatar}` → 201 `{child}` (server derives `ageBand`) |
+| POST `/children` | child.create | `{name, nickname?, birthdate, grammaticalGender:'f'\|'m'\|'n', grade, dominantHand?:'left'\|'right', avatar}` → 201 `{child}` (server derives `tier` from birthdate+grade; `band` T/G/S is computed by `packages/shared/bands.ts` on read, A6) |
 | PATCH `/children/:id` | child.update | partial → `{child}` |
 | PUT `/children/:id/picture-pin` | child.settings | `{hash, salt}` or `{clear:true}` → 204 |
 | DELETE `/children/:id` | child.delete (owner) | → 202 (soft delete; events purge after 30 d) |
@@ -2769,7 +2794,12 @@ export default (): ExpoConfig => ({
   plugins: [
     'expo-router',
     ['expo-localization', { supportsRTL: true, forcesRTL: true, supportedLocales: ['he', 'en'] }],
-    ['expo-font', { fonts: ['./assets/fonts/NotoSansHebrew-VF.ttf', './assets/fonts/Fredoka-VF.ttf'] }],
+    ['expo-font', { fonts: [   // static weights only (09 §3.6/§15, 14 PQ-P-07); fontFamily = 'Rubik-800' etc.
+      './assets/fonts/Rubik-500.ttf', './assets/fonts/Rubik-700.ttf', './assets/fonts/Rubik-800.ttf', './assets/fonts/Rubik-900.ttf',
+      './assets/fonts/NotoSansHebrew-400.ttf', './assets/fonts/NotoSansHebrew-500.ttf', './assets/fonts/NotoSansHebrew-600.ttf', './assets/fonts/NotoSansHebrew-700.ttf',
+      './assets/fonts/Andika-400.ttf', './assets/fonts/Andika-700.ttf',
+      ...(VARIANT === 'development' ? ['./assets/fonts/Fredoka-500.ttf', './assets/fonts/Fredoka-600.ttf', './assets/fonts/FrankRuhlLibre-400.ttf', './assets/fonts/FrankRuhlLibre-500.ttf'] : []), // GATE-UX-2 candidates
+    ] }],
     'expo-sqlite', 'expo-secure-store', 'expo-audio',
     ['expo-camera', { recordAudioAndroid: false }],
     ['expo-local-authentication', { faceIDPermission: 'זיהוי פנים פותח את אזור ההורים.' }],
@@ -2968,6 +2998,18 @@ Also:
 - `native-eas.yml` (phase 2): `eas build -p ios --profile preview --non-interactive`, then
   `eas build:list` → comment.
 - `secrets.yml` (manual, masked inputs): `wrangler secret put` for agent-generated secrets.
+- `reassure` job in `ci.yml` (UI PRs; needs `fetch-depth: 0` for the baseline) and `pr-hygiene` job
+  (`tools/ci/test-delta.mjs`, `baseline-origin.mjs` — a changed Playwright baseline must come from the
+  `baselines.yml` run, PR label `baselines-updated` with a reason; `bundle-budget.mjs` also fails on
+  `console.*` in the Hermes bundle outside `__DEV__`).
+- `baselines.yml` (`workflow_dispatch`): `playwright test --update-snapshots` inside the pinned image,
+  commits to a `baselines/<pr>` branch for review.
+- `rollback.yml` (`workflow_dispatch`, agent-runnable for S0): `eas update:republish --branch family
+  --group <previous>` or `eas update:roll-back-to-embedded --branch family`; posts the group ids and
+  pings `ops/notify`.
+- `tools/ci/calendar-guard.mjs` runs first in `ota.yml` and `promote.yml`: **no OTA publish to
+  `family` on Friday after 12:00 Israel, inside the Shabbat/holiday window or on a B7a quiet day**
+  unless the run carries input `s0-hotfix=true` (13 §10.2).
 
 ### 11.6 Release checklist (native release)
 
@@ -2994,7 +3036,9 @@ Also:
 | Visual/RTL/gender | ~10% | Playwright 1.64.1 in a **pinned Docker image** on the web export | CI (PR subset) + nightly (full) | §12.2 |
 | E2E golden paths | <5% | **Maestro** YAML on the **Mac iOS Simulator** via Remote Control | before each native build and before promote | onboarding (bootstrap) → add child → pair (simulated code) → picker → episode → chest → parent gate → settings → sync |
 | Real device | — | checklist §12.4 + device perf protocol §12.5 | each native build; monthly | haptics, audio latency, Rive, nikud, Face ID, camera QR, 3D fps, thermal |
-| Mutation (optional) | — | Stryker incremental on `packages/engine` | nightly | test strength of core logic |
+| Render-perf regression | — | **Reassure 1.6.1** (`reassure --baseline` on main, compare on PR) | every UI PR | gate: no added render per interaction, ≤ +10 % duration (14 PQ-T-05) |
+| Mutation | — | Stryker 10.1.1 vitest-runner, incremental on PR, full `--force` nightly | PR + nightly | **blocking:** mutation score ≥ 80 % on `packages/engine` (economy, projections, migrations) |
+| Native layout shift | — | Maestro double screenshot (t+0 / t+1 s) + `pixelmatch` on the Mac simulator | before promote | gate: 0 differing pixels on static screens (14 PQ-T-06) |
 
 **Key properties tested with fast-check:**
 1. **Convergence:** for any interleaving and partition of events across N simulated devices, after
@@ -3135,14 +3179,27 @@ This follows `performance_reliability_playbook.md` §11E:
 - Results go to `perf/results/<version>.md`. Any red item blocks the release.
 - **Hermes V1 + worklets memory smoke** after every Expo/Reanimated/worklets bump: 10 min in the
   world and 2D game loop, memory must stay flat. This guards against the SDK 56/57 regression class.
+  The native allow-list (`tools/ci/native-allowlist.json`, asserted by `assert-native-versions.mjs`)
+  pins the **Hermes V1 floor at `260318099.0.5`** (the version RN 0.88.1 bundles in
+  `sdks/.hermesv1version`; 14 PQ-R-02), reanimated 4.7.1 / worklets 0.13.0, Skia 2.14.0, Rive 0.5.5,
+  nitro-modules 0.36.5.
+- The full device protocol with step IDs **`PQ-DEV-01…13`** (incl. the interruption matrix, Split View
+  N/A because of `UIRequiresFullScreen`, Dynamic Type at AX3, and the crash-log pull from Mac Console)
+  lives in **14 §8**; this section is its summary.
 
 ---
 
 ## 13. Observability
 
 - **Self-hosted events:** `app.error`, `app.perf` (cold start, fps p95, JS ms p95, memory peak per
-  scene) and `app.start` (`runtimeVersion`, `updateId`, signing, expiry) are telemetry-class events,
-  synced and kept 30 days.
+  scene, `nav` route-transition ms) and `app.start` (`runtimeVersion`, `updateId`, signing, expiry,
+  **`prevExitClean`**) are telemetry-class events, synced and kept 30 days. Also `app.js_stall`,
+  `app.ui_stall`, `app.memory_warning`, `app.degrade{reason:'lowPower'|'thermal'|'memory', tier}`,
+  `app.boot_timeout`, `app.resume_fallback` (14 PQ-R-49/PQ-B-27).
+- **Crash-free without Sentry:** boot writes `boot_marker=running` to `kv-store` and sets it to
+  `clean` on `AppState` background/inactive and on a normal exit path; the next `app.start` reports
+  `prevExitClean = (marker === 'clean')`. Crash-free sessions = `1 − count(prevExitClean=false) /
+  count(app.start)`; gate ≥ 99.8 % over 7 days per device class (Ops tab).
 - **Dashboard → Ops tab (owner):**
   - errors by release
   - fps p95 by device
@@ -3153,7 +3210,7 @@ This follows `performance_reliability_playbook.md` §11E:
   - D1/R2 size
 - **Worker:** Workers Logs (`observability.enabled`), structured JSON with no PII. `wrangler tail` is
   available to the agent from CI or the Mac when debugging. Cron failures go to `ops/notify` email.
-- **Weekly ops line** in the Sunday parent email (owner only): "הכול תקין" or a short list (failed
+- **Weekly ops line** in the Friday parent email (owner only): "הכול תקין" or a short list (failed
   syncs, expiring installs, cap hits).
 - **Sentry (optional, off by default):** `@sentry/react-native` 8.28.0 is enabled only if the owner
   opts in. When on, it uses `sendDefaultPii:false`, a `beforeSend` scrubber that strips names, child
@@ -3308,7 +3365,8 @@ approval gates (E10, content approval, voice); naming the kids; approving `famil
    - 2D games 60 fps (120 fps on ProMotion) with hitch ratio < 5 ms/s
    - 3D world ≥ 55 fps p95 (gate #2)
    - tap→sound p95 ≤ 50 ms (≤ 80 ms hard gate)
-   - memory ≤ 400 MB steady / ≤ 650 MB peak, ≤ 20 MB growth over 20 cycles
+   - memory gates: ≤ 300 MB steady (2D) / ≤ 400 MB (3D) / ≤ 650 MB peak, ≤ 20 MB growth over 20
+     cycles (targets 200 / 300 / 500 MB per §4.7; a target miss opens a ticket, a gate miss blocks)
    - Hermes bundle ≤ 8 MB
 10. **Co-op:** same-device two-zone co-op works with no cross-talk of touches. Multi-device
     (flagged): two devices join a room by code, shared campfire state converges, and a reconnect

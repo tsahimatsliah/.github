@@ -299,9 +299,9 @@ S0 and S1 are 8 weekly chapters, each ending in a family boss (§9.3).
 2. **"תכנון אמיתי" (offline mission):** the app prints (00 C10) an "outline of a פנסון" page.
    - The child colors and draws "what my פנסון has".
    - The parent photographs it (parent gate). The image is processed on the device: crop, background removal, palette quantization to 8 colors.
-   - It becomes a `decal`, or a new `antenna` from a template if the parent picks "turn into an antenna".
+   - It becomes a `decal`, or a new `topper` from a template if the parent picks "turn into a topper".
    - No cloud processing is needed. If quality is poor, a filter turns it into a "sticker".
-3. **"הצבעה משפחתית" (once a season):** ברגית presents 3 new part designs (prepared from the children's ideas: the parent notes "she suggested a pineapple antenna" and the content pipeline produces 3 options). Each child votes with an emoji. All three are added to the catalog; the vote only decides the order they release in, so there's no losing.
+3. **"הצבעה משפחתית" (once a season):** ברגית presents 3 new part designs (prepared from the children's ideas: the parent notes "she suggested a pineapple topper" and the content pipeline produces 3 options). Each child votes with an emoji. All three are added to the catalog; the vote only decides the order they release in, so there's no losing.
 
 ---
 
@@ -1851,7 +1851,7 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 |---|---|
 | 0–8 | Darkness of dusk → one firefly (ניצי) lights up. "!אוֹר בּוֹקֶר, [name in the parent's voice]" |
 | 8–20 | A 12s movie: the Muddler's sneeze (funny), the friends fly away. ניצי: "עזור לי להחזיר אותם?" |
-| 20–35 | The **פנסון lab**: 3 big pulsing parts (chassis/color/antenna). Each tap changes it immediately, plus a laugh. A big "!יוצאים" button appears after 2 choices |
+| 20–35 | The **פנסון lab**: 3 big pulsing parts (chassis/color/topper). Each tap changes it immediately, plus a laugh. A big "!יוצאים" button appears after 2 choices |
 | 35–50 | The פנסון wakes up in the camp. **The first tap on the ground → it rolls there** (teaching tap-to-move by doing, no tutorial). Glints lead to a stone |
 | 50–60 | A rune on the stone hums "/m/". ניצי: "איזו אבן אומרת 'מָ'?" Two stones. A correct tap → the first friend (a letter-friend) comes out, T1 + "!מָצָאתָ אוֹתִי". (If wrong: the stone says its sound, and the right one glints. Nothing to fail) |
 
