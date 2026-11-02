@@ -93,12 +93,13 @@
 | Fire | Never goes out. It grows with the family's learning. | Fire that goes out means the run is over. | — |
 | Enemies | Lonely, prank-playing shadows that turn into friends. No horror. | Horror creatures (the Deer, cultists). | — |
 | Rescued | Light creatures made of letters, numbers and words. Each rescued friend is a curriculum item. | 4 missing children. | 300 robots, a crew. |
-| Hero | A lantern-being piloted by the child, co-designed with the children. | — | A specific robot (IP not used). |
+| Hero | A **toy-suit with a living spark** (a lantern-being) piloted by the child, co-designed with the children. Never called a robot. | — | A specific robot (IP not used). |
 
 No names, silhouettes, sounds or story framing are taken from existing games. Rules:
 - The hero is never white with blue eyes.
 - No "crash site" or spaceship.
 - No PlayStation-style controller imagery.
+- The hero is **never described as a robot** in any string, script, asset name or prompt (see §3.1 and AC-HERO-1). The only robot in the world is גלגלון (CH-03).
 
 ### 2.2 World structure
 
@@ -136,7 +137,7 @@ No names, silhouettes, sounds or story framing are taken from existing games. Ru
 | R-12 | **חדר הגחליליות** | K3: colors, shapes, animals, 1–3, body parts, first words | A soft playroom of toys (2.5D isometric) | — (open play) |
 
 **Region unlocks**
-- Regions open through **the family campfire level** (see §10.4) together with each child's skill readiness. This follows 99 Nights' Missing Kids Board (R12).
+- Regions open through **the story calendar or the family campfire level, whichever comes first** (the binding rule and the per-region table are in §10.4), together with each child's skill readiness. This follows 99 Nights' Missing Kids Board (R12) without ever gating learning behind a shared counter (02 §5.2 rule 5).
 - A region a child is not ready for yet appears as "work in progress" with ברגית waving. It never shows a lock and never says "you're not good enough."
 
 ### 2.3 Visual tone and palette `⟲REVISE-AFTER-SPIKE`
@@ -233,14 +234,17 @@ S0 and S1 are 8 weekly chapters, each ending in a family boss (§9.3).
 
 ### 3.1 Concept
 
-- **The פנסון** is a small lantern-being with a robot-ish feel. It is a mechanical vessel the child "pilots". The child's avatar sits inside a glass dome on its head, so the face is visible.
+- **The פנסון** is a small lantern-being: a **toy-suit (חֲלִיפַת צַעֲצוּעַ) with a living spark (נִיצוֹץ חַי)** inside. The suit is a soft, stitched, lantern-shaped toy the child "wears"/pilots; the spark in its core is alive, warm and belongs to the child. The child's avatar sits inside a glass dome on its head, so the face is visible.
+- **Naming rule (binding, parent's explicit request):** the hero is **never a robot**. Not "רובוט", not "robot", not "bot", not "mech", not "machine" — in strings, scripts, asset names, Rive artboard names, image-generation prompts or code comments. Allowed vocabulary: `toySuit`, `lanternHero`, "חליפת צעצוע", "פנסון", "הניצוץ החי". The gear/cog icon (⚙) is **reserved for the machine robot גלגלון** and for the "machine-made" tag on generated content (07 AC-06); it never appears on the פנסון or its parts. CI lint `hero-naming.lint` (AC-HERO-1).
+  - Glossary note for writers: **הַנִּיצוֹצוֹת** (plural, CH-10) are the rescued friends; **הַנִּיצוֹץ** (singular, "הניצוץ של {name}") is the hero's living core. Scripts never use the bare plural for the hero's core.
 - Design goals:
   - Original (no shape, color or detail from Astro Bot or any other game).
-  - Lovable and very animatable.
+  - Lovable and very animatable; it reads as a **toy** (stitches, soft seams, a wind-up key as a decorative part option), not as a machine (no panels, rivets, antennas-as-sensors, LEDs, gears).
   - Drawable by K2.
 - **The פנסון does not talk and is not AI.**
-  - It has no voice lines and no opinions. It expresses itself only through animation and short sounds (beeps, a mini-flute).
-  - So it never blurs with the AI helper גלגלון (00 C7). The two must look different (see the CH-03 card): the פנסון is round and warm with a lantern core, while גלגלון is boxy with a screen face and gears.
+  - It has no voice lines and no opinions. It expresses itself only through animation and short sounds (a mini-flute, soft chimes; **never beeps**, beeps belong to גלגלון).
+  - So it never blurs with the AI helper גלגלון (00 C7). The two must look different (see the CH-03 card): the פנסון is round, soft and warm with a lantern core, while גלגלון is boxy with a screen face and gears.
+  - **The spark reacts to learning:** it brightens on each correct action (T0 "core juice"), pulses gently while the child thinks, and glows steadily at rest. It never dims below its resting glow (no loss, 00 C5).
 - **Name options for the hero type** (the children can give *their* פנסון a personal name in onboarding):
   1. **פָּנָסוֹן** (default)
   2. נִיצוֹצוֹן
@@ -252,17 +256,17 @@ S0 and S1 are 8 weekly chapters, each ending in a family boss (§9.3).
 |---|---|---|
 | `chassis` | 3: `chassis.round` (K3 default, a wobbly ball), `chassis.explorer` (K2 default, egg-shaped with short legs), `chassis.ranger` (K1 default, slimmer, with a backpack) | Each chassis shares one skeleton of ≤30 bones (E1b) |
 | `dome` | 4 shapes (round, square-ish, bubble, double) | The avatar's face shows inside, rendered as a 2D/texture projection onto the dome |
-| `core` | 12 colors of "inner flame" (the lantern core) | Lights up with each correct answer (the core juice moment) |
-| `antenna` | 8 (spring, flower, star, leaf, flag, ear, horn, none) | Sways with secondary motion |
-| `arms` | 4 (short, mechanical claw, gloves, grabber) | The visual for interacting with power-ups |
-| `feet` | 4 (legs, wheels, springs, suction-cup feet) | Changes only the walking animation, not speed or ability |
+| `core` | 12 colors of the **living spark** (the lantern core) | Lights up with each correct answer (the core juice moment); never dims below rest |
+| `topper` (was `antenna`) | 8 (spring, flower, star, leaf, flag, ear, horn, none) | Sways with secondary motion. Named "topper"/"כובעון" in code and strings, never "antenna", so the hero never reads as a machine |
+| `arms` | 4 (short, mitten, gloves, grabber-paw) | The visual for interacting with power-ups. No claws, pistons or "mechanical" parts |
+| `feet` | 4 (legs, rollers-in-socks, springs, suction-cup feet) | Changes only the walking animation, not speed or ability |
 | `decal` | Unlimited: **drawings by the children** (scanned, see 3.4) plus 30 earned stickers | Placed on the chassis in 3 positions |
 | `trail` | 10 (sparks, bubbles, leaves, notes, rainbow…) | Cosmetic, from the shop or milestones |
 
 - **Rule:** no part changes gameplay ability (00 D3). Power-ups belong to the level, not to the hero.
 - **3D pipeline:**
-  - Spike: Quaternius CC0 robot base (E1b).
-  - Final: a custom design (Meshy/Tripo → Blender ≤5k tris → rig).
+  - Spike: a CC0 base mesh with a **toy/plush silhouette** (e.g., a Quaternius CC0 "cute character" base re-skinned as a stitched lantern; no robot base, so the spike never ships robot proportions by accident) (E1b).
+  - Final: a custom design (Meshy/Tripo → Blender ≤5k tris → rig). Prompts use "soft toy lantern, stitched fabric, glowing core"; the words "robot/mech/android" are banned in prompts (AC-HERO-1).
 - **Mandatory animation clips (8):** `idle`, `walk`, `run`, `jump`, `celebrate`, `wave`, `found_it`, `oops_cute` (a cute stumble, never "sad").
 
 ### 3.3 Avatar: a child who looks like themselves without a photo (00 D14 rules, Mii approach)
@@ -322,6 +326,7 @@ S0 and S1 are 8 weekly chapters, each ending in a family boss (§9.3).
 | CH-08 | **פְּרוֹפֶסוֹר לָמָּה** (למה-למה, זיקיתוש) | Chameleon scientist | m | Green that changes with "hypotheses" | Curiosity, experiments, science | Science, world |
 | CH-09 | **משפחה** (parents, grandparents, family pet) | NPCs built by the parent | per person | — | "Camp elders", recorded voices | Personal support |
 | CH-10 | **נִיצוֹצוֹת** (the rescued friends) | Species of light creatures | per individual | By species | The collectibles, filling the hub | By species (see 4.11) |
+| CH-11 | **Pip** (Sunny's little crab) | Small crab, **silent** | — (no voice, no gender in speech) | Coral-orange + turquoise claws | Hero of K1's decodable English stories (05 §7); lives only on the English island | English reading (decodable from 05 stage S2: "Pip sat.") |
 
 ### 4.2 CH-01 ניצי (mascot)
 
@@ -531,21 +536,35 @@ Each rescued friend is a **curriculum item** (content ID). In the hub it says it
 
 ---
 
+### 4.11a CH-11 Pip (silent crab, English island only; requested by 05)
+
+- **Why he exists:** his name is decodable from 05's phonics stage S2 (s, a, t, p, i, n), so K1's very first English story can be "Pip sat." He is Sunny's pet-helper and the recurring hero of the ship's-log stories (MX-E06).
+- **Rules:**
+  - **Pip never speaks** (no voice lines in any language), so OPOL (00 B2) can never be broken by him. He communicates with claw gestures, bubbles and a 2-note "click-click" sound signature.
+  - He appears **only** inside the English frame (R-08, bottles, English moments). Never in Hebrew scenes.
+  - He is drawable by K2 with 4 shapes (a round body, two claws, two eye-stalks).
+  - In 05's decodable sentences he does small things that end in a tiny change of state ("Pip got a pig.", "Fill the bag, Pip!"), so each page has a visible outcome in the scene.
+- **Visual brief:** a small coral-orange crab with oversized turquoise claws, a tiny sailor's cap matching Sunny's, big round eyes. No teeth, no pincers that look sharp.
+- **Don't:** give him Hebrew, give him a gendered voice, use him outside the English frame, or make him the butt of "slow/silly" jokes about reading.
+
 ### 4.12 Companions (pets): "גוזלי אור" (00 D4)
 
-- Every child has **1 active companion**, plus a collection that grows at milestones (3 at launch, then +1 per mastered skill cluster).
-- **It hatches from an "egg of light"** that the child received at a milestone. The egg's contents are known in advance (silhouette, D2).
-- **3 evolution stages:** `baby` → `young` → `grown`. They are fixed by mastery of the cluster the pet is tied to (gap D9). Example: "the dragon of light" is tied to the letter cluster א–ל; "young" means 50% of the cluster mastered, "grown" means 100%.
+> **Precedence:** `02-economy-progression.md` §8 is the canonical owner of the pet catalog, stages, thresholds, treats and friendship. This section keeps the game-design role of the pet and mirrors 02's rules so the two never diverge.
+
+- **One species per learning domain (02 §8.1), 6 at launch:** `fox_letters` שועלון האותיות (Hebrew reading), `dragon_numbers` דרקונון המספרים (math), `parrot_english` Poppy the parrot (English; **speaks only English**, 00 B2, voiced from Sunny's bank), `turtle_world` צב החוקר (world & science), `octopus_thinking` תמנון החידות (thinking/AI literacy), `puppy_heart` כלבלב הלב (SEL). No "gear robot" pet: the only machine in the cast is גלגלון.
+- Every child has **1 active companion** (the one that follows the פנסון) and a collection in "גן הגוזלים". **Eggs** (02 §8.1): the first egg at onboarding (K1 chooses 1 of 2 shown; K2 receives the egg of his first domain); K1's second egg at level 4 or when גן הגוזלים opens, whichever is later; every further egg when a new domain starts. The egg's contents are known in advance (silhouette, D2).
+- **5 stages, deterministic, by mastery only (02 §8.2):** `egg` → `baby` → `young` → `grown` → `legendary`. Thresholds are counts of **mastered skills in the pet's domain** (K1: first `proficient` / 3 / 8 / 15 mastered + 3 retained; K2: first `proficient` / 2 / 5 / 9). "Mastered" is 08's `master` level (D9). A completed species set in the collection room gives the pet an **accessory**, never a stage (02 §5.4). Care never affects evolution.
 - **Never dies, never gets sick, is never hungry.**
-  - Feeding (1 tap per episode, using coins or a free daily treat) is a show of affection, not a need.
-  - If not fed, the pet is fine.
+  - Feeding = affection, not a need: 1 free treat per episode, special treats for coins (02 §8.3), at most 3 "eaten" per day, the rest wait in the pantry.
+  - If not fed, the pet is fine. After an absence it is asleep or playing, and wakes happily ("הנה את! בואי נראה מה בנית"). Never "התגעגעתי".
+  - "Friendship" 1–10 only goes up (3 care points/day max) and unlocks pet emotes ("tricks").
 - **In-game role:**
   - Follows the פנסון in levels.
-  - **Points with its nose at a nearby secret** (a 3-second hint, after 20 seconds of no progress).
+  - **Points with its nose at a nearby secret** (a 3-second hint, after 20 seconds of no progress or 45 seconds without a secret found; 02 `petNoseHintSeconds`).
   - Cheers on a correct answer.
   - Sleeps at the end of the episode.
-- **K3:** the pet is "פּוּפִּי" (a soft round creature). It reacts to every touch with a laugh or a sound and doesn't evolve. Instead, it gets a hat or a color at every sticker milestone.
-- **Launch catalog (9):** light dragon, crystal turtle, fog cat, bubble fish, cloud fox, note owl, leaf hedgehog, star rabbit, mini gear robot (K1, AI-literacy cluster).
+- **K3:** the companion is "פּוּפִּי", a soft round bunny (02 `ארנבון`; the name is 01's, the species is 02's). It reacts to every touch with a laugh or a sound and doesn't evolve. Instead, it gets a hat or a color at every sticker milestone (every album page completed).
+- **Holidays:** pets get holiday costumes, not new species (02 §8.1).
 
 ---
 
@@ -591,6 +610,12 @@ The adaptive engine fills the content slots. These are the default durations. `E
 | 8:00–9:20 | **Short evening by the campfire** | 3–4 sleepy shadowlings come to warm themselves. Light each one with an item (review) → they become friends | 4–5 mixed review items | Calm, dusk palette, not dark |
 | 9:20–10:00 | **Goodnight + Tell + offline mission** | Tell (1 tap). The friends yawn and go to sleep. Offline mission card (picture + voice). ניצי: "שיחקנו יופי…" → the app sleeps | — | No autoplay; reopening goes through the parent gate (00, `child_psychology` §7D) |
 
+**Optional segments (any child, inserted by the planner, each ≤5:00, inside the episode budget):**
+- `english_bottle` (S0 only, until R-08 opens; §13.2): a bottle from Sunny in the daily-surprise slot, 3–5 min inside the English frame.
+- `ritual_mid` (07 `RIT-MID`, "דקת כלי"): 60–90s for K2 on 3 of 5 days, 90–120s for K1 every day; counts as learning time; one tool card from the unified tool belt (MX-T01). Skippable with one tap ("קדימה למשחק"); two skips in a row shorten it to a 5s version automatically (07 §12).
+- `weather_tap` (06 §4.5): in the first episode of the day, one tap "what's the weather outside?" on the hub's family weather station; feeds the shared monthly chart. ≤10s, no reward.
+- 07's `RIT-OPEN` = this document's Arrival + Plan (feelings check-in ≤20s + plan ≤15s); `RIT-CLOSE` = Goodnight + Tell. Open + close together ≤10% of episode time (07 AC-12; stricter than the 15% celebration budget and measured separately).
+
 #### K1 (8.5): `episode.k1.default`, 18:00 (range 15–20)
 
 | Time | Segment | What happens | Content |
@@ -621,9 +646,9 @@ The adaptive engine fills the content slots. These are the default durations. `E
 
 | | K3 | K2 | K1 |
 |---|---|---|---|
-| **Long-term "map"** | Sticker album (12 pages of 6) + a playroom that fills with toy friends | Lost Friends Board + hub neighborhood that fills + collection room | Same plus Adventure Album (season track, 30 tiers, never expires) |
-| **Collections** | Stickers, toy friends | Friends by species, pieces (mosaic), 1 pet | Same plus diary pages, emotes, hero parts, seasonal mosaic |
-| **Currencies** (00 D5) | None (stickers only) | Coins + treasures + pet | Coins + gems + treasures + shop + season track |
+| **Long-term "map"** | Sticker album (12 pages of 6, +1 seasonal page per season, +2 pages/month; 02 §2.4) + a playroom that fills with toy friends | Lost Friends Board + hub neighborhood that fills + collection room + Adventure Album (season track, **20 tiers**, opens at level 6; 02 §9) | Same plus Adventure Album (season track, **30 tiers**, opens at level 3, never expires) |
+| **Collections** | Stickers, toy friends | Friends by species, pieces (mosaic), pets (one per domain) | Same plus diary pages, emotes, hero parts, seasonal mosaic |
+| **Currencies** (00 D5; all numbers in 02) | None (stickers only; hidden XP for the parent) | Coins (small "effort chunks", ≤90) + chests (wood/gold) + 2 jars (spend/save) + "give" button + pet | Coins + gems + chests (wood/silver/gold/legendary) + shop + 3 jars + season track |
 | **Hub milestones** | Every 5 toy friends → a new toy in the playroom (sound/light) | Building thresholds (§10.2) | Same plus her own buildings (design mode) |
 | **Challenge** | None | 🌶🌶 optional | Stretch / Mystery flames, struggle-first, time-trial against herself, Mentor Track (guide mode) |
 | **Weekly** | Participates in the family evening (as "lighter") | Participates + personal goal | Participates + personal goal + Mentor Track |
@@ -820,8 +845,27 @@ export type SecretType = 'glint'|'sound'|'visibleBehindGate'|'oddTile'|'talkingO
 | MX-B01 | הדלקת צללונים | `shadow-light` | everyone | Battle: an answer = a light attack | by item |
 | MX-B02 | הגנת המדורה | `campfire-defense` | everyone (by role) | Evening: mixed review, light strategy | by role |
 | MX-P01 | צעצועי האור | `playroom-toys` | K3 | Open play: cause and effect, colors, 1–3, animals | tap |
+| MX-M13 | מאזני הקסם | `balance-scale` | K2, K1 | Heavy/light, "=" as balance (a relation), missing-symbol puzzles (03 `MECH.BALANCE`, `R.BALANCE`) | drag onto pans |
+| MX-M14 | שעון המחנה | `camp-clock` | K2, K1 | Daily sequence, reading/setting an analog clock (hour, half, quarter, 5 min), elapsed time (03 `MECH.CLOCK_CAMP`) | rotate hands |
+| MX-M15 | המכולת של המחנה | `camp-shop` | K2, K1 | Shekels/agorot, paying, change (03 `MECH.MAKOLET`; **play money, never the game's coins**) | drag coins/notes |
+| MX-M16 | קסם המראה | `mirror-lake` | K2, K1 | Symmetry: complete a shape across an axis, find axes (03 `MECH.MIRROR`) | tap tiles / draw |
+| MX-M17 | שיחת מספרים ליד המדורה | `number-talk` | K1 (K2 oral) | One problem, 2–3 strategies, compare with "another child's way" (03 `MECH.NUMBER_TALK`) | choose / drag strategy cards |
+| MX-M18 | מי חזק יותר? | `light-duel` | K2, K1 | Comparing quantities and numerals, <, >, = (03 `MECH.DUEL`) | tap |
+| MX-M19 | צללית | `shadow-tangram` | K3 (T+), K2, K1 | Composing/decomposing shapes (03 `MECH.TANGRAM`) | drag / rotate |
+| MX-M20 | דוח הסיירים | `scout-chart` | K2, K1 | Tables, pictographs, bar charts (03 `MECH.SCOUT_CHART`) | drag / choose |
+| MX-E05 | אורות המגדלור | `lighthouse-lights` | K1 | Tricky (irregular) English words, sight reading (05 `TW.*.READ`) | tap (catch the word in the beam) |
+| MX-E06 | יומן הספינה של Sunny | `ship-log` | K1 (K2 listens) | Decodable stories (Pip), comprehension; "read to your brother" (05 `RD.*`) | tap page / read |
+| MX-E07 | שיחה על הרציף | `dock-talk` | K2, K1 | Scripted dialogue turns, speaking (05 `OR.S.*`) | choose a bubble / record-and-compare (K1) |
+| MX-T06 | אסימון מוח | `brain-token` | K2, K1 | "Me first, then the machine": commit an attempt before any machine help (07 `BRAIN_TOKEN`) | choose / draw / guess |
+| MX-X05 | ארגז החול הפיזיקלי | `build-sim` | K2, K1 | Ramps, wheels, bridges, shadows, circuits; plan-build-test-improve (06 §4.5 `build-sim`, S.TECH.02) | drag / place / run |
 
-That is 51 mechanics; ≥25 are required. The **MVP** (first vertical slice) is: MX-M01, MX-M02, MX-H01, MX-H02, MX-H03, MX-E01, MX-B01, MX-B02, MX-P01, MX-S02, MX-R01.
+That is **64 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 from 07, 1 from 06); ≥25 are required. In addition, three existing mechanics gained **modes/variants** requested by other specs (defined in their cards): MX-E01 `pairs` mode (minimal pairs, 05), MX-X02 content "skins" (06), MX-T01 unified with 07's `TOOLBELT`, MX-M03 `lasso` variant, MX-M04 `cart`/`hut` variants, MX-M07 `table-map` progress screen, MX-M12 `board-game` variant (03 §5.4).
+
+**Build order (so 64 is a library, not a day-one scope):**
+- **Tier A — MVP** (first vertical slice, unchanged): MX-M01, MX-M02, MX-H01, MX-H02, MX-H03, MX-E01, MX-B01, MX-B02, MX-P01, MX-S02, MX-R01 (11).
+- **Tier B — first school term** (S0–S1): MX-M03, M04, M05, M11, M12, M18, MX-H04, H05, H09, MX-E02, E03, E04, MX-X01, X04, MX-A01, MX-T01, T06, MX-S01, MX-M14, M16 (20).
+- **Tier C — by S3**: everything else. A mechanic outside Tier A/B may ship as a `review`/`evening` compact form (§7.0) before its full level form exists.
+- The production budget in §6.6 ("12 chunks per gimmick") applies to Tier A+B gimmicks in year 1 (31 × 12 = 372 chunks); Tier C gimmicks get 6 chunks each.
 
 ### 7.2 Mechanic cards
 
@@ -1275,7 +1319,7 @@ That is 51 mechanics; ≥25 are required. The **MVP** (first vertical slice) is:
   - Answering = aiming the light: tap on the right answer in the world, or on the keypad (K1).
   - The beam travels 0.25s, hit-stop 60ms, then the layer "peels off" (squash + particles).
 - **Wrong answer:** the beam bends to the side and lights a nearby flower instead (funny, no penalty). The shadowling giggles. The same item comes back after 1–2 other items.
-- **Combo (K1 only, opt-in):** 3 in a row = a "light wave" that peels 1 layer from all the shadowlings in the area. It only shows after accuracy mastery (D11).
+- **Combo (K1 only, opt-in):** 3 in a row = a "light wave" that peels 1 layer from all the shadowlings in the area. It only shows for skills at 08 level `proficient` or above and `fluencyEligible` (D11; 08 §4.4).
 - **Hero "classes" (attack styles, cosmetic + verb flavor), K1 only, chosen in the Plan step:**
   - `style.archer` (a beam)
   - `style.builder` (building a wall of light in front of the shadowling)
@@ -1294,7 +1338,8 @@ That is 51 mechanics; ≥25 are required. The **MVP** (first vertical slice) is:
   - Phase 2: the gimmick + a twist from the Ten beat.
   - Phase 3: mixed with an earlier region (interleaving).
 - **Between phases:** 0:20 of "spectacle" (the boss laughs and stumbles), with checkpoints at the start of each phase.
-- **Defeating it:** the boss shrinks, laughs, and gives back a "big lost friend" (VIP) plus a gold-frame treasure (§16.2).
+- **Defeating it:** the boss shrinks, laughs, and gives back a "big lost friend" (VIP, the region's `bossFriend`, counted in the collection room) plus a **gold chest** (02 §6.2 `regionBossDefeated`: K1 80 coins + 1 gem + choice of 1 of 3 previewed items; K2 8 coins + choice of 1 of 2).
+- **Rescue count per region (binding, mirrored in 02 §5.1):** `friendsInRegion = levels × friendsPerLevel + 1 (bossFriend)`. With 8 levels: K1 = 8×7+1 = **57**, K2 = 8×5+1 = **41**. The region card and the Lost Friends Board show `rescued/total` as silhouettes (K2: silhouettes only, no numerals; K1: "41/57"). Secret level `secretA` opens at ⌈50%⌉ of the region's friends, `secretB` at mosaic complete, `goldenRemix` (K1) at 100% friends + pieces (02 §5.3).
 - **No-fail:**
   - A boss can't "win".
   - If the child struggles (≥3 errors in a phase), the boss "gets tired" and yawns, and the phase moves to Cozy.
@@ -1317,11 +1362,10 @@ That is 51 mechanics; ≥25 are required. The **MVP** (first vertical slice) is:
 - **A parent can take part:**
   - a recorded clue ("רמז מאבא") that opens the finale, plus 1 tap;
   - or an "Abba/Ima" role in the finale (an extra player in same-device mode, giving light to the weakest one, `assist`).
-- **Reward:**
-  - A family treasure (prism frame).
-  - +1 family fire level (if the weekly goal was also met).
-  - K1: 2 gems.
-  - Everyone: the boss joins as a VIP for that week (a cute version wanders the camp).
+- **Reward (numbers owned by 02 §6.2, trigger `bossDefeated`):**
+  - K1: a **silver chest** (40 coins + 1 gem + the next item on the silver track). K2: a **wood chest** (3 coins + next item). K3: nothing extra (participation is the reward; the family envelope comes with the weekly goal).
+  - +1 family fire level (the boss and the weekly goal are two separate level-ups; see §10.4).
+  - Everyone: the boss joins as a VIP for that week (a cute version wanders the camp) and the "family treasure" is that VIP plus the fire level, not a separate chest.
 
 ### 9.4 The runner: "מרדף הגחליליות" (MX-R01, Temple Run–like)
 
@@ -1342,6 +1386,7 @@ That is 51 mechanics; ≥25 are required. The **MVP** (first vertical slice) is:
 
 ### 9.5 The evening: campfire defense (MX-B02; 99 Nights without fear)
 
+- **Day/night rule (G5, binding):** the camp's time of day is driven by the **episode phase**, not by the wall clock: Arrival/Plan/Warm-up/Levels = `day`, Camp (Show + Build) = `dusk`, Evening = `evening`, Goodnight = `night`. Exceptions: Shabbat scenery (§15.4) and quiet days override the palette; K3 never sees `evening` (§2.3). A child who plays at 08:00 still gets the evening segment at the end of the episode (the fiction is "a day at camp", §5.1). In co-op (§12), the host device's phase is authoritative for all screens.
 - **Atmosphere:** dusk–evening, a fire in the center, the rescued friends sitting around it. Shadowlings come out of the forest edge **slowly, at the sides of the screen, not toward the camera**. They're cold and want warmth.
 - **The family's goal:** "warm" all the shadowlings (light them with items) before they "steal" a lantern.
   - If a shadowling reaches a lantern, it takes it, giggles and runs off to the forest. **The lantern comes back** the next evening, or with an easy chase.
@@ -1379,18 +1424,33 @@ That is 51 mechanics; ≥25 are required. The **MVP** (first vertical slice) is:
 
 ### 10.2 Neighborhood building thresholds (per child, fixed and visible, Astro model)
 
-| Rescued friends (K2) | K1 | Building that opens | What it adds |
-|---|---|---|---|
-| 5 | 8 | **בית החברים** (Friends' House) | The friends have a home + the collection room (10.3) |
-| 15 | 25 | **צריף המוזיקה** | Letter/number songs to listen to (a calm menu, no rewards) |
-| 30 | 50 | **אוהל התחפושות** | The avatar and פנסון wardrobe (cosmetics) |
-| 50 | 80 | **גן הגוזלים** | The pets' home, the egg nest |
-| 75 | 120 | **תיאטרון הסיפורים** | A bedtime story (§15.5) + K1's diary pages |
-| 100 | 160 | **מגדל הכוכבים** | A "Then vs. Now" view (the journey over the months) |
-| 150 | 240 | **סדנת היוצרים** (K1: design mode) | K1 designs a small room/level from chunks (Roblox-like expression) |
+> **Precedence:** the thresholds live in `economy.config.json → collection.neighborhoodThresholds` (02 §5.5, paced by the economy simulation so the last building opens around week 9–13 instead of week 4–6). The table below mirrors the config; if they ever differ, **02 wins** and this table is updated.
 
-- **Visible milestones:** a sign with a silhouette of the next building and "עוד 4 חברים" (goal-gradient). No prices, and nothing for sale.
-- **K3:** every 5 toy friends → a new toy in the playroom.
+| Rescued friends (K2) | K1 | `id` | Building that opens | What it adds |
+|---|---|---|---|---|
+| 5 | 8 | `friendsHouse` | **בית החברים** (Friends' House) | The friends have a home + the collection room (10.3) |
+| 20 | 30 | `musicHut` | **צריף המוזיקה** | Letter/number songs to listen to (a calm menu, no rewards) |
+| 50 | 80 | `costumeTent` | **אוהל התחפושות** | The avatar and פנסון wardrobe (cosmetics) |
+| 100 | 150 | `chickGarden` | **גן הגוזלים** | The pets' home, the egg nest |
+| 160 | 240 | `storyTheater` | **תיאטרון הסיפורים** | A bedtime story (§15.5) + K1's diary pages |
+| 240 | 360 | `starTower` | **מגדל הכוכבים** | A "Then vs. Now" view (the journey over the months) |
+| 350 | 520 | `creatorsWorkshop` | **סדנת היוצרים** (K1: design mode) | K1 designs a small room/level from chunks (Roblox-like expression) |
+| +120 per season | +180 per season | `perSeasonNewBuilding` | **מבנה עונתי** (a new seasonal building each season, e.g., a Hanukkah lantern-house, a Purim stage) | Keeps rescues meaningful after the 7 core buildings |
+
+- **Visible milestones:** a sign with a silhouette of the next building and "עוד 4 חברים" (goal-gradient). No prices, and nothing for sale. Only the child's **own** rescues count (co-op rescues count for each participant, DD-23).
+- **Hub fill states (the hub as trophy room, G2).** The hub has 6 visible "fill states" driven by the **family total** of rescued friends across the three neighborhoods; each state adds ambient life, never removes anything:
+
+| Fill state | Family rescued friends | What the camp looks like |
+|---|---|---|
+| `F0` dim | 0 | Campfire + tents only, mist at the edges, 1 lantern lit |
+| `F1` waking | ≥10 | Paths appear, 3 lanterns, friends sit by the fire |
+| `F2` lively | ≥60 | Friends walk and play, a mailbox, birds, 6 lanterns |
+| `F3` busy | ≥150 | Friends "help" at buildings, music from the hut, bunting between tents |
+| `F4` festival | ≥300 | A small stage, fireflies swarm at dusk, friends cheer when any child walks by |
+| `F5` legendary | ≥600 | Permanent lantern parade path around the camp, the mist is gone entirely |
+
+  The fill state is a visual layer; it never gates content and never shows per-child numbers (00 C6). Above 60 friends, instancing + "30 awake at a time" keep the frame budget (§10.1).
+- **K3:** every 5 toy friends → a new toy in the playroom (02 `toyEveryNFriends`).
 
 ### 10.3 The collection room ("חדר האוצרות")
 
@@ -1400,19 +1460,37 @@ That is 51 mechanics; ≥25 are required. The **MVP** (first vertical slice) is:
   - Near completion of a species, a soft glow appears on the last silhouettes plus "עוד 3!".
   - The engine also makes the last friends easier to find: they appear more often in levels.
 - **Poke a friend** → it says its item. **Poke a silhouette** → ניצי gives a hint about where it is ("הוא מחכה במכרה").
-- **A completed set of a species** = a T3 celebration + a badge **named after the skill** ("את מכירה את כל אותיות הקבוצה הראשונה", 00 D4) + an evolution for the tied pet.
+- **A completed set of a species** = a T3 celebration + a badge **named after the skill** ("את מכירה את כל אותיות הקבוצה הראשונה", 00 D4) + a chest (K1 silver, K2 wood; 02 §5.4) + an **accessory for the tied pet** (a scarf, a hat). Pet **evolution is by mastery only** (02 §8.2), never by collection, so "I found them all" and "I know them" stay two different things.
+- **Capsule machine (02 §5.7):** a hand-cranked capsule machine stands next to בית החברים. It is **deterministic**: the window always shows the **next capsule** (`nextCapsuleVisible`), each series has 8 items in a fixed order with no duplicates, and a new series opens when a region mosaic is completed. The fun is the crank-and-pop ritual (≤2.0s, T2 budget), not chance. No "spin", no rarity colors, no odds. Opens at level 4 (K1) / 10 (K2); price in 02.
 - **Pieces (mosaic):** each region has a mosaic of 30–40 pieces that slowly reveals a picture of the region's story. A completed mosaic = a diary page + a decoration for the campfire.
 
 ### 10.4 The family campfire (shared sink)
 
-- **Fire level 1–10 per season. It goes up only.** One level per:
+- **Fire level goes up only and never resets** — not per season, not ever (00 C5; 02 §7.6 `resetsPerSeason: false`). One level per:
   - (a) a weekly family goal met (00 C5);
   - (b) a weekly boss defeated;
-  - (c) a seasonal event completed.
-- **Each level:** a bigger, more colorful fire (99 Nights' 6 levels → our 10), a wider lit zone in the evening, and it **unlocks the next region / Lost Friends quest** (R12).
+  - (c) a seasonal event completed (by ≥1 child reaching the event treasure);
+  - (d) Lag BaOmer (§13.2) gives +2.
+- **Visual ladder:** levels 1–10 are the **flame sizes** of the first "ring" (99 Nights' 6 levels → our 10). From level 11 on, every 10 levels add a **color ring** of embers around the fire (ring 2 = the second season's color, and so on), the fire keeps its maximum size and the lit zone stays at its maximum radius. A new season therefore **adds** a ring color to the fire, it never shrinks it. `fireLevel` is unbounded in config (`campfire.fireLevel.max: null`, `flameStepsPerRing: 10`).
+- **Lit zone in the evening** widens with levels 1–10 (radius `6 + 0.6·level` tiles, capped at 12) and shortens the shadowlings' path (§9.5).
+- **Region unlocks (binding rule; replaces the vaguer "fire opens regions"):** a region opens when **both** hold:
+  1. **Story gate** — the earlier of: its chapter week has started on the calendar (§2.4 arc, `calendar.chapters`), **or** `fireLevel ≥ regionUnlocks.fireLevel[R]`. Fire can open a region **early**; the calendar guarantees it opens **at the latest** on its chapter week, so a family that misses weekly goals never loses access to learning (02 §5.2 rule 5: nothing in the curriculum path is gated behind collection or shared counters).
+  2. **Readiness gate** — the child has ≥1 skill in the region's domain at 08 level `new`-with-prereqs-met or above (the engine's "fringe"). Until then the gate shows ברגית's "עוד בבנייה" (never a lock, never "not good enough").
+
+  | Region | `fireLevel` early-open | Calendar guarantee (chapter) | Notes |
+  |---|---|---|---|
+  | R-00, R-12, R-10, R-11 | 1 (launch) | Week 1 | Hub, K3 playroom, Tree of Quiet (SEL always available), runner (as level Ketsu) |
+  | R-03, R-05 | 1 (launch) | Week 1–3 | The two starting regions (S0) |
+  | R-04 | 4 | Week 5 (S1) | Fog lake; K1 only until K2 starts grade 1 (DD-18) |
+  | R-08 | 5 | Week 6 (S1) | English island; before it opens, English arrives via "bottles from the sea" (§13.2 S0, §7.2 MX-E01) |
+  | R-06 | 6 | Week 7 (S1/S2) | ברגית's workshop |
+  | R-07 | 8 | S3 start | Observatory |
+  | R-09 | 9 | S3 mid | גלגלון's garage (AI literacy); MX-A01 simple cards are available earlier inside R-05/R-06 levels |
+
+  The table is `calendar.regionUnlocks` in config; the parent can open any region manually from the parent area (audit-logged).
 - **Campfire decorations:**
   - Benches, lights, a family flag, a hanukkiah at Hanukkah, a sukkah at Sukkot.
-  - Bought with gems (K1) or **coins from the "give jar"** of K2/K1 (the "spend/save/give" model; a contribution to the family goal, without comparing who gave how much).
+  - Bought with **"עצים למדורה" (logs)**, the shared unit of 02 §7.6: K1's give jar (10 coins = 1 log) and gems (1 gem = 5 logs), K2's give button (1 coin = 1 log), K3's episodes (3 logs each, automatic, the "lighter" role), and +20 logs per weekly goal. Family projects (benches → lantern string → flag → stage → swing → light tower) run in a fixed visible order, one active at a time (02 §7.6). Only the family total is shown to the children, never who gave how much (00 C6).
 - **The weekly family goal:** "3 adventure days per child this week" (the parent sets 2–5 per child; K3 default 2). Shabbat and holidays don't count and don't hurt. The meter is shared, and the display is "the family's light" without separating children.
 
 ### 10.5 Building in the neighborhood (building system)
@@ -1450,37 +1528,20 @@ That is 51 mechanics; ≥25 are required. The **MVP** (first vertical slice) is:
 - Sparks (`spark`) are the breadcrumbs in levels. They light the core and in the evening "load" towers or attacks.
 - **They reset at the end of the episode** and can't be accumulated. **No conversion to coins.** This keeps 00 D1 (coins for mastery, not time). See the Proposed change to 00 for the clarification.
 
-### 11.2 Default numbers (tunable in `economy.config.ts`)
+### 11.2 Numbers: see 02 (no economy numbers live in this document)
 
-> **Precedence:** `02-economy-progression.md` is the canonical owner of currency amounts, caps, chest tiers (wood/silver/gold/legendary), chest triggers, the capsule machine and XP. Where the numbers in this section differ from 02, **02 wins**. They are kept here only as the game-design intent: payment for mastery and not time; sparks are not a currency; nothing is announced in advance. A reconciliation pass should align the tables.
+> **Binding precedence:** `02-economy-progression.md` is the **sole owner of every economic number**: earn values per event (02 §2.2–2.5), diminishing returns and caps (02 §2.6), what never earns (02 §2.7), the end-of-episode receipt (02 §2.8), XP and levels (02 §3), chest tiers, triggers, contents and reveal timings (02 §6), shop catalog, price bands, showcase, wishlist, jars and save bonus (02 §7), pets (02 §8), season track (02 §9), weekly family goal (02 §10), real-world rewards (02 §11). Earlier drafts of this section carried a numbers table; it was removed so there is exactly one source. Anything a developer needs numerically is in `economy.config.json` (02 Appendix A).
 
-
-| Event | K2 coins | K1 coins | K1 gems | Notes |
-|---|---|---|---|---|
-| New item correct on the first try (first time) | 2 | 2 | — | Diminishing returns on repeats: 0 after the item is mastered |
-| Passing a delayed review (SRS rung) | 3 | 3 | — | The receipt says "you remembered after 7 days" |
-| Recovering after a mistake (correct after an error on the same item) | 2 | 2 | — | Rewards persistence (C4) |
-| Completing a level (one-time) | 10 | 15 | — | Replays: 3 |
-| Skill mastered (gap D9) | 20 | 25 | 1 | + a badge named after the skill |
-| Region boss | 25 | 30 | 2 | + a gold-frame treasure |
-| Weekly family boss | 15 | 20 | 2 | + a family treasure |
-| Weekly family goal | — | — | 3 | + a fire level |
-| Seasonal event completed | 20 | 30 | 3 | + a prism treasure |
-| **Daily cap** | **60** | **100** | — | Above the cap: a "receipt" with 0, and nothing is said about it |
-
-- **No pre-announcement** of prizes for tasks (Lepper). The receipt appears *after* the action in the camp.
-- **Shop (cosmetic only, fixed catalog; items never leave once they've appeared):**
-  - an avatar shirt 30–60;
-  - a פנסון part 40–120;
-  - a neighborhood decoration 20–150;
-  - an emote 80;
-  - a trail 100;
-  - a "special" item for gems (K1) 3–8 gems.
-  - A wishlist plus a "save-up jar" with a progress bar.
-- **Spend/save/give jars** (K2: two, K1: three).
-  - The "save" jar gets 5% weekly interest (up to 10 coins).
-  - The "give" jar goes to the family campfire.
-- **K3:** stickers only (00 D5). No coin counter.
+What this document still **requires** of the economy (game-design intent, all already satisfied by 02):
+1. **Mastery and effort pay, time never does** (00 D1; 02 §2.7 `neverEarns`). The engine emits learning events; the economy is a pure fold over them (02 §2.1).
+2. **A rescue pays no coins.** The friend is the reward (02 §2.2 `rescue: 0`).
+3. **Receipt after, never contract before** (Lepper; 02 §2.8). No coin counter in the HUD during a level (§6.4). The receipt's "process lines" include the effort marks from §16.2 (`firstTry`, `hintFree`, `braveChoice`, `mentor`) as **words, not value**.
+4. **K2 coins are small "effort chunks"** that he can count aloud (≤4 per episode, feminine counting forms, 00 B4; 02 §2.3).
+5. **K3: stickers only**, no coin counter, hidden XP for the parent only (02 §1).
+6. **Milestones pay through chests** whose contents are fixed at earn time and previewed (00 D2; 02 §6.3).
+7. **Sparks are not a currency** (§11.1).
+8. **Shop is cosmetic only, catalog permanent, showcase weekly on Sunday**, no countdowns, no discounts (00 D3; 02 §7.3).
+9. **Jars:** K1 spend/save/give, K2 spend/save + a "give" button; the give jar feeds the campfire's log pile (02 §7.5–7.6).
 
 ---
 
@@ -1550,8 +1611,9 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 
 ### 12.6 K1 guide mode ("מצב מדריכה")
 
-- **Opt-in per session.** K1 is offered (never required) "do you want to be your brother's guide today?"
-- **Cap:** 1 guide session per day, ≤10 minutes (gap §4.12).
+- **Two-level opt-in.** (1) The parent enables guide mode in K1's settings (10 §6.13: default **off**). (2) When enabled, K1 is offered per session (never required) "do you want to be your brother's guide today?" The offer appears only when K2 is active on the same device or in a CO-3 room.
+- **Cap:** 1 guide session per day, ≤10 minutes (gap §4.12). When the cap is reached mid-session the guide strip fades with "הדרכה להיום הסתיימה, מחר שוב" and K1 can keep playing her own content; K2 continues alone. A second offer never appears that day (§21 UC-18). Economy: one `mentor_session_completed` per day at most (02 §2.2); a session shorter than 3 minutes does not emit it.
+- **Brain token first (07 §2.3):** K1's hint tokens are usable only **after K2 has deposited his own attempt** (an answer, a choice or a drawing). The 5s "let him try first" timer starts at that deposit.
 - **What she does:** sits next to K2 in CO-2 or CO-3, sees on her screen what K2 sees plus a "guide strip":
   - "תני לו לנסות קודם" (a 5s timer before she can help);
   - "שאלי: איך ידעת?";
@@ -1585,7 +1647,7 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 
 | ID | Name | Dates (Gregorian) | Theme | Content highlights per child |
 |---|---|---|---|---|
-| S0 | **"המחנה מתעורר"** | from launch (target 2026-11-08) → 2026-12-03 | Onboarding, R-03 + R-05 + R-12 | Weeks 1–3 of the arc (§2.4) |
+| S0 | **"המחנה מתעורר"** | from launch (target 2026-11-08) → 2026-12-03 | Onboarding, R-03 + R-05 + R-12 | Weeks 1–3 of the arc (§2.4). **English warm-up "בקבוקים מהים" (requested by 05 §15.1, adopted):** until R-08 opens (chapter 6, ~2026-12-20) a bottle washes up at the camp shore **2–3 times a week** (daily surprise slot, §5.5) with a recording of Sunny: one song + 2–3 words, inside the English frame (turquoise + entry jingle), 3–5 minutes, for every child (K3 with a parent). K1's English placement ("המכתב של Sunny", 05) runs in week 3 through a bottle. Bottles stay in the mailbox and never expire. No rewards beyond the Wordling of each word |
 | EV-01 | **"שמונה לילות של אור"** (Hanukkah) | first candle on the evening of **2026-12-04** (Shabbat eve!) → day 8 **2026-12-12** | A hanukkiah on the campfire; each night 1 candle and 1 friend | K3: count 1–8 candles with a song (feminine forms). K2: the spinning-top letters נ ג ה פ (MX-H01 on the dreidel). K1: how many candles altogether including shamash (2+3+…+9 = 44, MX-M06); sharing sufganiyot as fractions (MX-M09). Offline: light candles and count together. Night 1 is Friday evening → unlocks on Saturday night with night 2 (cumulative) |
 | S1 | **"עונת הערפל"** | 2026-12-13 → 2027-01-30 | R-04 the fog lake + R-08 English island (week 6) | K1: start the gradual nikud-fade (prep before February); K2: the vowel series; the English island opens for everyone |
 | EV-02 | **"חג השתילה"** (Tu BiShvat) | 2027-01-20 → **2027-01-26** (the holiday: 2027-01-23, Shabbat) | Planting trees in the camp (a permanent grove) | K3: tree/flower/bird names. K2: count 15 seedlings (Tu = 15). K1: an orchard plan in an array (MX-M05) + fruit names in English |
@@ -1618,8 +1680,8 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
   - 1 sticker/mosaic set (8–12);
   - 1 offline mission per day;
   - 1 family evening (optional).
-- **No "event coins"** and no special currency. Rewards come from the regular tables (§11.2).
-- **"Event treasure"** (prism frame) after completing ≥60% of the event levels. Its contents are known in advance.
+- **No "event coins"** and no special currency. Rewards come from the regular rules in 02 (`noEventCurrency`, `matchedSinkRequired`: every event ships with matching holiday shop items).
+- **"Event treasure"** (02 trigger `holidayEventComplete`: K1 legendary chest with 3 gems, K2 gold chest, K3 surprise envelope) after completing ≥60% of the event levels (`eventTreasureAtLevelShare`). Its contents are known in advance.
 
 ---
 
@@ -1679,6 +1741,8 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 | Fri | Optional (before Shabbat) | Short episode: daily surprise + Build | Same | Recorded "Shabbat shalom" from a parent (optional) |
 | Sat | Shabbat (§15.4) | Shabbat | Shabbat | Nothing counts |
 
+**Endowed progress must be real (02 §5.2 rule 8, `endowedProgress.mustBeActiveRescues`):** the 3 friends that the collection room opens with are rescued by the child in the **first episode** through real, easy learning actions: friend 1 in the first 60 seconds (§14.2), friends 2–3 in the Shō beat of the first level (single-target actions, no failure possible). The room never shows a friend the child did not rescue.
+
 **Goal of week 1:**
 - Each child has rescued ≥8 friends (K3: 6 toy friends).
 - The family has seen its fire grow.
@@ -1706,11 +1770,15 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 - **After the goodnight:**
   - The app shows only "the camp is asleep" (a slowly animated drawing) plus the parent-gate button.
   - **No "play again" button** for the child. Re-entry for K2/K3 is through the parent gate. K1 can open the "חדר האוצרות" (view only, no rewards) and the music hut.
-- **Caps (parent-set, defaults):**
-  - K3: 2 episodes / 10 minutes per day.
+- **Caps (parent-set; defaults are owned by 10 §6.13 and mirrored here):**
+  - K3: 2 episodes / **15** minutes per day (lap mode; the 5-minute solo playroom counts inside it).
   - K2: 2 / 25 minutes.
   - K1: 2 / 40 minutes.
-- **Bedtime lock:** from a parent-set hour (default 19:30 for K3/K2 and 20:30 for K1). The app shows "the camp is asleep".
+  - Weekday and Friday/Shabbat caps are separate settings (10 §6.13). Co-op minutes count at 50% for each participant (§12.1).
+- **Bedtime lock:** from a parent-set hour (defaults per 10 §6.13: K3 19:30, K2 20:00, K1 20:30). No **new** episode starts in the 60 minutes before bedtime; one already running finishes with the normal wind-down. The app shows "the camp is asleep".
+- **"App sleeps" windows** (10 SET-02: school hours, meals, parent-declared): same screen as bedtime; the parent gate opens it as an exception (audit-logged).
+- **Cap or window changed by the parent mid-session (§21 UC-11):** the new value is applied at the **next segment boundary** (Appendix A `segments`), never mid-beat. If the new cap is already exceeded, the soft warning fires immediately and the episode "lands" within ≤1:30 (above). If the cap was raised, the current episode simply gets the extra room. The child never sees a message about the change; the receipt is unaffected.
+- **Parent "+10 min" bonus** (DD-09): a button behind the gate, max 1 per child per day, logged; it extends the cap, it does not add an episode.
 - **Media-free contexts:**
   - The parent marks meals or travel in a schedule; the app "sleeps".
   - Car: an **audio only** mode (songs, riddles, no screen). This is an option for the parent, not a default.
@@ -1783,8 +1851,8 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 |---|---|---|---|---|---|---|---|
 | **T0** micro | Every correct action | **≤0.8s** (typical 0.35s) | No (the next item loads underneath) | Squash on the object, a burst of 8–12 particles, a note on the pentatonic scale (it rises in a chain), the פנסון's core lights up, light haptic (iPhone) | Yes, gentle, no shake | Yes | Yes |
 | **T1** small | A friend is rescued in a level / end of a beat | **≤1.5s** | No ("don't eject": the friend flies to the jar while play continues) | The friend pops out, a voice line of ≤4 words, an arc into the HUD jar, a "click" | Yes | Yes | Yes |
-| **T2** medium | Level complete, a new item/sticker, treasure, a building rises | **≤3.0s** (plus the taps on the treasure, which the child controls) | Yes, skippable after 1.0s | Reveal (16.2), the friends dance, the item rotates into the album | Sensory-only version 1.5s | Yes | Yes |
-| **T3** large | Skill mastered, a species set complete, pet evolution, region boss | **≤6.0s**, rare | Yes, skippable after 1.0s | Confetti (not flashing), ניצי dance, a fanfare of 1.5–3s, sometimes a recorded parent line, a "תראו לאבא ולאמא" moment | Doesn't exist (instead: T2) | Yes | Yes |
+| **T2** medium | Level complete, a new item/sticker, **wood chest** (02: ~2.9s), capsule pop, a building rises | **≤3.0s** (plus the taps on the chest, which the child controls) | Yes, skippable after 1.0s | Reveal (16.2 → 02 §6.5), the friends dance, the item rotates into the album | Sensory-only version 1.5s (K3 "surprise envelope") | Yes | Yes |
+| **T3** large | Skill mastered, a species set complete, pet evolution, region boss, **silver / gold / legendary chest** (02: ~3.5 / ~4.4 / ~5.8s), level-up | **≤6.0s**, rare | Yes, skippable after 1.0s (chests: after the first viewing of that tier, 02) | Confetti (not flashing), ניצי dance, a fanfare of 1.5–3s, sometimes a recorded parent line, a "תראו לאבא ולאמא" moment | Doesn't exist (instead: T2) | Yes | Yes |
 | **T4** finale | Weekly family boss, season finale | **≤10s**, at most 1 per week | Yes, skippable after 2.0s | A short cinematic of the friends + the boss turns into a friend + the fire grows | Shared participation | Yes | Yes |
 
 - **Time budget:** celebrations + transitions **≤15% of the episode's time** (gap §4.5). Measured in telemetry (`celebration_ms_total / episode_ms`). If the budget is exceeded, T0 shortens to 0.25s and T1 merges.
@@ -1794,34 +1862,15 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 
 ### 16.2 Treasure reveal choreography (deterministic, 00 D2, R3)
 
-> **Precedence:** the chest tiers, the taps per tier and the per-tap timings in `02-economy-progression.md` (§ chest reveal) are canonical. This section keeps two game-design requirements that 02 must satisfy (or, if it doesn't, record a decision in `docs/decisions/`): (a) the contents are fixed and previewed before opening; (b) the total reveal time is ≤3.0s excluding the child's taps (T2 budget). The "effort marks" idea below is a *proposal* for how extra taps can mean something. Adopt it only if 02 agrees.
+> **Binding precedence:** `02-economy-progression.md` §6 is canonical for chest tiers, triggers, contents, taps per tier and the 8-beat reveal timings (`chests.revealMs`). The earlier "effort steps" proposal of this section (taps = 1 + effort marks) is **withdrawn**: 02's rule that the tier is visible from the first frame and the tap count is fixed per tier is simpler, deterministic and lint-able. What survives of the idea is the **effort marks as receipt lines** (below).
 
-
-- **The frame type is known when it's earned and shown in advance:**
-  - `bronze` = a level/episode
-  - `silver` = a skill mastered
-  - `gold` = a region boss
-  - `prism` = an event or the family boss
-  - The frame differs in **shape** as well as color (color-blind safe): round / hexagon / star / prism.
-- **The contents are shown as a silhouette before opening.**
-- **"Effort steps":** the number of taps to open = 1 + the number of **effort marks** earned in the activity (max 3):
-  - `firstTry` (≥80% correct on the first try)
-  - `hintFree` (no hints in the last beat)
-  - `braveChoice` (chose Stretch / 🌶🌶)
-  - (K1) `mentor` (helped a sibling in guide mode)
-  - Each step shows the badge of the mark ("ניסית שוב!"). **This is a summary of real effort, not a lottery.**
-- **Timings per step (tokens):**
-  ```
-  reveal.tap.wobbleMs = 280      (the wobble grows with each step: amplitude ×1.0, ×1.4, ×1.8)
-  reveal.tap.glowStepMs = 180    (+ one rising note; mark badge flies in)
-  reveal.burstMs = 400           (light burst, 24 particles, hit-stop 60ms)
-  reveal.itemRiseSpinMs = 700    (the item rises and spins 1.25 turns, ease-out-back)
-  reveal.settleMs = 300          (lands in its slot + click + haptic success)
-  reveal.voMs ≤ 1200             (the item's name / ניצי, in parallel to rise+settle)
-  total (excluding child tap latency) ≤ 3000ms
-  ```
-- **Verification:** a frame-step study on the device after the vertical slice (CEL-AC-6). The tokens are tuned for "feel", without exceeding the T2 budget.
-- **There is no randomness of value.** "Rarity" = what earned it (00 D2). For K1 the frame shows "קיבלת זהב כי ניצחת את הבוס של המכרות".
+- **Tiers (02 §6.1), each a different shape as well as color (color-blind safe):** `wood` תיבת עץ (round, 1 tap, K1+K2) · `silver` תיבת כסף (shield, 2 taps, K1) · `gold` תיבת זהב (star, 3 taps, K1+K2) · `legendary` אוצר אגדי (crown, 3 taps + 600ms hold, K1) · K3 "מעטפת הפתעה" (envelope, 1 tap, stickers). The mapping from this document's older names: gold-frame (region boss) and family (weekly goal) → `gold`; prism (event, season final) → `legendary`; a level/episode gives **no chest** (friends and the receipt are the reward).
+- **The tier and the contents are known when earned** (`chest_earned` carries the full contents) and **previewed as a silhouette + label before opening** ("בפנים: כובע פיראט + 40 מטבעות"; read aloud for K2). The tier never changes during the reveal (no "upgrade" animation, 02 §6.5 כלל-על).
+- **Effort marks** are computed per activity and shown as **process lines in the receipt** (02 §2.8), never as taps or value: `firstTry` (≥80% correct on first try), `hintFree` (no hints in the last beat), `braveChoice` (chose Stretch / 🌶🌶), `mentor` (K1 helped in guide mode), `movedBody` (completed a movement moment in `full` mode — informational only, the seated variant earns exactly the same, 02 §2.2). Lines use the §16.3 phrase sets.
+- **Choreography:** 02 §6.5 (enter → preview → anticipation taps → charge → burst → reveal → settle → collect). Celebration-tier mapping: wood = T2, silver/gold/legendary = T3 (§16.1). Memorial days: the chest goes to the shelf, no auto-reveal, no fanfare (02 §6.5).
+- **Idempotent reveal (data safety, §21 UC-14):** `chest_earned{id, contents}` is written when earned; `chest_opened{chestId}` is written at the **start** of beat 6 (reveal). The fold grants contents on `chest_opened` only. If the app dies before beat 6, the chest is still on the shelf unopened; if after, the next launch plays only beat 8 (collect, ≤0.7s) for that chest. No path double-grants.
+- **Verification:** a frame-step study on the device after the vertical slice (AC-CEL-6). Tokens are tuned for "feel" within 02's `revealMs` and the T2/T3 budgets.
+- **There is no randomness of value.** "Rarity" = what earned it (00 D2). For K1 the label says "קיבלת זהב כי ניצחת את הבוס של המכרות".
 
 ### 16.3 Praise phrase sets (the game's voice)
 

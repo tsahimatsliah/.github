@@ -63,24 +63,76 @@ export interface Ctx { now: EpochMs; tz: 'Asia/Jerusalem'; rng: () => number; co
 ```ts
 export type ChildId = string; export type SkillId = string; export type ItemId = string;
 export type TemplateId = string; export type TopicId = string; export type SessionId = string;
-export type StrandId = string;            // 'math.number' | 'math.operations' | 'hebrew.pa' | 'hebrew.decoding' | ...
+export type StrandId = string;            // ראו את הרשימה הקנונית בהמשך הסעיף
 export type EpochMs = number;
 export type DayKey = string;              // 'YYYY-MM-DD' לפי Asia/Jerusalem. ימים קלנדריים נמדדים לפי DayKey בלבד
 export type SubjectId = 'math' | 'hebrew' | 'english' | 'science' | 'world' | 'ai_literacy' | 'sel' | 'logic' | 'art' | 'music' | 'motor';
 export type Tier = 'K1' | 'K2' | 'K3';    // שכבת הגיל של הפרופיל (A2), לא זהות
 export type Grade = 'toddler' | 'gan_trom' | 'gan_chova' | 'g1' | 'g2' | 'g3' | 'g4' | 'g5' | 'g6';
 export type LevelId = 'new' | 'beginner' | 'advancing' | 'proficient' | 'master';
+export type ExtraGateId = 'O.REP' | 'O.STEP';   // שכבות-על ממקצוע (03 §3.2). הסמנטיקה ב-§5.1 וב-§4.1
 ```
 
-| `LevelId` | תווית קנונית | תצוגה להורה | תצוגה לילד (UX spec) |
-|---|---|---|---|
-| `new` | חדש | "שלב: חדש" | זרע |
-| `beginner` | מתחיל | "שלב: מתחיל" | נבט |
-| `advancing` | מתקדם | "שלב: מתקדם" | שתיל |
-| `proficient` | שולט | "שלב: שולט" | עץ |
-| `master` | מאסטר | "שלב: מאסטר" | עץ פורח |
+**`SubjectId` סגור.** אין `coding` ו-`finance` (הערת 06 §2): תכנות ממופה ל-`logic` וכסף ל-`world`, וההבחנה לדיווח להורה נשמרת ב-**ציר** (`logic.coding`, `world.finance`). הדשבורד (10) מקבץ לפי `StrandId`, ולכן לא צריך מקצוע נפרד. כך `subjectWeights` נשאר קצר (10 §6.13, סכום 100).
 
-התווית מתייחסת **לשלב של המיומנות** ומתאימה לשם העצם "שלב" (זכר דקדוקי), ולכן היא לא תלויה במגדר הילד. לילד מוצגים שמות של שלבי צמיחה, שאין בהם מגדר. זה עומד ב-B3.
+**רשימת הצירים הקנונית (`StrandId`)** — כל ציר הוא סולם לוגיטים אחד (§2.1). הבעלים של התוכן בכל ציר הוא מסמך הקוריקולום, ו-08 מחזיק רק את המזהה:
+
+| מקצוע | צירים | בעלים |
+|---|---|---|
+| `math` | `math.counting`, `math.magnitude`, `math.number`, `math.operations`, `math.word_problems`, **`math.facts`, `math.fractions`, `math.geometry`, `math.measurement`, `math.patterns_data`** (03 §6.0א) | 03 |
+| `hebrew` | `hebrew.pa`, `hebrew.letters`, `hebrew.listening`, `hebrew.decoding`, `hebrew.comprehension`, `hebrew.spelling_morph`, `hebrew.writing` | 04 ⟂VERIFY: 04 עדיין לא מפרסם רשימת צירים ועמוד שדרה. עד אז המזהים כאן הם הקנוניים, ו-04 ממפה אליהם |
+| `english` | `english.oral_vocab`, `english.listening`, `english.letter_sounds`, `english.decoding`, `english.speaking` | 05 (§3) |
+| `science`, `world`, `logic`, `art`, `music`, `motor` | לפי 06 §2: `science.*`, `world.*` (כולל `world.finance`), `logic.*` (כולל `logic.coding`), `art.*`, `music.*`, `motor.tracing`, `motor.fine`, `motor.gross` | 06 |
+| `ai_literacy`, `sel` | `ai_literacy.*`, `sel.*` (ב-`sel` אין רמות מוצגות, C8) | 07 |
+
+**בדיקת תוכן:** חבילת תוכן שבה `Skill.strand` לא ברשימה נדחית בטעינה (`ContentIndex` validator).
+
+### 1.1א שמות שלבים: ההגדרה הקנונית והמיפוי ל-02
+
+| `LevelId` | תווית קנונית | תצוגה להורה | תצוגה לילד |
+|---|---|---|---|
+| `new` | חדש | "שלב: חדש" | לפי 02 §4.2 (ניצן סגור / "באתר בנייה") |
+| `beginner` | מתחיל | "שלב: מתחיל" | לפי 02 §4.2 (נבט) |
+| `advancing` | מתקדם | "שלב: מתקדם" | לפי 02 §4.2 (שתיל) |
+| `proficient` | שולט | "שלב: שולט" | לפי 02 §4.2 (פרח ארד) |
+| `master` | מאסטר | "שלב: מאסטר" | לפי 02 §4.2 (פרי כסוף / פרי זהב) |
+
+התווית מתייחסת **לשלב של המיומנות** ומתאימה לשם העצם "שלב" (זכר דקדוקי), ולכן היא לא תלויה במגדר הילד. **המיפוי החזותי לילד שייך ל-02 §4.2** (צמח, תג, פרי); הטבלה כאן רק מפנה אליו, כדי שלא יהיו שני סולמות (10 §18.2).
+
+**02 משתמש בשבעה "מצבים"** (`locked → ready → introduced → practicing → proficient → mastered → retained`). שניים מהם הם מצבי גרף ואחד הוא מצב חזרה, ולכן הם **נגזרים** ולא רמות. המיפוי הקנוני, ממומש פעם אחת ב-`packages/shared/levels.ts` ומיובא על ידי המנוע, הכלכלה (02) והדשבורד (10):
+
+| מצב 02 | נגזרת מ-08 | הערה |
+|---|---|---|
+| `locked` | `level === 'new' && !ready(k)` | `ready(k)` = כל הקדם-דרישות הקשות ≥ `proficient` (§3.5, "השוליים") |
+| `ready` | `level === 'new' && ready(k)` | — |
+| `introduced` | `level === 'beginner'` | — |
+| `practicing` | `level === 'advancing'` | — |
+| `proficient` | `level === 'proficient'` | תג ארד (02) |
+| `mastered` | `level === 'master'` | "Mastered" של D9. תג כסף ויהלום (D1) |
+| `retained` | `level === 'master' && card.ladder[card.rung] ≥ 30` | עבר את שלב החזרה של 30 יום (02 §4.1). תג זהב |
+
+```ts
+// packages/shared/levels.ts — מקור אחד לשני הסולמות
+export type LevelId = 'new' | 'beginner' | 'advancing' | 'proficient' | 'master';
+export type EconomySkillState = 'locked' | 'ready' | 'introduced' | 'practicing' | 'proficient' | 'mastered' | 'retained';
+export const LEVEL_ORDER: readonly LevelId[] = ['new', 'beginner', 'advancing', 'proficient', 'master'];
+export const LEVEL_LABEL_HE: Record<LevelId, string> = { new: 'חדש', beginner: 'מתחיל', advancing: 'מתקדם', proficient: 'שולט', master: 'מאסטר' };
+export function toEconomyState(level: LevelId, ready: boolean, reviewRungDays: number | undefined): EconomySkillState {
+  switch (level) {
+    case 'new':        return ready ? 'ready' : 'locked';
+    case 'beginner':   return 'introduced';
+    case 'advancing':  return 'practicing';
+    case 'proficient': return 'proficient';
+    case 'master':     return (reviewRungDays ?? 0) >= 30 ? 'retained' : 'mastered';
+  }
+}
+export function fromEconomyState(s: EconomySkillState): LevelId {   // לייבוא נתונים ישנים ולבדיקות בלבד
+  return ({ locked: 'new', ready: 'new', introduced: 'beginner', practicing: 'advancing', proficient: 'proficient', mastered: 'master', retained: 'master' } as const)[s];
+}
+```
+
+* **כיוון אחד:** המנוע הוא מקור האמת ל-`level`; 02 ו-10 לא מחשבים רמה בעצמם (AC-05 ב-10). `skill_state_changed` של 02 §2.1 נושא `LevelId` של 08 (`from`, `to`), ו-02 גוזר ממנו את מצבו.
+* **הורדת רמה והתג:** `level` יכול לרדת (§5.3), אבל התג של 02 לא יורד לעולם (`badgeNeverDowngrades`). זה לא סתירה: התג הוא היסטוריה ("הגיע פעם ל-master"), והרמה היא מצב נוכחי. `toEconomyState` מחזיר את המצב הנוכחי; 02 שומר בעצמו `maxStateEver`.
 
 ### 1.2 Skill
 
@@ -105,8 +157,12 @@ export interface Skill {
   errorTags?: Record<string, SkillId>;      // תג טעות אבחוני → קדם-דרישה חשודה (למשל 'place_value_reversal' → 'math.pv.tens')
   placementEligible: boolean;
   discriminationPairs?: SkillId[];          // לשזירה מבחינה (ב/כ, ד/ר)
+  extraGates?: ExtraGateId[];               // 03 §17.2: 'O.REP' = שער ייצוגים ל-proficient (§5.1). 'O.STEP' = ניקוד שלבים (§4.1)
+  placementRole?: 'primary' | 'continuation'; // 'continuation' = ציר שלא נבדק במסע, מתחיל ב-prior מ-pos ומיקום עצל (§3.7)
 }
 ```
+
+* **ולידציה בטעינת חבילה:** מיומנות עם `O.REP` חייבת להחזיק לפחות 2 תבניות `reviewed` עם `representation:'pictorial'` ולפחות 2 עם `'abstract'`, אחרת החבילה נדחית (אחרת השער לא ניתן למעבר). מיומנות עם `O.STEP` חייבת להחזיק תבניות שמדווחות `steps` (§1.4).
 
 ### 1.3 ItemTemplate ו-Item
 
@@ -159,8 +215,11 @@ export interface Attempt {
   touchesBeforeAnswer: number;              // לזיהוי הקשות זעם
   idleMaxMs: number;
   appBackgrounded: boolean;
+  steps?: { total: number; correct: number; firstErrorTag?: string };   // O.STEP (03 §3.2): פרוצדורה רב-שלבית, K1. firstTryCorrect ⇔ correct === total
+  representation?: 'concrete' | 'pictorial' | 'abstract';               // מועתק מהתבנית בזמן ההצגה, לשער O.REP (§5.1)
   context: { role: BlockRole; mode: AttemptMode; assisted: 'none' | 'parent' | 'sibling'; wrapperTopic?: TopicId; afterWorkedExample: boolean };
 }
+// שם האירוע על החוט (11 §5.8): `item.answered` v2 = בדיוק המבנה הזה. השדות שחסרים ב-v1 של 11 (outcome, role, mode, chosenErrorTag, touchesBeforeAnswer, idleMaxMs, appBackgrounded, assisted, steps, representation) מתווספים (ראו fable-issues-F5 → 11).
 // נגזר, לא נשמר:
 export interface ScoredObservation { x: number; w: number; useRt: boolean; excluded?: ExclusionReason; responseMs?: number }
 export type ExclusionReason = 'rapid_guess' | 'timeout' | 'idle' | 'backgrounded' | 'abandoned' | 'not_scored_template' | 'disengaged_block';
@@ -169,7 +228,8 @@ export type ExclusionReason = 'rapid_guess' | 'timeout' | 'idle' | 'backgrounded
 ### 1.5 SkillState ו-StrandState
 
 ```ts
-export interface RecentObs { dayKey: DayKey; ts: EpochMs; firstTryCorrect: boolean; hintFree: boolean; x: number; p: number; role: BlockRole; mixedContext: boolean }
+export interface RecentObs { dayKey: DayKey; ts: EpochMs; sessionId: SessionId; firstTryCorrect: boolean; hintFree: boolean; x: number; p: number; role: BlockRole; mixedContext: boolean;
+  representation?: 'concrete' | 'pictorial' | 'abstract' }   // ל-O.REP
 export interface SkillState {
   childId: ChildId; skillId: SkillId;
   theta: number;                            // יכולת על סולם הציר (לוגיטים)
@@ -219,17 +279,26 @@ export interface ChildProfile {
   challengeDial?: 'easy' | 'just_right' | 'hard';   // K1 בלבד
   stretchZoneOptIn: boolean;                // K1 בלבד (C2)
   rtPolicy: 'ignore' | 'fluency_only';      // נגזר: grade < g1 → 'ignore' (§4.4)
-  consent: { adaptive: true; interestInference: boolean; efGames: boolean; narrativeReports: boolean; earlyFlags: boolean; parentConcern: { attention: boolean; language: boolean; motor: boolean; emotional: boolean } };
+  consent: { adaptive: true; interestInference: boolean; efGames: boolean; narrativeReports: boolean; earlyFlags: boolean;
+             checkinNudge: boolean;         // T4b ב-10 §8: דגל EMO_CHECKIN (§9.2). ברירת מחדל false
+             parentConcern: { attention: boolean; language: boolean; motor: boolean; emotional: boolean } };
   parentSeeds: { interests: TopicId[]; sensitivities: string[]; temperamentHints: TemperamentHint[] };
   questionnaire: QuestionnaireAnswer[];
   dispositions: DispositionMap;             // §8
   efCalibration?: EFCalibration;            // §8.3
   placement: Partial<Record<SubjectId, PlacementStatus>>;
+  modelEpoch: number;                       // §10.5.6: "איפוס התקדמות" מעלה את המונה. אירועים עם epoch קטן יותר לא נכנסים ל-fold
+  schoolYear: string;                       // 'תשפ"ז' / '2026-27'. מתעדכן ב-rollover (§10.5.7)
 }
 export type EngineChildView = Omit<ChildProfile, 'grammaticalGender' | 'displayName'>;  // כל פונקציות המנוע מקבלות רק את זה
 export type TemperamentHint = 'slow_to_warm' | 'high_energy' | 'sound_sensitive' | 'needs_movement_breaks' | 'perfectionist_signs';
 export interface QuestionnaireAnswer { questionId: string; answer: 'yes' | 'partly' | 'no' | 'unsure'; answeredAt: EpochMs }
-export interface PlacementStatus { state: 'not_started' | 'in_progress' | 'done'; expeditionsDone: number; strandsDone: StrandId[]; finishedAt?: EpochMs }
+export interface PlacementStatus {
+  state: 'not_started' | 'in_progress' | 'done'; expeditionsDone: number; strandsDone: StrandId[]; finishedAt?: EpochMs;
+  startedAt?: EpochMs; lastStepAt?: EpochMs;
+  quality: 'ok' | 'low' | 'inconsistent';   // §3.8: 'low' = SE > 0.6 בציר כלשהו; 'inconsistent' = דפוס תשובות אקראי
+  resumable?: { strand: StrandId; posterior: number[]; obs: number; lo: number; hi: number; prev: number; savedAt: EpochMs }; // §3.6 כלל 6
+}
 ```
 
 ### 1.8 InterestMap
@@ -277,10 +346,33 @@ export type BehaviorSignal = SignalBase & (
   | { kind: 'recovery' }                    // חזר והצליח אחרי אפיזודת תסכול באותו מפגש
   | { kind: 'novelty_offer'; accepted: boolean }
   | { kind: 'not_into_this'; topic: TopicId } | { kind: 'want_more'; topic: TopicId }
-  | { kind: 'emotion_checkin'; value: 'happy' | 'sad' | 'angry' | 'scared' | 'calm' }   // C8: אפמרלי כברירת מחדל
+  | { kind: 'emotion_checkin'; value: 'happy' | 'sad' | 'angry' | 'scared' | 'calm' }   // C8: `local_only` (11 §5.7). נשמר במכשיר עד 90 יום, רק לצורך EMO_CHECKIN (§9.2)
   | { kind: 'parent_correction'; target: string; value: unknown }
 );
 ```
+
+* **על החוט** (11 §5.8) כל `BehaviorSignal` נשלח כאירוע `behavior.signal` (cls `learn`, פרט ל-`emotion_checkin` שהוא `local_only`). 11 עדיין לא רושם את הסוג הזה (ראו fable-issues-F5).
+
+### 1.9א ParentInput (אירוע ביומן, מקורו באזור ההורה)
+
+```ts
+export type ParentInput = { type: 'parent_input'; id: string; deviceId: string; guardianId: string; childId: ChildId; ts: EpochMs; dayKey: DayKey; hlc: string } & (
+  | { kind: 'questionnaire'; answers: QuestionnaireAnswer[] }
+  | { kind: 'session_reattribute'; sessionId: SessionId; to: ChildId | 'unknown' }      // §10.5.3: "זה לא היה {name}"
+  | { kind: 'reset_profile_model' }                                                        // §10.5.6: עניין ונטיות בלבד
+  | { kind: 'reset_progress'; subjects: SubjectId[] | 'all' }                              // §10.5.6: מעלה modelEpoch
+  | { kind: 'skill_action'; skillId: SkillId; action: 'classTaught' | 'prefer' | 'lock' | 'unlock' | 'skipChallenge' | 'notRelevant' | 'interfaceIssue'; reason?: string }  // 10 API-12
+  | { kind: 'flag_action'; ruleId: string; action: 'talkedToTeacher' | 'notRelevant' | 'snooze' | 'print'; reason?: string }   // §9.7
+  | { kind: 'class_topic'; topic: ClassTopic }
+  | { kind: 'grade_rollover'; from: Grade; to: Grade; schoolYear: string }               // §10.5.7
+  | { kind: 'interest_override'; topic: TopicId; value: 'loves' | 'not_really' | 'clear' }
+  | { kind: 'disposition_correction'; key: DispositionKey; context?: string; value: unknown }
+  | { kind: 'external_evidence'; evidence: 'paperProbe' | 'teacherNote' | 'transfer'; subject?: SubjectId; valueJson: unknown }
+);
+```
+
+* **סדר וסתירות:** `ParentInput` ממוין יחד עם שאר האירועים בסדר הקנוני. כששני הורים שולחים קלט סותר לאותו יעד (למשל `lock` ו-`unlock` לאותה מיומנות), **האחרון לפי `hlc` קובע** (E6, 10 RB-5), ושניהם נשארים ביומן. אין "מיזוג" של קלטים.
+* `session_reattribute` ו-`reset_progress` הם האירועים היחידים שמשנים אירועים **קודמים** (דרך הקיפול: הם מסננים, לא מוחקים). לכן הם מפעילים חישוב מחדש מנקודת הביקורת שלפני האירוע המושפע המוקדם ביותר (§10.5.4).
 
 ### 1.10 Session, EpisodePlan, Plan
 
@@ -290,9 +382,22 @@ export interface Session {
   mode: 'episode' | 'mini' | 'placement' | 'boss' | 'benchmark' | 'reentry' | 'playroom' | 'coop';
   plannedMinutes: number; focusedMs: number; coPlay: boolean;
   plan: EpisodePlan; blocksCompleted: number;
-  endReason?: 'completed' | 'daily_cap' | 'child_exit' | 'parent_exit' | 'frustration_break' | 'disengaged';
+  endReason?: SessionEndReason;
+  attributedTo?: ChildId | 'unknown';       // §10.5.3: ברירת מחדל = childId. אחרי `session_reattribute` שונה, והניסיונות לא נספרים לילד הזה
+  anomaly?: { kind: 'identity_suspect'; score: number; reasons: string[] };   // §10.5.3, מחושב בסיום המפגש
   stats: { scored: number; firstTryCorrect: number; rapidGuesses: number; timeouts: number; frustrationEpisodes: number; celebrationMs: number };
 }
+// הרשימה הקנונית של סיבות סיום. 11 §5.8 (`session.ended{reason}`), 10 §4.1 ו-02 משתמשים בה כפי שהיא (אין 'childQuit'/'natural'/'windDown' מקבילים):
+export type SessionEndReason =
+  | 'completed'          // הפרק הסתיים בבלוק closing (10: "טבעי")
+  | 'daily_cap'          // תקרה יומית (§6.10)
+  | 'child_exit'         // הילד יצא (10 AL-04: "childQuit")
+  | 'parent_exit'        // הורה סגר / החלפת שחקן (11 §4.16: 'switch')
+  | 'frustration_break'  // הצעת הפסקה התקבלה (§6.7)
+  | 'disengaged'         // ניחושים/idle (§4.4)
+  | 'bedtime_lock'       // נעילת שינה (11 §5.5)
+  | 'inactivity'         // 5 דקות בלי מגע → חזרה לבורר (11 §4.16)
+  | 'app_killed';        // לא התקבל session.ended; נסגר בפתיחה הבאה עם endedAt = ts האירוע האחרון + 30 ש'
 export interface Block {
   id: string; role: BlockRole; subject: SubjectId; skillIds: SkillId[];
   itemCount: number; targetP: number; scored: boolean;
@@ -327,10 +432,14 @@ export interface EngineState {
     bandController: { adj: number; ewmaSuccess: number; n: number };
     itemsPerMinute: number;                 // EWMA, ‏prior K1/K2 = 2.0
     lastActiveDay?: DayKey; sessions: SessionSummary[];  // 60 האחרונים
+    contentExhausted: Partial<Record<StrandId, DayKey>>;  // §10.5.9
   }>;
   checkpointSeq: number;
+  lastEventKey?: { ts: EpochMs; deviceId: string; eventId: string };   // המפתח הקנוני האחרון שנקלט
 }
 ```
+
+**נקודות ביקורת (checkpoints):** `EngineState` נשמר ב-SQLite אחרי כל מפגש שהסתיים וגם כל 200 אירועים, עם `lastEventKey`. נשמרות 30 נקודות אחרונות לכל ילד (≈ חודש). כשסנכרון מביא אירוע עם מפתח קטן מ-`lastEventKey` (איחור), או `session_reattribute`/`reset_progress`, המנוע טוען את נקודת הביקורת האחרונה שלפני המפתח המוקדם ביותר שהושפע ומקפל מחדש. אם אין נקודה כזו (האירוע ישן מ-30 נקודות), מקפלים מאפס (S-4: ≤ 1 ms לאירוע, כלומר ≤ 10 ש' לשנה של אירועים, ברקע עם מסך "מסדרים את המפה").
 
 ### 1.12 טיפוסי עזר
 
@@ -357,7 +466,8 @@ export interface SessionSummary { id: SessionId; dayKey: DayKey; mode: Session['
 
 * כל ציר (strand) הוא סולם לוגיטים אחד. **יחידה אחת ≈ שנת לימודים אחת** בגילים האלה (`SCALE = 1.0` לוגיט לשנת-כיתה, ניתן לדריסה לכל ציר). כך SE של 0.45 שווה בערך חצי שנת לימודים, וזה דיוק מספיק לבחירת נקודת התחלה.
 * עוגן מיומנות: `b_k = SCALE · skill.anchor`.
-* מיקום הילד הצפוי בתוכנית: `pos(child, date) = gradeStart(grade) + monthsSinceSep1/10`, בתחום [0, 1] בתוך השנה (ספטמבר–יוני). ‏K1 בנובמבר 2026: ‏`3 + 0.2 = 3.2`. ‏K2: ‏`0.2`. לפעוטה: ‏`(ageMonths − 66)/12`.
+* מיקום הילד הצפוי בתוכנית: `pos(child, date) = gradeStart(grade) + min(monthsSinceSep1, 10)/10`, בתחום [0, 1] בתוך השנה (ספטמבר–יוני; יולי–אוגוסט נעצרים על 1.0). ‏K1 בנובמבר 2026: ‏`3 + 0.2 = 3.2`. ‏K2: ‏`0.2`. לפעוטה: ‏`(ageMonths − 66)/12`.
+* `gradeStart`: ‏`toddler` ו-`gan_trom` לפי נוסחת הגיל, ‏`gan_chova` 0, ‏`g1` 1, ‏`g2` 2, ‏`g3` 3, ‏`g4` 4, ‏`g5` 5, ‏`g6` 6. ה-`grade` מגיע מפרופיל הילד ומתעדכן רק ב-`grade_rollover` (§10.5.7), אף פעם לא לפי תאריך לבד.
 
 ### 2.2 מודל התשובה
 
@@ -427,10 +537,11 @@ K_tmpl = 0.01;                           τ_T ← clamp(τ_T − K_tmpl·w·(x �
 
 | מסע | צירים | הערות |
 |---|---|---|
-| E1 חשבון א' | `math.number` (ערך מקום עד 1000, ישר מספרים 0–1000), `math.operations` (חיבור/חיסור, עובדות כפל) | RT נרשם בשקט, לא משפיע (§4.4) |
+| E1 חשבון א' | `math.number` (ערך מקום עד 1000, ישר מספרים 0–1000), `math.operations` (חיבור/חיסור), `math.facts` (3–4 עובדות מייצגות לכל קבוצה, 03 §14.1; מקס' 6 פריטים) | RT נרשם בשקט, לא משפיע (§4.4). צירים `primary` |
 | E2 עברית א' | `hebrew.decoding` (מילים ופסאודו-מילים מנוקדות + 3 פריטים לא מנוקדים לפער הניקוד), `hebrew.comprehension` | אותו טקסט מנוקד ולא מנוקד (B5) |
-| E3 חשבון ב' + אנגלית | `math.word_problems` (מוקראות בקול כדי להפריד בין קריאה לחשבון), `english.listening_vocab`, `english.letter_sounds` | אי LTR |
+| E3 חשבון ב' + אנגלית | `math.word_problems` (מוקראות בקול כדי להפריד בין קריאה לחשבון), `math.fractions` (3 פריטי `isProbe` בלבד, ציר `continuation`), `english.listening`, `english.letter_sounds` | אי LTR. תקרת 25 פריטי חשבון למקצוע נשמרת: E1 ≤ 16, ‏E3 חשבון ≤ 9 |
 | E4 עברית ב' | `hebrew.spelling_morph` (הכתבה של הומופונים ט/ת, כ/ח, ק/כ, א/ע; שורש משותף) | קטע קריאה בקול (ASR, E9) **אופציונלי**, רק בנוכחות הורה |
+| — (ללא מסע) | `math.geometry`, `math.measurement`, `math.patterns_data` | צירי `continuation`: מיקום עצל בתרגול (§3.7) |
 
 ### 3.3 שאלון ההורה
 
@@ -504,6 +615,35 @@ K_tmpl = 0.01;                           τ_T ← clamp(τ_T − K_tmpl·w·(x �
 | S16 | יש משהו בשיעורי הבית שמתסכל לאחרונה? | הקשר לפרופיל, לא תצפית |
 
 **בדיקה צולבת:** אם `|θ̂_placement − μ_questionnaire| > 1.0` לוגיט, נרשם `questionnaire_mismatch`, ולהורה מוצג משפט רך: "ראינו במשחק תמונה קצת שונה ממה שסימנתם. זה טבעי, ונמשיך לכייל תוך כדי משחק."
+
+**שאלון שדולג:** `prior = N(SCALE·(pos − 0.2), σ0 + 0.2)` ו-`maxItems` של הציר +2 (בתוך תקרת המקצוע). להורה מוצג "אפשר למלא אחר כך" ב-PA-ASM, ותשובות מאוחרות נכנסות כתצפיות-פסאודו **רק** למיומנויות שעדיין `u ≥ 0.5` (אחרת הראיה מהמשחק כבר טובה יותר).
+
+### 3.3א מזהי שאלון קנוניים (מחליפים את המזהים הזמניים)
+
+המזהים בטבלאות T/G/S למעלה הם **מזהי שאלון** (`questionId`). המיפוי למיומנויות אמיתיות בחבילות התוכן נמצא בקובץ `packages/content/questionnaire-map.json`, שהתוכן שלו הוא הטבלה הזו. שאלה יכולה למפות לכמה מיומנויות, כל אחת עם משקל (ברירת מחדל 1.0, מוכפל ב-`questionnaireWeight`):
+
+| `questionId` | מיומנויות (מסמך) |
+|---|---|
+| T6 `math.colors_shapes` | `M.GEO.SHAPE.TYPICAL`, `M.DATA.SORT.ONE` (03) |
+| T7 `math.counting_rote3` | `M.NUM.COUNT.ROTE3` (03) |
+| G7 `math.rote_count` 10/20/30 | `M.NUM.COUNT.ROTE10` / `ROTE20` / `ROTE30` (03) — שלוש תצפיות, אחת לכל סף |
+| G8 `math.cardinality10` | `M.NUM.COUNT.OBJ10` (03) |
+| G9 `math.numerals10` | `M.NUM.NUMERAL.ID10` (03) |
+| G10 `math.compare` | `M.NUM.COMP.SYM10` (1.0), `M.NUM.COMP.COUNT10` (0.5) (03) |
+| G11 `math.add_within5` | `M.OPS.JOIN.C5` (03) |
+| S7 `math.facts_x_to5` | `M.FACT.MUL.X2`, `X5`, `X3`, `X4` (03) |
+| S8 `math.facts_x_to10` | `M.FACT.MUL.MIXED` (03) |
+| S9 `math.add_sub100` | `M.OPS.ADD.2D2D`, `M.OPS.SUB.2D2D` (03) |
+| S10 `math.pv1000` | `M.PV.HUND1000` (03) |
+| S11 `math.word_problems` | `M.WP.BAR.PPW`, `M.WP.BAR.CHANGE` (03) |
+| S12 `math.fractions_intro` | `M.FRAC.UNIT` (03) |
+| G13 `english.oral_vocab` | `E.VO.COL.REC`, `E.VO.NUM.REC`, `E.VO.ANI.REC` (05 §3; `english.oral_vocab` = `E.VO.*.REC`) |
+| S13 `english.letter_sounds` | `E.PH.SAT.GPC` (05; `english.letter_sounds` = `E.PH.*.GPC`, היחידה הראשונה) |
+| S14 `english.decoding_cvc` | `E.PH.SAT.BLEND` (05; `english.decoding_cvc` = `E.PH.*.BLEND`) |
+| T1–T5, T8–T9, G1–G6, G12, G14, S1–S6 | `H.*` (04), `lang.*`/`motor.*`/`world.*` (06) — ⟂VERIFY: 04 ו-06 טרם פרסמו טבלת מיפוי. עד אז הקובץ מחזיק את המזהה הזמני, והטעינה מציגה אזהרת dev "unmapped questionId" (לא כשל) |
+
+* **צירי מיקום באנגלית** (05 §3): ‏`english.oral_vocab` = עמוד שדרה מ-`E.VO.*.REC`; ‏`english.listening` = `E.OR.L.*.REC`; ‏`english.letter_sounds` = `E.PH.*.GPC` לפי סדר היחידות; ‏`english.decoding` = `E.PH.*.BLEND`. השם `english.listening_vocab` שהופיע בטבלת E3 של K1 הוחלף ב-`english.listening`.
+* **בדיקה:** `questionnaire-map.json` עובר ולידציה מול `ContentIndex` ב-CI (כל מיומנות קיימת, או מסומנת `provisional`). כל מיומנות שבשאלון ואינה `placementEligible` עדיין מקבלת תצפית-פסאודו.
 
 ### 3.4 האלגוריתם (לכל ציר)
 
@@ -611,10 +751,32 @@ function classifySkills(strand, post, obs): Record<SkillId, 'known' | 'uncertain
 3. **"קשה לי, אפשר אחר?"** הדמות מושכת בכתפיים ("בוא/י נדלג", בגרסת מגדר). אין עונש גלוי.
 4. **בלי טיימר גלוי.** RT נרשם בשקט.
 5. **פריט מנוחה** אחרי 2 החטאות רצופות.
-6. **עד 10 דקות למסע** ל-K1 ו-5 דקות ל-K2. אם הזמן נגמר באמצע ציר, הציר נשמר כ-`in_progress` ומתחדש מהפוסטריור בפעם הבאה.
-7. **אחים לא רואים זה את זה.** המיקום מתבצע בפרופיל האישי.
+6. **עד 10 דקות למסע** ל-K1 ו-5 דקות ל-K2. אם הזמן נגמר באמצע ציר, הציר נשמר כ-`in_progress` ומתחדש מהפוסטריור בפעם הבאה. **כללי הפסקה באמצע ציר** (כל יציאה: זמן, `child_exit`, `app_killed`, `bedtime_lock`, רקע > 60 ש'):
+   * הפוסטריור, `obs`, `lo/hi/prev` נשמרים ב-`PlacementStatus.resumable` **אחרי כל פריט** (אירוע `placement.step` הוא מקור האמת; `resumable` הוא נגזרת שלו, ולכן גם סנכרון ממכשיר אחר משחזר אותו).
+   * חידוש בתוך **14 יום**: ממשיכים מאותו מקום, עם פריט חימום אחד (P ≥ 0.9) לפני ההמשך, ו-`maxItems` לא מתאפס.
+   * אחרי 14 יום, או אם הילד שיחק בינתיים ≥ 3 פרקים במקצוע: הציר מתחיל מחדש עם `prior = N(mean(post), max(sd(post), 0.7))`, כי מה שנלמד בינתיים שינה את התמונה. התצפיות הישנות נשארות ביומן ולא נכנסות שוב.
+   * ציר שנעצר אחרי `minItems` נסגר כ-`finish('interrupted')` (כמו `cap`), ולא נפתח מחדש.
+   * מסע שלא הושלם ב-**21 יום** מהפתיחה: המקצוע מסומן `placement.state='done'` עם `quality:'low'`, הצירים שלא נבדקו מקבלים prior מ-`pos` (כמו `continuation`, §3.7), והמשחק השוטף ממשיך. להורה: "סיימנו את המיפוי עם מה שיש; המשחק ימשיך לדייק."
+7. **אחים לא רואים זה את זה.** המיקום מתבצע בפרופיל האישי. מסע מיקום נפתח רק אם `session.childId` זהה לפרופיל שנבחר בבורר **ואין** `anomaly.identity_suspect` במפגש הקודם (§10.5.3); אחרת המסע נדחה לפעם הבאה בלי הסבר לילד.
 8. **פריט אחד במסך**, הנחיה קולית (B1) ואייקון. ‏K2 לא צריך לקרוא.
 9. **ירח דבש:** שני הפרקים הראשונים אחרי המיקום רצים עם `targetP = 0.90`, כדי שהשיעור הראשון יצליח.
+10. **בלי עזרה מההורה** (10 ON-12). אם בכל זאת `assisted ≠ 'none'` (ההורה לחץ "עזרתי"), הפריט נכנס לפוסטריור ב-w × 0.3 כמו ב-§4.1.
+
+### 3.7 צירי המשך (`placementRole:'continuation'`) ומיקום עצל
+
+צירים שאין להם מקום במסעות (K1: `math.geometry`, `math.measurement`, `math.patterns_data`, וגם `math.fractions` כשהזמן ב-E3 נגמר; K2: כל צירי `math.*` החדשים; כל המקצועות של 06/07) **לא נבדקים במסע**. במקום זה:
+
+1. `StrandState` מאותחל ל-`theta = SCALE·(pos − 0.2)`, ‏`se = 1.0`, ‏`placedAt = undefined`. תצפיות-פסאודו מהשאלון נכנסות כרגיל.
+2. כל המיומנויות בציר מקבלות `level:'new'`, ‏`u = 1.0` (K = 0.50), ‏`provenance:'none'`. השוליים נגזרים מהגרף בלבד.
+3. **מיקום עצל:** בפעם הראשונה שהמרכיב בוחר מיומנות מהציר כמוקד, הבלוק `new` שלה מתחיל ב-**3 פריטי `isProbe`** ברמת המיומנות (role `probe`, ‏`targetP` רגיל, **עם** משוב רגיל, כי זה תרגול ולא מיקום). הם נכנסים ל-Elo עם K = 0.50, ולכן 3 פריטים מזיזים θ עד ±0.75 לוגיט. אם שלושתם נכונים → המיומנות מסומנת `uncertain→known` לפי §3.5 (סגירה כלפי מטה חלה), והמוקד עובר לצאצא. אם שלושתם שגויים → קדם-דרישה (כמו `stuck`).
+4. `placedAt` נקבע כשהציר צבר ≥ 8 תצפיות מנוקדות ו-`se ≤ 0.6` (SE של הציר מחושב כ-`1/sqrt(Σ a²·P(1−P))` על 20 התצפיות האחרונות, עם רצפה 0.3).
+5. **אין "מקדים/בדרך/בבנייה" לציר המשך** ב-PA-ASM (10 W-ASM-05) עד `placedAt`; מוצג "עוד לא מופה, המשחק מכייל תוך כדי".
+
+### 3.8 תשובות אקראיות במיקום (ילד שמקיש בלי לחשוב)
+
+הסימנים (בודקים אחרי `minItems`): (א) `disengagedStreak ≥ 3` כבר מסיים את הציר (§3.4). (ב) **חוסר עקביות גוטמן:** ≥ 2 הצלחות בצמתים שמעל ≥ 2 כישלונות (b גבוה יותר ב-≥ 1.0 מהכישלון), או `sd(post)` שלא קטן ב-≥ 0.05 במשך 4 פריטים רצופים אחרי `minItems`. (ג) `responseMs` מתחת לרצפת הגיל ב-≥ 50% מהפריטים (גם אם לא ברצף).
+
+כשמתקיים (ב) או (ג): `finish('inconsistent')`, ‏`quality:'inconsistent'` למקצוע, ‏`se = max(se, 0.7)`, וכל מיומנויות הציר מאותחלות כ-`uncertain` (לא `known` ולא `unknown`) עם `u = 0.8`. אין חזרה על המסע באותו יום. המסע לציר הזה נפתח שוב **פעם אחת** אחרי ≥ 2 ימים, כ"מסע קצר" (`maxItems` = `minItems` + 2). אם גם הוא `inconsistent`, המקצוע נסגר ב-`quality:'low'` והתרגול הרגיל מכייל (K גבוה). להורה ב-PA-ASM: "המיפוי בחשבון יצא לא ברור (אולי {name} {מיהר|מיהרה}). המשחק ממשיך לכייל תוך כדי, ואפשר להציע לנסות שוב בזמן רגוע." (לא מוצג לילד).
 
 ---
 
@@ -632,9 +794,11 @@ function classifySkills(strand, post, obs): Record<SkillId, 'known' | 'uncertain
 | פריט "כמעט זהה" מיד אחרי דוגמה פתורה | כרגיל | ×0.5 |
 | בסיוע הורה או אח (`assisted ≠ 'none'`) | כרגיל | ×0.3 |
 | K3 (כל פריט, משחק משותף) | כרגיל | ×0.5 |
+| **פרוצדורה רב-שלבית (`O.STEP`, ‏K1, ‏03 §3.2)** בניסיון ראשון, בלי רמז | `correctSteps / steps` | 1 |
 | ניחוש מהיר / timeout / idle / רקע / נטישה / תבנית לא מנוקדת | — | 0 (`excluded`) |
+| מפגש שהורה סימן "לא {name}" (`attributedTo ≠ childId`, §10.5.3) | — | 0 (`excluded:'reattributed'`) |
 
-ספירות השליטה (§5) משתמשות רק ב-`firstTryCorrect && hintsUsed === 0` על תצפיות לא מוחרגות.
+ספירות השליטה (§5) משתמשות רק ב-`firstTryCorrect && hintsUsed === 0` על תצפיות לא מוחרגות. **ב-`O.STEP`:** `firstTryCorrect ⇔ steps.correct === steps.total`; ‏x חלקי נכנס ל-Elo (הנוסחה ב-§4.2 מקבלת x ∈ [0,1]), ל-`learningProgress` ול-BKT הצל (שם x ≥ 0.999 נחשב נכון). `steps.firstErrorTag` ממלא את `chosenErrorTag` ומזין את §5.5. תיקון עצמי בפרוצדורה (K1, ניסיון שני): x = 0.5 × (correctSteps₂/steps), כלומר לכל היותר 0.5.
 
 ### 4.2 עדכון (מצב ברירת מחדל: דיוק בלבד)
 
@@ -733,6 +897,7 @@ function hshsUpdate(s, item, x: 0 | 1, tMs: number, cfg) {
 
 * K3: הרמות מחושבות פנימית לבחירת פריטים בלבד ולא מוצגות. מוצגות רק מדבקות.
 * `attemptsSinceLevelChange ≥ 10 && learningProgress < 0.05 && level ∈ {beginner, advancing}` → `stuck = true` (wheel-spinning, ‏Beck & Gong). המרכיב יורד לבדיקת קדם-דרישה (§6.4), ואם זה נמשך יותר מ-5 מפגשים מוצג להורה כרטיס "תקוע".
+* **שער ייצוגים `O.REP`** (03 §17.2, מיומנויות מושגיות במתמטיקה; EEF 2020, concreteness fading): כשב-`skill.extraGates` יש `'O.REP'`, הכניסה ל-`proficient` דורשת **בנוסף** ≥ 2 תצפיות נקיות עם `representation:'pictorial'` **וגם** ≥ 2 עם `'abstract'` בתוך last8. תצפית בלי `representation` (תבנית ישנה) לא נספרת לשער. עד שהשער מתקיים הרמה נשארת `advancing` עם `reasons: ['needs_pictorial' | 'needs_abstract']`, והבורר (§6.5) מעדיף את הייצוג החסר. השער לא חל על `master` (הבדיקה המושהית היא מעורבבת ממילא) ולא על הורדת רמה. `extraGates` נבדקים אחרי כל תנאי §5.1 הרגילים, ב-`packages/engine/mastery/gates.ts`, כדי ש-D9 יישאר הגדרה אחת עם תוספות מוצהרות.
 
 ### 5.2 בדיקה מושהית ומעורבבת
 
@@ -898,8 +1063,11 @@ stuck(k) ⇒ במקום k: בדיקת קדם-דרישה (הקדם-דרישה ע�
 function pickItem(skill, block, c, rt, rng): Item {
   const pTarget = clamp(block.targetP + c.bandController.adj, block.targetP - 0.07, block.targetP + 0.07);
   const cands = itemsOf(skill).filter(i => i.reviewed && !seenInLast(i, 10) && i.id !== rt.prevItemId);
+  // 0) O.REP: אם השער ממתין (§5.1) ויש מועמד בייצוג החסר עם |P_i − pTarget| ≤ 0.12, מצמצמים אליו
   // 1) |P_i − pTarget| מינימלי; 2) שוני בתכונה אחת לכל היותר מהפריט הקודם של המיומנות; 3) הכי פחות נראה לאחרונה; 4) rng
-  return lexMin(cands, i => [round2(Math.abs(P(i) - pTarget)), featureDiff(i, rt.prevOfSkill) > 1 ? 1 : 0, lastSeen(i), rng()]);
+  const need = missingRepresentation(skill, c);                // 'pictorial' | 'abstract' | undefined
+  const pool = need && cands.some(i => i.representation === need && Math.abs(P(i) - pTarget) <= 0.12) ? cands.filter(i => i.representation === need) : cands;
+  return lexMin(pool, i => [round2(Math.abs(P(i) - pTarget)), featureDiff(i, rt.prevOfSkill) > 1 ? 1 : 0, lastSeen(i), rng()]);
 }
 // הלולאה האיטית: בקר רצועת ההצלחה, אחרי כל פרק
 function updateBandController(bc, sessionFirstTry: number[], target: number) {
@@ -949,7 +1117,17 @@ function updateBandController(bc, sessionFirstTry: number[], target: number) {
 * K1, פרק של ≥15 דק': ≥2 מקצועות. בלוקים עוקבים מתחלפים במקצוע כשאפשר. המבוא של מיומנות חדשה נשאר רציף.
 * K2: ≥2 מקצועות בתוך עטיפת סיפור אחת (למשל ספירה במסע לחלל, ואז צליל פותח של "חללית").
 * בלוק review מערבב ≥2 מיומנויות מרמת `advancing` ומעלה בלבד (שזירה רק אחרי ~70%, Brunmair & Richter). זוגות `discriminationPairs` (ב/כ, ד/ר, +/− בבעיות מילוליות) מקבלים עדיפות.
-* משקלי מקצועות ברירת מחדל: K1 חשבון 35, עברית 35, אנגלית 15, אחר 15. ‏K2 אוריינות עברית 35, חשבון 35, אנגלית בעל פה 10, אחר 20.
+* **משקלי מקצועות ברירת מחדל** (`EngineConfig.subjectWeights`, ההורה משנה ב-10 §6.13 בטווח 10–60 לכל מקצוע פעיל, סכום 100):
+
+| | חשבון | עברית | אנגלית | אחר (06+07) |
+|---|---|---|---|---|
+| K1 | 30 | 30 | **25** | 15 |
+| K2 | 30 | 35 | **15** | 20 |
+| K3 | אין משקלים: 50% "מוכר ואהוב" / 50% "חידוש עדין" (§6.2) | | | |
+
+  **ההכרעה (בקשת 05 §17, שורה 08):** 05 ביקש להעלות אנגלית ל-25% (K1) ו-15% (K2), כי כמות הקלט היא המנבא העיקרי של רכישת שפה זרה, ו-15 דק' בשבוע לא מצטברות לכלום. קיבלתי, עם שני סייגים: (א) **עברית ≥ אנגלית תמיד** (B1, Hebrew-first), ולכן ב-K2 העלייה באנגלית באה מהחשבון (35→30) ולא מהעברית, כי מודעות פונולוגית וצלילי אותיות לפני כיתה א' הם המנבא החזק ביותר לקריאה (Yinon et al. 2026, B6), ותחושת המספר של K2 כבר חזקה לפי השאלון; ב-K1 הירידה מתחלקת שווה (35→30 בשני המקצועות). (ב) **לפני פתיחת "האי האנגלי"** (05 §15.1: פרק 6, ~20.12; עד אז שלב "בקבוקים מהים") משקל האנגלית מוגבל ל-**5** (הבקבוקים), והיתרה מתחלקת פרופורציונלית בין שאר המקצועות. תוצאה צפויה ל-K1: ~3 פרקים × 18 דק' × 25% ≈ 14 דק' אנגלית בשבוע באפליקציה, פחות מה-35–40 ש-05 רוצה; את ההפרש 05 מספק משמע ושגרות מחוץ למסך, כפי שכתב. **שיר TPR באנגלית ב-K2 ממלא גם את בלוק ה-fun** (§6.2), כך שהאנגלית לא "גונבת" מהמשחק החופשי.
+* **מקצוע כבוי** (ההורה כיבה ב-PA-CSET): המשקל שלו 0, והיתרה מתחלקת פרופורציונלית. מקצוע עם `contentExhausted` בכל הצירים (§10.5.9): כנ"ל, עם הודעה להורה.
+* **תת-משקל:** `subjectUnderweighted(s)` ב-§6.4 מתקיים כשהחלק של s ב-14 הימים האחרונים קטן מ-`subjectWeights[s] − 10` נקודות.
 
 ### 6.9 "מה למדו החודש"
 
@@ -1148,8 +1326,13 @@ export interface StrengthsNarrativeInput {
 | `MOTOR_K2_TRACING` | K2 | מיד | סטיית מסלול חציונית מעל סף התבנית ב-≥60% מהניסיונות | 6 שבועות | 10 שבועות |
 | `LANG_K3_PARENT` | K3 | שאלון | T1 = `no` **וגם** T2 = `no` בגיל ≥ 2;6 | מיד, הודעה עדינה | אותה הודעה כוללת את מסלול הפנייה |
 | `EMO_DISTRESS` | כולם | מיד | ≥3 אפיזודות תסכול בשבוע, 3 שבועות **או** ≥3 יציאות אחרי שגיאה בשבוע | 3 שבועות: על לחץ, הפסקות ומשחק משותף | אם `parentConcern.emotional`: מדריך הדגלים האדומים (C8) |
+| `EMO_CHECKIN` (בקשת 10 §6.9) | K2, K1 | רק עם `consent.checkinNudge` (T4b, ברירת מחדל כבוי) | בצ'ק-אין הרגשי (§1.9, `local_only`) נבחר "עצוב" או "מפחד" ב-**≥3 מתוך 5 ימי הצ'ק-אין האחרונים** (ימים עם צ'ק-אין, לא ימים קלנדריים). מחושב **במכשיר שבו נעשה הצ'ק-אין** בלבד; יוצא ממנו **רק** `{ruleId, status, dayKey}` בוליאני למכשירי ההורים (00-Δ3 ב-10) | **מיד** (זה לא דגל RTI אלא "דחיפה עדינה"): "אולי זה זמן טוב לשיחה" + CL-10. לא נכנס למדרג `watch`. קצב: לכל היותר פעם ב-**14 יום**, ולא נספר במכסת 28 הימים של שאר הדגלים | **אין.** לעולם לא `referral_suggested` מצ'ק-אין לבד. אם במקביל `EMO_DISTRESS` פעיל, ההודעה מאוחדת |
+| `MATH_K1_FACT_PACE` (בקשת 03 §14.3) | K1 | מיד, `maxStatus:'watch'` עד אישור ההורה בנקודת הבדיקה (I1) | אחרי ≥10 שבועות של תרגול עובדות: < 30% מעובדות הכפל (`M.FACT.MUL.*`) ב-`proficient`+, **בזמן ש**דיוק במושגי הכפל (`M.MUL.*`) ≥ 85% ב-≥30 פריטים | 10 שבועות, ≥12 מפגשים עם עובדות. **זה קצב, לא קושי:** ההודעה מציעה לשוחח עם המורה על יעד לוח הכפל (03 §16) | **אין** (לעולם לא `referral_suggested`) |
+| `MATH_K1_READ_VS_LISTEN` (בקשת 03 §14.3) | K1 | מיד, `maxStatus:'watch'` עד אישור | בבעיות מילוליות: דיוק נמוך ב-≥15 נקודות כש-`audioPrompt` כבוי (קוראת לבד) לעומת מופעל, ≥20 פריטים בכל מצב, ב-28 יום | **אין הודעה משלו.** הסמן מזין את `HEB_K1_LISTEN_READ_GAP` כראיה נוספת (נספר כ"שבוע מתקיים" גם אם ה-θ-gap קטן מ-1.0 אבל ≥ 0.7). המנוע ב-`watch`: בעיות מילוליות עם הקראה כברירת מחדל | דרך `HEB_K1_LISTEN_READ_GAP` בלבד |
 
 **הערה:** פענוח חלש בגיל 5.5 **אינו** דגל, כי פענוח פורמלי מתחיל בכיתה א'.
+
+**`maxStatus`:** לכל כלל יש `maxStatus` ב-config (`'watch' | 'parent_note' | 'referral_suggested'`). כלל שנוסף אחרי הגרסה הראשונה של המסמך מתחיל ב-`'watch'` (המנוע מתאים את עצמו, ההורה לא רואה כלום) עד שההורה מאשר את הנוסח שלו ב-10 PA-FLAG ("כללים חדשים ממתינים לאישור"). האישור נרשם ב-`ParentInput.flag_action` ומעלה את `maxStatus`.
 
 ### 9.3 פסאודוקוד
 
@@ -1218,6 +1401,23 @@ function evaluateFlags(state, childId, ctx): FlagState[] {
 * `FlagState`, ‏`DispositionMap`, ‏`EFCalibration` וצ'ק-אין רגשי מחושבים ונשמרים במכשיר.
 * מסונכרנים רק למכשירי ההורים, מוצפנים (E6). לא נשלחים לאף ספק AI.
 * נמחקים עם איפוס פרופיל. הנתונים "רגישים במיוחד" לפי תיקון 13.
+* **ייצוא (10 PRIV-03):** `FlagState` נכלל בייצוא רק כשההורה מסמן "כולל 'לתשומת לב'" (ברירת מחדל כבוי), ואז כ-JSON נפרד עם ההסתייגות. `emotion_checkin` לא נכלל בייצוא לעולם (הוא במכשיר הילד, לא אצל ההורה).
+
+### 9.7 התרעות שווא ותיקון הורה
+
+הרגישות והסגוליות של הכללים לא ידועות (§9.1), ולכן ההתנהגות אחרי "לא רלוונטי" חשובה יותר מהספים עצמם:
+
+| פעולת הורה (10 PA-FLAG) | אפקט במנוע |
+|---|---|
+| **"לא רלוונטי"** + סיבה (`notRelevant`) | הכלל לילד הזה עובר ל-`dismissed` ל-**8 שבועות** (`snoozedUntil`), **ו**הסף של הכלל לילד הזה מחמיר ב-20% (למשל `< 10/22` → `< 8/22`; `≥25%` → `≥30%`) לשארית השנה. הסיבה נשמרת ב-`FlagState.calibration[]` ומוצגת למפתח (לא להורה). שתי דחיות של אותו כלל → הכלל כבוי לילד עד rollover (§10.5.7), ומוצג ב-PA-FLAG כ"כיביתם" עם אפשרות להדליק |
+| **"דיברנו עם המורה"** (`talkedToTeacher`) | נרשם בראיות; הכלל לא מתקדם ל-`referral_suggested` ב-4 השבועות הבאים (נותנים זמן לתשובת המורה) |
+| **"להשהות 4 שבועות"** (`snooze`) | `dismissed` ל-28 יום, בלי שינוי ספים |
+| **הסתייגות מתוכנית** (`external_evidence` עם הערת מורה "בסדר גמור") | כמו `notRelevant` אבל בלי החמרת סף, ומוצג "המורה רואה תמונה אחרת" |
+| כיבוי `consent.earlyFlags` | הכול נעצר, ו-`FlagState` נמחק במכשירים תוך 24 ש' |
+
+**שני סמנים בלתי תלויים:** כלל שמוגדר עם "וגם" (למשל `HEB_K2_LETTERS_PA`) דורש את שניהם בכל שבוע שנספר. כלל עם "או" דורש שהסמן **אותו סמן** יתקיים ברצף השבועות (לא לסירוגין). זה מוריד התרעות שווא מרעש.
+
+**הטיית חשיפה:** `minWeeklyExposure` (מספר פריטים רלוונטיים בשבוע) ברירת מחדל 15. שבוע עם פחות מזה לא נספר ולא שובר את הרצף (`persisting` לא מתאפס, רק לא עולה). ילד שמשחק מעט לא יקבל דגל רק מזה שהוא משחק מעט.
 
 ---
 
@@ -1259,6 +1459,85 @@ function evaluateFlags(state, childId, ctx): FlagState[] {
 * **אתגר דילוג (האצה):** בציר שבו הצלחת ניסיון-ראשון > 95% ב-14 יום (≥30 פריטים) מוצע "אתגר דילוג". זו בדיקה בסגנון מיקום כלפי מעלה מהשוליים (מקס' 8). מיומנויות שעוברות מסומנות `proficient` עם `provenance:'skip_challenge'`, ועדיין דורשות בדיקה מושהית. אין תקרת כיתה.
 * **בדיקה כלפי מטה:** הצלחה < 60% במשך 7 ימים (≥20 פריטים) → בדיקת קדם-דרישות בציר (מקס' 6).
 
+### 10.5 מקרי קצה (כללים מחייבים)
+
+#### 10.5.1 מיקום שנקטע באמצע
+לפי §3.6 כלל 6: שמירה אחרי כל פריט, חידוש עד 14 יום, התחלה מחדש עם prior מורחב אחרי כן, סגירה כפויה אחרי 21 יום. **בדיקה:** U-PLR-1..4.
+
+#### 10.5.2 ילד שעונה אקראית במיקום
+לפי §3.8: `finish('inconsistent')`, אתחול `uncertain`, מסע קצר חוזר פעם אחת. **בדיקה:** U-RAND-1..3.
+
+#### 10.5.3 אח ששיחק בפרופיל של אח (זיהוי ותיקון)
+* **זיהוי (היוריסטי, בסיום כל מפגש, `anomaly.identity_suspect`).** ציון = סכום:
+  * +2 אם `firstTryRate` של המפגש (≥10 פריטים מנוקדים) רחוק מ-`ewmaSuccess` של הילד ב-≥0.35 **לכל כיוון**.
+  * +2 אם `mean(x − P)` במפגש ≥ +0.35 או ≤ −0.35 (≥10 פריטים): הילד "הרבה יותר טוב/גרוע מהתחזית" בבת אחת.
+  * +1 אם חציון `responseMs` במפגש נמוך מ-0.5× או גבוה מ-2× מחציון הילד (≥10 תצפיות, אחרי סינון RT).
+  * +1 אם המפגש החל תוך 3 דקות מ-`session.ended{reason:'parent_exit'|'inactivity'}` של **אח אחר** באותו מכשיר (11 §4.16).
+  * +1 אם בחירות הנושא במפגש כולן מחוץ ל-5 הנושאים המובילים של הילד (≥3 בחירות).
+  * ציון ≥ 4 → `identity_suspect`. ציון ≥ 3 במפגש **ראשון אחרי מיקום** לא נספר (ירח דבש משנה את ההתנהגות).
+* **מה המנוע עושה לבד:** במפגש חשוד, העדכונים **כן נכנסים** (אין ראיה מספיקה לחסום), אבל `u` של המיומנויות המעורבות לא יורד (K לא קטן), כדי שמפגש אחד לא "ינעל" θ שגוי. אותות עניין מהמפגש נכנסים במשקל ×0.5. דגלים (§9) לא סופרים את המפגש הזה בשבוע. **לא נשלחת התראה לילד**, ולא נעשה שום דבר גלוי בזמן המשחק (C5).
+* **כלי התיקון להורה (10 PA-LOG, W-LOG-05):** בשורת המפגש "לא {name} {שיחק|שיחקה}?" → בחירה: אח אחר / "לא יודע" → `ParentInput.session_reattribute {sessionId, to}`. המנוע: (1) `Session.attributedTo = to`; (2) כל ה-`Attempt` וה-`BehaviorSignal` של המפגש מוחרגים (`excluded:'reattributed'`) **אצל הילד המקורי**; (3) חישוב מחדש מנקודת הביקורת שלפני המפגש (§1.11), כך ש-θ, u, רמות, כרטיסי חזרה, עניין ונטיות חוזרים למצב "כאילו המפגש לא קרה" (זה מה ש-event sourcing נותן בחינם); (4) אם `to` הוא אח, האירועים **לא** מועברים אליו אוטומטית (ה-DAG, הרמות והקושי שלו שונים; הניסיונות על פריטים שלא מתאימים לו היו מטים את ה-Elo שלו). הם נשארים ביומן תחת `attributedTo` לצורך שקיפות בלבד. (5) `skill.mastered` ו-`skill.level_changed` שנפלטו במפגש מקבלים אירוע `skill.level_reverted` (02 **לא** לוקח חזרה מטבעות/תגים, C5; 02 §4.1 `badgeNeverDowngrades`). (6) ההחלטה הפוכה אפשרית ("בעצם כן {name}") עד 30 יום; שני הקלטים ביומן, האחרון לפי hlc קובע.
+* **מניעה:** תמונת-PIN (H3, ברירת מחדל ל-K1); הצעה אוטומטית להורה להפעיל תמונת-PIN גם ל-K2 אחרי 2 מפגשים `identity_suspect` ב-14 יום (10 AL-15).
+
+#### 10.5.4 נתונים משני מכשירים שסותרים
+* **אירועים לא סותרים** (11 §6.5): אותו ילד ששיחק על שני מכשירים (גם במקביל, גם offline) נותן שני רצפי אירועים, והמצב הוא הקיפול שלהם בסדר הקנוני `(ts, deviceId, eventId)`. שני המכשירים מגיעים לאותו `EngineState` אחרי סנכרון (S-3).
+* **מפגשים חופפים בזמן** (שני מכשירים, אותו ילד, אותו רגע): שניהם תקפים. התקרה היומית נספרת על שניהם (11 §4.16, חריגה offline נסלחת). חזרה שהגיע זמנה ותורגלה בשני המכשירים: הראשונה בסדר הקנוני מעדכנת את הכרטיס, והשנייה היא "חזרה מוקדמת" (§5.5, קרדיט ×0.25). פריט שהוצג בשניהם: שני הניסיונות נספרים (הם ניסיונות אמיתיים).
+* **`ParentInput`/docs סותרים:** last-writer-wins לפי hlc (E6), שניהם ביומן.
+* **אירוע שמגיע באיחור** (ts ישן מנקודת הביקורת): חישוב מחדש (§1.11). אם זה קורה באמצע מפגש פעיל, המנוע מסיים את הפריט הנוכחי, מחשב מחדש ברקע, וממשיך עם `EpisodeRuntime` הקיים (התוכנית לא נבנית מחדש באמצע פרק).
+* **אירוע כפול** (אותו `id` משני מכשירים אחרי שחזור): `reduce` אידמפוטנטי לפי `id` (קבוצת מזהים שנראו ב-checkpoint).
+
+#### 10.5.5 סטיית שעון
+* `dayKey` מחושב **במכשיר בזמן האירוע** מ-`ts + tzOffsetMin` (11 §5.7), ונשמר באירוע. המנוע לא מחשב אותו מחדש. לכן אירוע ממכשיר עם שעון שגוי נכנס ליום השגוי, אבל **באופן עקבי** בכל המכשירים.
+* הסדר הקנוני לפי `ts` נשאר גם אם הוא "שקרי". אין ניסיון לתקן ts של אירועים (הם עובדות).
+* **הגנות:** (א) `gapDays` ו-`elapsedActiveDays` מחושבים על DayKey ומוגבלים ל-`max(0, …)`: שעון שחזר אחורה לא יוצר "הפסקה שלילית" ולא מעלה u. (ב) `onFirstAttemptAfterGap` לא מופעל אם `gapDays > 400` (שעון מקולקל, לא חופשה) אלא רושם `clock_anomaly` בטלמטריה. (ג) `dueDay` בעתיד הרחוק (> 90 יום מ-`max(dayKey)` שנראה) נחתך ל-90. (ד) חלונות בנצ'מרק ו-`activeFrom` של דגלים מחושבים מ-`ctx.now` של המכשיר שמריץ, ולא מאירועים. (ה) אם 11 מדווח `|skew| > 2 min`, המנוע מקבל `ctx.now = serverTime + (localNow − localAtSync)` (זמן שרת מתוקן), כך שהחלטות "היום" עקביות עם הדוחות ב-Worker.
+* **בדיקה:** U-SKEW-1..3.
+
+#### 10.5.6 איפוס על ידי הורה (10 FAM-03, PRIV-04)
+| פעולה | מה מתאפס | מה נשאר |
+|---|---|---|
+| **"איפוס מודל הפרופיל"** (`reset_profile_model`) | `InterestMap` (חוץ מזרעי הורה ו-`parentOverride`), `DispositionMap`, `EFCalibration`, `FlagState` (כולל `calibration`), צ'ק-אין רגשי במכשירים | θ, רמות, כרטיסי חזרה, מיקום, כלכלה |
+| **"איפוס התקדמות"** (`reset_progress`, לפי מקצוע או הכול; Owner בלבד, step-up) | `SkillState`, `StrandState`, `ReviewSchedule`, `PlacementStatus` של המקצועות שנבחרו, `bandController`, `itemsPerMinute` (אם הכול). ממומש כהעלאת `modelEpoch` (או `subjectEpoch[s]`): הקיפול מתעלם מ-`Attempt`/`BehaviorSignal` של המקצוע עם epoch קודם. **האירועים לא נמחקים** (היסטוריה, ייצוא, 11 §5.9) | כלכלה (02: מטבעות, תגים, חילוצים לא נלקחים, C5), עניין ונטיות (אלא אם גם איפוס פרופיל), `ItemCalibration` (משותף ל-3 הילדים, לא שייך לילד) |
+| **"מחיקת ילד"** (10 PRIV-04, רכה, 30 יום) | המנוע מסיר את `children[childId]` מהמצב ומנקודות הביקורת בכל מכשיר מיד עם קבלת הפקודה; האירועים נמחקים ב-D1 אחרי 30 יום (11 §7.3). ביטול בתוך 30 יום → קיפול מחדש מאפס | — |
+| **ביטול איפוס** | אין. איפוס התקדמות הוא בלתי הפיך ברמת המודל (האירועים נשמרים, אבל `modelEpoch` לא יורד). ההודעה להורה אומרת זאת, ומוצעת "הורדת רמה ידנית" למיומנות בודדת (W-SK-10) כחלופה עדינה |
+
+אחרי `reset_progress` המקצוע חוזר ל-`placement.state='not_started'` ומסע מיקום חדש מתוזמן (עם prior מהשאלון, שלא התאפס).
+
+#### 10.5.7 עליית כיתה (rollover, 1.9.2027 ולכל שנה)
+* ב-**1 בספטמבר** (`calendar.schoolStart` של השנה החדשה) האפליקציה מציעה להורה ב-FAM-03 "עלה/תה כיתה?" עם הצעה (`grade+1`; `gan_chova → g1`; `gan_trom → gan_chova`; `toddler` לפי גיל ≥ 3;0 → `gan_trom`). **עד שההורה מאשר**, המנוע ממשיך עם ה-`grade` הישן ו-`pos` נעצר על 1.0 (§2.1). אין rollover אוטומטי (A5: ההורה יודע; ילד יכול להישאר שנה נוספת בגן).
+* אישור → `ParentInput.grade_rollover`. המנוע:
+  1. `profile.grade`, `profile.schoolYear` ← חדשים. `tier` **לא** משתנה (K1/K2/K3 הם מזהי פרופיל, A2), אבל כל הכללים שתלויים ב-`grade` (למשל `rtPolicy = grade < 'g1' ? 'ignore' : 'fluency_only'`) מתעדכנים: **K2 בכיתה א' מקבל `rtPolicy:'fluency_only'`** ואת סולם החזרות של K2 (הסולם לפי `tier`, לא לפי כיתה: 1/3/7/14/30; מעבר ל-60 יום רק כש-`tier` משתנה, וזה לא קורה).
+  2. `Plan.yearScaffold` ו-`monthHint` נבנים מחדש מה-`gradeTag` החדש. `ClassTopic`-ים ישנים פגים (`expiresAt = now`).
+  3. `IsraeliSchoolCalendar` של השנה החדשה (חבילת תוכן; ⟂VERIFY מול לוח משרד החינוך תשפ"ח, שמתפרסם בדרך כלל ביוני).
+  4. **מיקום חוזר:** לא מסע מלא. הפרק הראשון אחרי הקיץ הוא `reentry` (§10.4, כי `daysSinceLastActive ≥ 21` כמעט בטוח), ובנוסף **"מסע קצר"** (`maxItems = minItems`) לכל ציר `primary` שבו `θ_s − SCALE·pos_new < −0.8` או `> +0.8`, כדי לכייל מול התוכנית החדשה. התאריכים: חלון BOY של השנה החדשה.
+  5. `anchor` של מיומנויות **לא משתנה** (הוא תלוי תוכנית, לא ילד). רמות וכרטיסי חזרה נשמרים. דגלים: `weeksPersisting` מתאפס (שנה חדשה, כיתה חדשה), `calibration` נשמר, `activeFrom` מחושב מהלוח החדש.
+  6. `ContentIndex` חייב להכיל מיומנויות ל-`gradeTag` החדש (K1 → `g4`: רצועת S+ של 03). אם אין → `contentExhausted` (§10.5.9) והודעה למפתח.
+* **ילד שעלה כיתה באמצע השנה** (מעבר בית ספר, הקפצה): אותו מסלול, בלי התניה לספטמבר. **ילד שנשאר שנה נוספת:** ההורה דוחה את ההצעה, `schoolYear` מתעדכן, `grade` לא.
+* **בדיקה:** U-ROLL-1..4.
+
+#### 10.5.8 היעדרות ארוכה
+* 21–89 יום: §10.4 (`reentry`).
+* **≥ 90 יום** (למשל K2 שהפסיק באביב וחזר בספטמבר): `reentry` + "מסע קצר" לכל ציר `primary` (כמו ב-rollover). `u ← min(1, u + 1.0)` (כלומר 1.0). כרטיסי חזרה: כולם `needsReview`, ה-rung יורד ל-`max(0, rung − 2)` **בלי** הורדת רמה, ולא יותר מ-30% מהפרק לחזרות (כמו 10.4) למשך 5 פרקים. דגלים: `weeksPersisting` מתאפס.
+* **ילד שההורה "השהה"** (10 AL-05 מזכיר "ילד מושהה"): `profile.paused: true` → המנוע לא מתזמן, דגלים ובנצ'מרק לא רצים, ימי ההשהיה לא נספרים ב-`elapsedActiveDays` (כמו ימי מנוחה). חזרה מהשהיה = כמו היעדרות לפי אורכה.
+
+#### 10.5.9 לומד מהיר מאוד שמגיע לתקרה
+* `ceilingHit` במיקום (§3.4) → המסע הבא ממשיך כלפי מעלה עם `prior = posterior`, בלי תקרת כיתה. אתגר דילוג (§10.4) ממשיך משם.
+* **תוכן נגמר בציר** (אין מיומנות `new`/`beginner` שמוכנה, וכל מה שקיים ≥ `proficient`): `contentExhausted[strand] = today`. המרכיב: (א) חלק ה-new של הציר עובר לצירים אחרים באותו מקצוע; (ב) אם כל המקצוע מוצה → המשקל שלו מתחלק (§6.8) ובלוק ה-fun מקבל פעילויות העשרה `MP.X` (03 §3.2) ופרויקטים (§7.3, Renzulli III); (ג) להורה ב-PA-MAP: "הגענו לסוף התוכן שלנו ב-{strand} לשנה הזו. המשחק ממשיך לחזור ולהעמיק." (ד) למפתח: אירוע `content.exhausted` בטלמטריה, כדי להוסיף רצועת S+/G+ (03). **אין** "המצאת" תוכן על ידי LLM כתגובה (C7: תוכן מאושר בלבד).
+* **בנצ'מרק לילד כזה:** הסטטוס "מקדים" מוצג רק ב-PA-ASM (10 R14), וה-SE מחושב כרגיל. `skip_challenge` לא מעניק `master` (עדיין בדיקה מושהית).
+* **בדיקה:** U-CEIL-1..2.
+
+#### 10.5.10 ייצוא ומחיקה (10 PRIV-03/04)
+* ייצוא: `EngineState.children[childId]` מיוצא כ-JSON (schema `engine-state.v1`), בלי `ItemCalibration` (משותף) ובלי `FlagState` אלא אם סומן (§9.6). מצורף `levels.ts` mapping כדי שה-JSON קריא. הקיפול ניתן לשחזור מהאירועים בלבד, ולכן ה-JSON הוא נוחות, לא מקור.
+* מחיקת משפחה: המנוע לא עושה דבר מיוחד; המכשירים מקבלים `wipe` (11 S5).
+
+#### 10.5.11 הורים חולקים
+* שני `ParentInput` סותרים → hlc (§1.9א). **חריג:** `reset_progress` ו-`child.delete` דורשים Owner (10 §2), ולכן אין סתירה. `lock`/`unlock` על מיומנות: האחרון קובע; ב-PA-MAP מוצג "שונה לאחרונה על ידי {guardian}" (10 RB-5).
+* `questionnaire` שמולא על ידי שני ההורים (שניהם ענו): התשובות ממוזגות **לפי שאלה**: `unsure` נדחה מפני תשובה; `yes` ו-`no` סותרים → `partly`. זה נרשם ב-`questionnaire_mismatch` ומוצג ב-W-ASM-03 כ"סימנתם תשובות שונות".
+
+#### 10.5.12 מעט מאוד נתונים (שבוע ראשון)
+* לפני מיקום: `composeEpisode` מחזיר `EpisodePlan` עם `mode:'placement'` בלבד (אין פרק רגיל לפני שהמקצוע הראשון מופה, חוץ מ-K3). ההורה רואה ES-0 (10 §5.4).
+* אחרי מיקום, עד 8 תצפיות למיומנות: `P̂` ו-FTA לא מוצגים (10 PD-P4); `level` כן (הוא מוגדר מהתצפית הראשונה). `reasons[]` של כל בלוק מסבירים "עדיין מכיילים".
+* `bandController` לא פעיל עד `n ≥ 10` (§6.5), ו-`itemsPerMinute` הוא ה-prior 2.0 → תקציב הפריטים בשבוע הראשון עלול להיות גדול מדי: לכן ב-3 הפרקים הראשונים `itemBudget = round(0.8 × minutes × itemsPerMinute)` (פחות פריטים, יותר חגיגה), ו-`closing` מגיע ב-80% מהזמן במקום 85%.
+
 ---
 
 ## 11. פרמטרים (`EngineConfig`, ברירות מחדל)
@@ -1290,8 +1569,22 @@ export const DEFAULT_CONFIG: EngineConfig = {
   frustration: { scoreThreshold: 4, window: 5, idleAfterErrorMs: 10000, rageTaps: 5, rageWindowMs: 2000 },
   interest: { halfLifeDays: 25, parentSeedHalfLifeDays: 50, positionBias: 0.8, positionBiasFactor: 0.33, snoozeDays: 14 },
   profile: { shrinkM: 10, prior: 0.7, earlyEvents: 20, earlySessions: 5, earlyDays: 3, consistentEvents: 40, consistentWeeks: 3, hideBelowAccuracy: 0.7 },
-  flags: { minNoticeGapDays: 28, provisional: { wcpmFloorPointed: null /* חייב להיקבע מכלי משרד החינוך או ממשוב מורה */ } },
-  cadence: { bossEveryDays: 28, bossAfterProficient: 3, reentryGapDays: 21, vacationGapDays: 14, skipChallengeAcc: 0.95, probeDownAcc: 0.60 },
+  subjectWeights: { K1: { math: 30, hebrew: 30, english: 25, other: 15 }, K2: { math: 30, hebrew: 35, english: 15, other: 20 } },   // §6.8
+  englishPreIslandWeight: 5,                   // §6.8: עד פתיחת האי האנגלי (05 §15.1)
+  gates: { 'O.REP': { pictorialClean: 2, abstractClean: 2, pickTolerance: 0.12 } },   // §5.1, §6.5
+  lazyPlacement: { probeItems: 3, placedAtMinObs: 8, placedAtMaxSe: 0.6 },            // §3.7
+  placementResume: { resumeDays: 14, restartSdFloor: 0.7, forceCloseDays: 21, episodesBeforeRestart: 3 },   // §3.6 כלל 6
+  inconsistency: { guttmanGap: 1.0, sdStallItems: 4, sdStallDelta: 0.05, fastShare: 0.5, retryAfterDays: 2 },  // §3.8
+  anomaly: { rateDelta: 0.35, residualDelta: 0.35, rtRatioLow: 0.5, rtRatioHigh: 2.0, siblingSwitchMin: 3, minScored: 10, threshold: 4, interestWeight: 0.5 },  // §10.5.3
+  flags: { minNoticeGapDays: 28, minWeeklyExposure: 15, notRelevantSnoozeWeeks: 8, notRelevantTighten: 0.2, teacherGraceWeeks: 4,
+           checkin: { window: 5, hits: 3, cooldownDays: 14 },
+           maxStatus: { MATH_K1_FACT_PACE: 'watch', MATH_K1_READ_VS_LISTEN: 'watch', EMO_CHECKIN: 'parent_note' /* השאר: 'referral_suggested' */ },
+           provisional: { wcpmFloorPointed: null /* חייב להיקבע מכלי משרד החינוך או ממשוב מורה */ } },
+  cadence: { bossEveryDays: 28, bossAfterProficient: 3, reentryGapDays: 21, vacationGapDays: 14, longAbsenceDays: 90, skipChallengeAcc: 0.95, probeDownAcc: 0.60,
+             rolloverShortTripDelta: 0.8 },
+  clock: { maxGapDays: 400, maxDueAheadDays: 90 },           // §10.5.5
+  checkpoints: { everyEvents: 200, keep: 30 },               // §1.11
+  firstWeek: { episodes: 3, budgetFactor: 0.8, closingAt: 0.80 },   // §10.5.12
   celebrationMaxShare: 0.15, honeymoonEpisodes: 2,
 };
 ```

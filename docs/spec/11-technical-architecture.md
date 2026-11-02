@@ -19,7 +19,10 @@
 | State | **SQLite is the source of truth** (expo-sqlite + drizzle). An append-only event log feeds deterministic projections (pure TS in `packages/engine`). **Zustand** holds ephemeral session/UI state. TanStack Query is used only for server-only parent views. `expo-sqlite/kv-store` stands in for MMKV. | Local-first (E6), testable, and with no Nitro dependency in the critical path. |
 | 3D (E1b) | three.js 0.186.1 + `@react-three/fiber@9.8.2` (`/native`) + expo-gl + expo-asset, with custom kinematics + `three-mesh-bvh`. The Hebrew HUD is 2D RN only. Fallbacks: WebView-hosted three.js, then 2.5D Skia. Filament is native-only plan B. A **10-day spike with 4 gates** (§4.9). | The same scene code runs on web, which keeps Playwright useful. |
 | Characters | `@rive-app/react-native@0.5.5` (Nitro) on device and `@rive-app/react-canvas@4.37.1` on web, behind one `<Character>` interface (§4.10). | E2. |
-| Backend | One Cloudflare Worker `olam-api` (Hono 4.13.14) with D1 `olam-db`, R2 `olam-private` + `olam-content`, Cron, the Durable Object `CoopRoom`, and the Rate Limiting binding. The parent dashboard is a Cloudflare Pages project `olam-parent` that proxies `/api/*` to the Worker through a service binding (same origin, cookie auth). | E5, H6. |
+| Backend | One Cloudflare Worker `olam-api` (Hono 4.13.14) with D1 `olam-db`, R2 `olam-private` + `olam-content`, **two Cron triggers** (nightly `10 0 * * *` = 02:10/03:10 Israel; and `*/15 * * * *` for the alert queue, the Friday weekly-report `send_at` check, batch polling and expiry nudges — per 10 §15.3), the Durable Object `CoopRoom`, and the Rate Limiting binding. The parent dashboard is a Cloudflare Pages project `olam-parent` that proxies `/api/*` to the Worker through a service binding (same origin, cookie auth). | E5, H6, 10 §10–§11 (weekly report on Friday 12:00–14:00, ≥ 3 h before candle lighting). |
+| Fonts | Static TTFs only (no variable fonts, 09 §15): Rubik 500/700/800/900 (display), Noto Sans Hebrew 400/500/600/700 (reading, nikud), Andika 400/700 (English). Gate candidates (Fredoka, Frank Ruhl Libre) ship only in the `development` variant until GATE-UX-2 decides. | 09 §3.6 owns the choice; B5 nikud. |
+| iPad multitasking | `UIRequiresFullScreen: true`. Split View, Slide Over and resizable Stage Manager windows are **off**: a kids' game must not shrink to a 1/3-width layout nobody tested, and a child must not drag another app in. The desktop dashboard covers parents' multitasking. ⟂VERIFY on iPadOS 27 that a full-screen-required app also stays unresizable under Stage Manager. | §4.18 E-13. |
+| Resilience | Every failure the walk in §4.18 names has one rule and one acceptance test: first launch offline, migration failure, corrupted DB, storage full, OTA apply timing (never mid-episode), 7-day free-signing expiry, pairing brute force, lost device, concurrent parent edits (field-level LWW), Worker/AI vendor/$-cap outages, missing R2 asset, audio interruptions, Low Power Mode, thermal throttling, orientation changes in 3D, Dynamic Type extremes with nikud, VoiceOver in Hebrew. | Playbooks (14) + REVIEW-BRIEF. |
 | Auth (H + free signing) | **Pluggable identity providers:** `email_code` (primary until the paid program exists), `apple` (Sign in with Apple; turned on after the paid program), and a one-time `bootstrap` owner code. Devices hold opaque device tokens. Guardians hold short JWT access tokens plus rotating refresh tokens. The parent gate is local Face ID / PIN. | SIWA, Push and App Attest need the paid program (§18). |
 | AI | All AI calls go through the Worker under a per-day $ cap: Opus 5.5 Batch for content, Sonnet 5.5 for judging and vision extraction, Haiku 5.5 for companion turns and summaries. Structured outputs everywhere. | E8. |
 | Co-op | Same device first (split-zone iPad). Multi-device runs over a `CoopRoom` Durable Object WebSocket (hibernation API) with a server-authoritative shared state at 10 Hz. | Cheap, works across any network, and needs no native module. |
@@ -48,7 +51,8 @@
  │   /v1/auth/* /v1/family/* /v1/devices/* /v1/pairings/* /v1/sync /v1/content/*          │
  │   /v1/ai/* /v1/tts/* /v1/photos/* /v1/reports/* /v1/admin/* /v1/coop/*                 │
  │ D1 olam-db (Time Travel 30d) · R2 olam-content (packs, audio) · R2 olam-private        │
- │ (photos 30d, backups) · DO CoopRoom · Rate Limiting · Cron (02:10 nightly, Sun 07:41)  │
+ │ (photos 30d, backups) · DO CoopRoom · Rate Limiting · Cron (02:10 nightly; every 15 min:  │
+ │   alert queue, Friday report send_at check, batch polling, expiry nudges)                │
  │ Pages olam-parent (parent web dashboard, /api/* → service binding → olam-api)          │
  └──────┬──────────────────────┬─────────────────────────┬──────────────────────────────┘
         ▼                      ▼                         ▼
@@ -277,14 +281,28 @@ Blender is installed in CI via apt; spike gate #4 decides whether it's used.
     and the `Row` primitive.
   - `olam/no-live-tts`: no imports of `expo-speech` in child-facing code.
   - `olam/no-third-party-analytics`: a deny list of SDK names.
-  - `olam/perf-bans`, from `performance_reliability_playbook.md` §11D:
+  - `olam/perf-bans`, from `performance_reliability_playbook.md` §11D (binding; the standalone
+    playbook spec is `14-performance-quality-playbook.md`, which owns the full rule text — this spec
+    only wires the rules into code, lint and CI):
     - `InteractionManager` and `Touchable*` (removed in RN 0.88)
     - `I18nManager.forceRTL` (RTL is set natively, never toggled)
     - reading `.value` of shared values in render
     - `new THREE.*` inside `useFrame`
     - `createAudioPlayer` inside event handlers
     - `<Image>`/`expo-image` without width/height or aspectRatio
-  - `react-hooks` rules plus the React Compiler lint.
+    - `BlurView` or a blurred shadow on an animated layer (09 §3.9)
+  - `olam/no-raw-design-values` (09 §3): no literal color, duration, radius or size in component
+    code under `packages/ui` and `src/features`; tokens only.
+  - `olam/no-raw-pressable` (09 UX-AC-10): no raw `Pressable`/`TouchableOpacity` in child screens.
+  - `olam/engine-purity` (quality playbook §3): `Math.random`, `Date.now`, `new Date()`, `fetch`,
+    `setTimeout` and any `expo-*`/`react-native` import are banned in `packages/engine` and
+    `packages/content` (`no-restricted-globals` + `no-restricted-imports`).
+  - `olam/no-skipped-tests` (quality playbook §4): `.only`/`.skip`/`xit` fail lint; deleting a test
+    file needs the PR label `tests-removed` with a reason (checked by `tools/ci/test-delta.mjs`).
+  - `@typescript-eslint/switch-exhaustiveness-check`, `no-floating-promises`,
+    `react-hooks/exhaustive-deps` as **errors**.
+  - `react-hooks` rules plus the React Compiler lint; zero compiler bail-outs allowed in
+    `src/games/**` and `src/world/**` (checked with `react-compiler-healthcheck` in CI).
 - **Prettier:** 2-space indent, single quotes, 100 cols, trailing commas `all`.
 - **Lefthook:** pre-commit runs prettier on staged files plus `eslint --cache` on staged files.
   Pre-push runs `pnpm typecheck`.
@@ -435,6 +453,23 @@ Signing settings are written by a config plugin (`plugins/withSigning.ts`):
   gentle banner. Kids never see expiry.
 - When an app has expired on a device, nothing is lost. Re-install, or the next routine run, restores
   it, and local data stays because the bundle ID and team are the same.
+- **Manual trigger (13 §3.2 compatibility):** the parent can also say "חתימה שבועית" in chat, or run
+  `tools/mac/resign.sh --all` themselves. The script is the same; the LaunchAgent is only the
+  automatic caller. (13 calls the script `tools/device/resign.sh`; the canonical path is
+  `tools/mac/resign.sh`, see `docs/review/fable-issues-F6.md`.)
+
+**7-day expiry walk (what actually happens, E-06 in §4.18):**
+
+| Moment | Device | Kid sees | Data |
+|---|---|---|---|
+| Day 5 | routine rebuilds + reinstalls over Wi-Fi; app restarts cleanly on next launch | nothing (install happens while the app is closed; if it is open, iOS quits it and the next launch resumes at the picker) | untouched; an unsynced event queue is flushed on next launch |
+| Day 6, install failed | `POST /v1/ops/notify {kind:'resign_overdue'}` → email to O/C; macOS notification; parent-gate banner "תוקף ההתקנה: עוד יום" | nothing | untouched |
+| Day 7+, expired | iOS refuses to launch: system alert "Unable to Verify App" / "לא ניתן לאמת את האפליקציה". This is iOS UI; we cannot restyle it | the system alert. The parent checklist says what it means ("צריך לחבר למק"); a child who taps it just sees the home screen again | **SQLite, Keychain and packs stay on disk** as long as the app is not deleted. Up to 7 days of unsynced events wait locally (sync runs every 5 min while online, so normally ≤ 5 min of play is unsynced) |
+| Reinstall (same bundle ID + team) | app launches, `app.start` event, sync flush, `app.resigned` telemetry | picker | preserved; verified by the routine's smoke check (`device_self.paired_at` unchanged, event count ≥ before) |
+| Reinstall after delete, or team change | fresh install → pair as a new device (§5.3 S3) → restore from family cloud (§6.6) | setup screen, then picker | server copy restores everything except `local_only` events (mood check-ins, C8) and the per-device bedtime overrides, which the parent re-enters; the parent is told this in the restore screen |
+
+- Rule: **the app is never deleted to "fix" an expiry**; the checklist and the parent-gate banner both
+  say so (13 §3.2 agrees).
 
 **OTA in PATH 1.** Release builds embed the following. JS/asset changes then arrive without the Mac;
 only native changes or the 7-day re-sign need it.
@@ -448,8 +483,24 @@ runtimeVersion: { policy: "fingerprint" }
 - The dev client loads either Metro (`npx expo start --dev-client`, run on the **Mac** via Remote
   Control on the LAN; the container can't host a tunnel) or a published EAS Update branch via its
   extensions panel or `qr.expo.dev`.
-- Updates apply on the **next cold start**. The app never reloads mid-episode. `Updates.reloadAsync()`
-  is called only from the parent area ("עדכון זמין — להפעיל מחדש?").
+- **OTA apply timing (binding, E-05 in §4.18).** `checkAutomatically: 'ON_LOAD'` +
+  `fallbackToCacheTimeout: 0` means the embedded/cached bundle starts immediately and a newer update
+  downloads in the background. It is **applied only at these moments**, by `src/services/updates/
+  UpdateGate.ts`:
+  1. The next cold start (iOS normal case).
+  2. On the **picker** (`/picker` or `/(setup)`), when no child session is open, the device has been
+     idle ≥ 60 s, and no co-op room is active → silent `Updates.reloadAsync()` (the picker re-renders
+     in < 2 s; a kid who taps during the reload simply lands on the picker again). This covers the
+     shared iPad that is never cold-started for weeks.
+  3. From the parent area, "עדכון זמין — להפעיל מחדש?" (manual).
+  - **Never** while a `(child)` route, a mini-game, a chest reveal, the wind-down, a movement activity
+    or a co-op room is mounted. `UpdateGate` checks `useSession().active === false` and
+    `useCoop().roomId === null` before every reload; a test mounts a child route and asserts that
+    `reloadAsync` is not called even when an update is ready.
+  - On `(child)` mount the gate also calls `Updates.checkForUpdateAsync()` only if the last check is
+    > 6 h old; the download itself is deferred until the episode ends (no bandwidth competition with
+    pack downloads during play).
+  - Every `app.start` event carries `updateId`; an S0 bug names the update group to roll back (§11.3).
 
 ### 3.4 PATH 2 — paid program (deferred; ready-to-flip)
 
@@ -490,23 +541,35 @@ app/
 │  ├─ pair.tsx                 new device: scan QR / type 6-digit code
 │  ├─ device-setup.tsx         device name, mode, allowed children (guardian-confirmed)
 │  └─ done.tsx                 → placement expedition per child
-├─ picker.tsx                  Profile picker (avatars, optional picture-PIN, K3 → parent-present gate)
-├─ (child)/[childId]/          ChildSessionProvider (opens a play session, caps, wind-down timer)
-│  ├─ _layout.tsx              Stack; HUD layer; pause → picker on long-press (parent gate to exit app)
-│  ├─ hub.tsx                  3D/2.5D hub (rescued friends live here)
-│  ├─ world/[zoneId].tsx       explorable zone (R3F Canvas + 2D HUD)
-│  ├─ level/[levelId].tsx      gimmick level (G3)
-│  ├─ game/[gameId].tsx        2D learning mini-game (Skia) launched from world triggers
-│  ├─ english/[islandId].tsx   English island — wraps children in <Dir value="ltr">, EN jingle on enter
-│  ├─ collection.tsx           display room with silhouettes (G2)
-│  ├─ shop.tsx                 cosmetic shop (K1 full, K2 simple; hidden for K3 per D5)
-│  ├─ avatar.tsx               avatar / hero customizer
+├─ picker.tsx                  SCR-01 Profile picker (avatars, optional picture-PIN, K3 → parent-present gate)
+├─ safe-room.tsx               SCR-16 החדר המוגן — reachable from the picker and pause WITHOUT a gate (B8);
+│                              works offline and in the dark; no child session required
+├─ rest.tsx                    SCR-20 מנוחה (Shabbat/holiday/bedtime/daily cap/memorial day) — rendered by
+│                              `RestGate` whenever the calendar or device_settings say so; only exits: safe-room, parent gate
+├─ (child)/[childId]/          ChildSessionProvider (opens a play session, caps, wind-down timer, FTUE state)
+│  ├─ _layout.tsx              Stack; HUD layer; pause sheet (SCR-18) is a modal in this layout, not a route;
+│  │                           `gestureEnabled:false`; long-press → picker; parent gate to leave the app
+│  ├─ hub.tsx                  SCR-03 3D/2.5D hub (rescued friends live here); SCR-02 FTUE = hub with
+│  │                           `child_resume.ftueStep < done` (same route, scripted overlay)
+│  ├─ map.tsx                  SCR-04 map / path (zones, nodes, review nodes, secret nodes)
+│  ├─ world/[zoneId].tsx       SCR-05 explorable zone (R3F Canvas + 2D HUD)
+│  ├─ level/[levelId].tsx      SCR-05 gimmick level (G3); K3 diorama is a level with `controls:'diorama'`
+│  ├─ game/[gameId].tsx        SCR-06 2D learning mini-game (Skia) launched from world triggers / map nodes
+│  ├─ english/[islandId].tsx   SCR-06h English island — wraps children in <Dir value="ltr">, EN jingle on enter
+│  ├─ results.tsx              SCR-07 results (CHOREO-06) → chest → receipt; params: episodeId
+│  ├─ wind-down.tsx            SCR-07 episode end ritual (WindDownCard) → picker
+│  ├─ collection.tsx           SCR-12 display room with silhouettes (G2); K3 → StickerBook variant
+│  ├─ shop.tsx                 SCR-08 cosmetic shop (K1 full, K2 simple; route guarded off for K3 per D5)
+│  ├─ avatar.tsx               SCR-09 avatar / hero customizer
+│  ├─ base.tsx                 SCR-10 "הבסיס שלי" (BuildGrid)
+│  ├─ pet.tsx                  SCR-11 pet (K1/K2 only)
 │  ├─ chest/[chestId].tsx      chest reveal (contents fixed at earn time, D2)
-│  ├─ photo-game/[packId].tsx  play a parent-approved photo-to-game pack
-│  └─ wind-down.tsx            episode end ritual
+│  ├─ move/[activityId].tsx    SCR-19 movement activity (SafetyCard → MovementCoach → cooldown)
+│  ├─ playroom.tsx             SCR-17 K3 lap-mode playroom (calmMeadow; the only K3 "hub")
+│  └─ photo-game/[packId].tsx  play a parent-approved photo-to-game pack (opens as a `secret` map node)
 ├─ (coop)/
-│  ├─ lobby.tsx                same-device or multi-device; choose children/roles
-│  └─ room/[roomId].tsx        campfire / co-op session
+│  ├─ lobby.tsx                SCR-13 same-device or multi-device; choose children/roles
+│  └─ room/[roomId].tsx        SCR-13 campfire / co-op session (evening defence)
 ├─ (parent)/                   _layout: ParentGate (Face ID/PIN) + guardian session check; RBAC guard
 │  ├─ index.tsx                dashboard (per child cards; "מה לעשות הערב")
 │  ├─ child/[childId]/…        report, skills, settings (caps, quiet hours, subjects), profile
@@ -529,6 +592,57 @@ Navigation rules:
   is recommended for K3 (parent checklist).
 - Deep links use scheme `olam://`, for `olam://pair?code=…` only. Universal links need associated
   domains, which means the paid program, so they're not used.
+- `RestGate` (in `(child)/_layout` and `picker`) redirects to `/rest` when `calendar.isRestNow()`
+  (Shabbat/holiday window from `@hebcal/core`, family city) or `device_settings.bedtime` says so, or
+  the child's daily cap is reached (that child only: the picker shows the sleeping avatar, SCR-01).
+  Memorial days set `rest.mode='memorial'` (quiet screen, no celebrations, B7).
+
+**Screen ↔ route ↔ owner (every SCR in 09 §8.2 must appear here; test `routes.spec.ts` snapshots
+this table from `app/` so a new screen without a route fails CI):**
+
+| 09 screen | Route | Feature module (`src/features/…`) |
+|---|---|---|
+| SCR-01 picker | `/picker` | `picker/` |
+| SCR-02 FTUE | `/(child)/[id]/hub` + FTUE overlay | `hub/ftue/` |
+| SCR-03 hub | `/(child)/[id]/hub` | `hub/` (+ `src/world`) |
+| SCR-04 map | `/(child)/[id]/map` | `map/` |
+| SCR-05 world level | `/(child)/[id]/world/[zoneId]`, `/level/[levelId]` | `world/` (+ `src/world`) |
+| SCR-06 episode player + mechanics 06a–06g | `/(child)/[id]/game/[gameId]` | `episode/` + `src/games/<gameId>` |
+| SCR-06h English island | `/(child)/[id]/english/[islandId]` | `english/` |
+| SCR-07 results + wind-down | `/(child)/[id]/results`, `/wind-down` | `episode/results/`, `episode/winddown/` |
+| SCR-08 shop | `/(child)/[id]/shop` | `shop/` |
+| SCR-09 avatar | `/(child)/[id]/avatar` | `avatar/` |
+| SCR-10 base | `/(child)/[id]/base` | `base/` |
+| SCR-11 pet | `/(child)/[id]/pet` | `pet/` |
+| SCR-12 collection / sticker book | `/(child)/[id]/collection` | `collection/` |
+| SCR-13 co-op lobby + campfire | `/(coop)/lobby`, `/(coop)/room/[roomId]` | `coop/` |
+| SCR-14 photo-to-game (parent) | `/(parent)/photo/capture` | `parent/photo/` |
+| SCR-15 parent gate | `/(parent)/_layout` ParentGate | `parent/gate/` |
+| SCR-16 safe room | `/safe-room` | `saferoom/` |
+| SCR-17 K3 playroom | `/(child)/[id]/playroom` | `playroom/` |
+| SCR-18 pause | modal sheet inside `(child)/_layout` | `episode/pause/` |
+| SCR-19 movement | `/(child)/[id]/move/[activityId]` | `movement/` |
+| SCR-20 rest | `/rest` | `rest/` |
+| chest reveal | `/(child)/[id]/chest/[chestId]` | `economy/chest/` |
+| parent dashboard screens (10 §6) | `/(parent)/…` | `parent/<area>/` mirrors 10's PA-* ids |
+
+**Component ownership (09 §7 `CMP-xx` → package):**
+
+| Components | Owner | Why |
+|---|---|---|
+| CMP-01..08, 10..17, 19..20, 22..32, 46 (buttons, tiles, drag/drop, trace canvas, nikud text, bubbles, progress, counters, chest, shop card, jar, carousel, swatch, island frame, profile card, turn ring, parent gate, dialogs, toasts, hint, coach strip, loader, settings slider) | `packages/ui` (`components/`, `choreo/`, `audio/`, `haptics/`, `rtl/`, `tokens/`) | platform-neutral, used by mobile **and** parent-web; Storybook-web + Playwright per state × profile |
+| CMP-09 CharacterRig, CMP-18 AvatarPreview | `apps/mobile/src/platform/rive` + contract in `packages/ui/src/character.ts` | needs the Rive native/web split (§4.10) |
+| CMP-21 BuildGrid, CMP-47 StickerBook, CMP-48 PetView | `apps/mobile/src/features/{base,collection,pet}` | screen-specific, Skia-heavy |
+| CMP-33 WorldAnchor, 34 MoveTarget, 35 OffscreenIndicator, 36 HUD, 37 VirtualJoystick, 38 Action/Jump, 39 PowerUpBanner | `apps/mobile/src/features/world/hud` (2D) + `src/world` (3D side of 33/34) | bound to the R3F canvas and Reanimated shared values |
+| CMP-40 DisplayShelf/CollectionSlot | `apps/mobile/src/features/collection` | 3D/2.5D room |
+| CMP-41 MovementCoach, 42 SafetyCard | `apps/mobile/src/features/movement` | sensors (§4.17) |
+| CMP-43 CoopRoleCard/ReadyUp | `apps/mobile/src/features/coop` | split-zone gestures (§10.1) |
+| CMP-44 CaptureFrame/CropHandles/ConfirmItemRow | `apps/mobile/src/features/parent/photo` | camera + manipulator |
+| CMP-45 WindDownCard | `packages/ui` | reused by rest screen |
+| tokens (`color.*`, `type.*`, `touch.*`, `spring.*`, `sfx.*`, `hap.*`) | `packages/ui/tokens/*.ts` → `tokens.json` built in CI for Figma/Rive/Blender | 09 §3 single source |
+
+A component that has no row here cannot be merged (`tools/ci/component-owner.mjs` checks every
+`CMP-` id mentioned in 09 §7 against this table).
 
 ### 4.2 State management and data access
 
@@ -619,7 +733,21 @@ Load flow:
 `src/services/audio/AudioService.ts`, the single owner of audio:
 - **Session** (called **once at startup** in `boot/`, never per scene): `setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'doNotMix',
   shouldPlayInBackground: false })`. Learning narration must be heard even when the iPhone's ring
-  switch is on silent.
+  switch is on silent. `playsInSilentMode` is a parent toggle per device (09 §6.7); `doNotMix` is
+  fixed (the game has its own music; a parent's podcast would collide with VO).
+- **Interruptions (E-16 in §4.18):** phone call, FaceTime, Siri, alarm, another app taking the
+  session (`AVAudioSessionInterruption` surfaces through expo-audio's status / `AppState`
+  `inactive`):
+  1. On interruption begin: pause all buses, pause the game loop (same path as `AppState` inactive),
+     persist resume state. The VO queue item that was cut is **replayed from its start** on resume
+     (an instruction half-heard is worse than none).
+  2. On interruption end: do **not** auto-resume gameplay. Show the "לגעת כדי להמשיך" overlay;
+     music fades back in over 600 ms after the tap; the cut VO replays.
+  3. Route change (Bluetooth headphones connect/disconnect, AirPlay): keep playing; re-run the
+     latency self-check silently (`AudioService.measureLatency()` on the next 3 SFX) and switch
+     the haptics/visual lead per 09 §6.8 if measured latency > 120 ms.
+  4. Microphone use (K1 read-aloud only) requests `allowsRecording` for that activity and releases
+     it after; never at startup (it changes the speaker route on iPhone).
 - **Buses:**
   - `music`: one looping player, crossfade 600 ms.
   - `vo`: a queue with no overlap; it ducks music to 25% over 150 ms.
@@ -675,6 +803,25 @@ It's a no-op on iPad (no Taptic Engine) and on web. Per-child toggle. Rate-limit
 
   A memory-warning handler (`AppState` `memoryWarning`) drops image, Rive and GLB caches. `AppState`
   `inactive`/`background` pauses the render loop, persists resume state and releases music.
+- **Storage full (E-04):** before any pack download the loader checks
+  `FileSystem.getFreeDiskStorageAsync()` and requires `free ≥ packBytes × 2 + 200 MB`; otherwise the
+  pack stays `pending_storage`, the parent area shows "אין מקום באייפד (נותרו N MB)", and the kid
+  keeps playing the packs already present. Old pack versions and the `expo-image` disk cache are
+  purged first (oldest first) before declaring `pending_storage`. SQLite writes that fail with
+  `SQLITE_FULL` are retried once after the purge; if they still fail the episode continues
+  **in memory** (events buffered in `useSession().pendingEvents`), the child is not interrupted, and
+  the buffer is flushed on the next successful write; the parent gets `AL-11` ("אין מקום"). Telemetry
+  `app.storage_full` is emitted once per day.
+- **Low Power Mode (E-17):** `expo-battery` `useLowPowerMode()` → `perfTier = 'low'`: ambient Rive
+  loops at 30 fps, particles ≤ 3, 3D DPR capped at 1.5, `frameloop="demand"` after 1 s idle instead of
+  3 s, music stems reduced to `bed` + `melody`. Gameplay still targets 60 fps; the screen refresh is
+  60 Hz anyway under Low Power Mode. Nothing is said to the child.
+- **Thermal throttling (E-18):** a 40-line Expo Module `olam-thermal` exposes
+  `ProcessInfo.thermalState` and `os_proc_available_memory()`. On `serious`/`critical`: the same
+  degradations as Low Power Mode plus shadows off and a 30 fps cap for the 3D world (`setFrameCap(30)`
+  in `src/world/sim`), and the next zone load is deferred until `nominal`/`fair`. `app.perf` records
+  `thermalState` histograms per session; a device that hits `serious` in ≥ 20% of 3D sessions fails
+  gate #2 for that device class.
 - **Textures:** WebP/PNG ≤ 1024² (props) and ≤ 2048² (hero/atlas only). **No KTX2/Basis on native**:
   it's reported broken with Expo + three.js, and its transcoder needs WASM. AVIF only after a decode-cost
   check on the oldest iPad.
@@ -697,6 +844,24 @@ Sync triggers:
 - every 5 min while foreground and online (`expo-network` state)
 - after an episode ends
 - a manual "סנכרון עכשיו" in the parent area
+
+**First launch offline (E-01).** A freshly installed (or freshly re-signed) app with no network:
+- If `device_self` exists (re-sign/reinstall over an existing install): boot normally, everything in
+  the table above works; the sync scheduler waits for connectivity.
+- If `device_self` is empty (new device, or restore after delete): the setup screen shows
+  "צריך אינטרנט כדי לצרף את המכשיר למשפחה" with a retry button; pairing needs the Worker (there is no
+  offline family). The owner's **bootstrap** path also needs the network. Nothing else is offered —
+  there is no "guest" child, because events must carry a real `childId`/`familyId`.
+- If pairing succeeded but the **initial pull** was cut off: the device is in state
+  `bootstrapping` (`sync_state.pull_cursor = 0`, `device_self` present). The picker shows only the
+  allowed children from `familySnapshot` (returned by `/pairings/claim`, so the picker always has
+  names/avatars), play is allowed immediately with the **bundled core content**, and the pull resumes
+  on the next trigger. Projections are rebuilt once the first full pull completes (§6.5).
+
+**Long offline periods.** There is no limit: 30 days offline still plays. Caps and calendar use the
+device clock; `rest.tsx` uses the bundled Hebcal table (B7) so Shabbat still pauses offline. On
+reconnect, if |skew| > 2 min the telemetry row is logged and HLC physical time takes
+`max(local, server)` (§6.5).
 
 ### 4.9 3D world layer (E1b)
 
@@ -746,7 +911,20 @@ src/features/world/
   - Tilt is a bonus mini-game only.
 - **Determinism hooks (web/dev):** `window.__olam.world = { moveTo(x,z), teleport(id), step(n),
   pause(), state() }`, plus `window.__perf` (fps p50/p95, `renderer.info.render.calls`, triangles,
-  JS ms per frame).
+  JS ms per frame). 09 §13.2 uses the same names (`window.__olam.ready`, `window.__olam.world.moveTo`).
+- **Orientation (E-13):** world/level/game/coop routes lock **landscape** on iPhone via
+  `expo-screen-orientation` (`lockAsync(LANDSCAPE)` on mount, `unlockAsync` on unmount); hub, map,
+  shop, avatar, collection allow both on iPad (09 §8.1). On an iPad rotation during 3D: the sim keeps
+  stepping, `useThree().size` triggers `camera.aspect`/`updateProjectionMatrix`, HUD anchors
+  re-project on the next frame, and the HUD does a 200 ms cross-fade (CHOREO-10). The GL context is
+  **not** recreated (expo-gl keeps it); a test rotates the web viewport 5× and asserts no context
+  loss, no duplicate `Canvas`, and that `renderer.info.memory.textures` is unchanged.
+- **GL context loss** (`webglcontextlost` on web; expo-gl `onContextLost` ⟂VERIFY event name on
+  native): pause the sim, show the per-route error boundary's "נטען מחדש" with the mascot, re-mount
+  the `Canvas` once; on a second loss in 60 s fall back to the 2.5D Skia zone renderer for this
+  session and emit `app.error{kind:'gl_lost'}`.
+- **Split View / Stage Manager:** disabled by `UIRequiresFullScreen: true` (§0). The 3D canvas
+  therefore always gets the full screen; no mid-size layout exists in the Playwright matrix.
 
 **Performance budgets (oldest family device; A12-class assumed until the parent lists devices):**
 
@@ -814,9 +992,14 @@ Data-binding property names are shared with the designer in `assets/rive/contrac
   | Class | Example | Handling |
   |---|---|---|
   | Expected domain | pack pending update | inline UI state |
-  | Network | timeout, 5xx | retry with exponential backoff (0.5 s → 30 s, jitter), queue |
-  | Auth | 401 | refresh once, then re-pair prompt (parent only) |
-  | Integrity | hash mismatch | discard + refetch |
+  | Network | timeout, 5xx, DNS | retry with exponential backoff (0.5 s → 30 s, jitter, cap 15 min for sync), queue. Every call: 10 s timeout + `AbortController`. The child never sees a network error (09 §9.4: silence); the parent area shows `ParentToast` |
+  | Worker down (E-09) | 502/503/522/530 from Cloudflare, or `/v1/health` failing | same as Network; the app is local-first so play continues. Parent area tabs that are server-only show the last snapshot with "מעודכן לפני N דק׳". After 24 h without a successful sync `AL-11` is raised by the Worker when it is back (device `last_seen_at`) and locally as a parent-gate banner |
+  | AI vendor down (E-09) | Anthropic 529 overloaded / 5xx / timeout 20 s | companion: scripted hint from the pack immediately (no spinner > 1 s), `ai_log.flagged='vendor_down'`; photo extract: job `queued` with retry at 1, 5, 15 min then `failed` + `AL-08b` text "ננסה שוב מאוחר יותר"; batch: next 15-min poll retries `batches.create` up to 3× per night, then the night is skipped and logged |
+  | $ cap hit (E-09) | 503 `cap_reached` | companion → scripted hints for the rest of the day (child unaware); parent area + email at 80 % and 100 % (`AL-11`); batch submit skipped until midnight Israel; `PATCH /admin/limits` raises the cap (owner) |
+| Auth | 401 | refresh once, then re-pair prompt (parent only) |
+  | Integrity | hash mismatch, **R2 object missing (404) for a catalogued file** (E-10) | discard + refetch ×3 with backoff; a 404 marks the pack version `failed{reason:'asset_missing'}`, keeps the previous version active, and raises `ops/notify {kind:'asset_missing', packId, path}` so the agent republishes the pack. A **VO file missing at play time** (should be impossible after verification) plays the bundled generic line for that message key (`vo.generic.<intent>`) and shows the text; `app.error{kind:'vo_missing'}` |
+  | Local DB (E-02/E-03) | migration failure, `SQLITE_CORRUPT`, `quick_check` ≠ ok | §6.3 recovery ladder: retry → restore from server copy; the child sees the picker a few seconds later, never a stack trace |
+  | Storage | `SQLITE_FULL`, disk < 200 MB | §4.7 storage-full rule |
   | Programming | bug | boundary + `app.error` event |
 
 - **API errors** use one shape:
@@ -903,9 +1086,48 @@ polyfill if that fails.
 - **R-9** 3D world, Skia canvases and game coordinates are direction-agnostic. Any text in them is a
   2D overlay (R-3). Skia paragraph text is not used for Hebrew in kid screens until nikud rendering is
   verified on device (B5).
-- **R-10** Font: a Hebrew font with correct nikud GPOS (candidates Noto Sans Hebrew / Assistant /
-  licensed kids' font), tested on device on day 1 with the nikud torture string in
-  `packages/i18n/test/nikud-sample.txt`.
+- **R-10** Font: **Noto Sans Hebrew** for reading text and **Rubik** for display (09 §3.6, both
+  with verified nikud GPOS; Open Sans, Heebo, Varela Round and Karantina are banned for pointed text),
+  tested on device on day 1 with the nikud torture string in `packages/i18n/test/nikud-sample.txt`.
+  GATE-UX-2 may swap the reading font (Fredoka / Frank Ruhl Libre candidates); the token name stays.
+- **R-11** Dynamic Type (E-14): child screens set `allowFontScaling={false}` at the `HText` level
+  and scale by the per-profile slider (100–150 %, 09 §3.6) instead; parent screens honour system
+  Dynamic Type up to **AX3 (≈ 235 %)** with no clipping (10 AC-35), larger sizes scroll. Nikud
+  text at any scale keeps `lineHeight = round(size × ratio)` recomputed from the scaled size (never a
+  fixed pt), `paddingVertical ≥ 0.12em`, `overflow: visible` on the nearest ancestor, and `numberOfLines`
+  only with `adjustsFontSizeToFit` **off** (shrinking pointed text detaches marks on iOS ⟂VERIFY on
+  iOS 27). Playwright shoots every nikud screen at 100/135/150 % (09 §13.2) and the parent screens at
+  AX3; a mark crossing the glyph box is a failed `UX-AC-03b` (bounding-box check per word token).
+- **R-12** VoiceOver in Hebrew (E-15): every `HText` child-facing word gets `accessibilityLabel` =
+  the **unpointed** string (VoiceOver's Hebrew voice reads combining marks letter-by-letter on isolated
+  glyphs); a single letter tile gets the letter *name* ("בֵּית") as label; numbers use the B4 lookup
+  (gendered) in the label; English islands set `accessibilityLanguage="en-US"` on the `<Dir
+  value="ltr">` root so VoiceOver switches voice (B2); directional hints ("החלק שמאלה") are never in
+  labels (RTL-neutral verbs only). Focus order follows DOM/tree order, which is RTL under
+  `direction:'rtl'`; a Playwright `axe` + `accessibility tree` snapshot per screen asserts the order
+  starts at the start-edge counter (CMP-36). VoiceOver + Reanimated: the HUD exposes
+  `accessibilityLiveRegion="polite"` only for the friends counter, never for per-frame values.
+- **R-13 Known RN RTL bugs → regression tests** (each has a Playwright or Maestro case tagged
+  `@rtl-bug`):
+  1. `ScrollView`/`FlatList` horizontal initial offset and `contentOffset` mirrored (iOS) → use
+     `inverted`-free custom carousels with explicit `scrollToOffset` from the start edge; test:
+     carousel shows item 1 at the right edge on first and second visit.
+  2. `TextInput` caret/placeholder alignment under `direction:'rtl'` → always set `textAlign:'right'`
+     + `writingDirection:'rtl'` on inputs (parent area only; kids have no inputs except K1 words).
+  3. `Image`/`expo-image` `resizeMode` ignores direction (fine) but `transform:[{scaleX:-1}]` must
+     not be applied to illustrations (lint `mirrorInRtl` manifest, 09 UX-AC-14).
+  4. `Modal` and native sheets flip entry edge on iOS 17+ with `forcesRTL` → custom sheets only (R-7).
+  5. `position:'absolute'` with `left/right` → lint-banned (R-2); `start/end` only.
+  6. Negative `marginStart` on a `Row` inside `Reanimated.View` with `transform` → test both
+     `translateX` signs via `dirX()` (09 §3.11) in each `CHOREO`.
+  7. Progress bars filled by `width` + `alignSelf:'flex-start'` render from the left under RTL →
+     use `alignSelf:'flex-start'` inside a `Row` (flips) and never `left:0`.
+  8. `FlashList` `horizontal` + RTL: ⟂VERIFY on FlashList 2.3.2; until verified, horizontal lists
+     are custom `ScrollView`s.
+  9. react-native-screens native header is LTR unless `semanticContentAttribute` is set → headers are
+     custom (`headerShown:false`, R-7).
+  10. Web: `dir="rtl"` on `<html>` plus `unicode-bidi: isolate` on every `HText` (set by the
+      `bidi()` helper) so mixed Hebrew/Latin strings never reorder punctuation.
 
 ### 4.15 Performance techniques
 
@@ -918,21 +1140,37 @@ polyfill if that fails.
   avoid wide re-renders. Expensive engine calls run between episodes or in
   `requestIdleCallback`/`startTransition`. **`InteractionManager` and `Touchable*` were removed in RN
   0.88 / SDK 58** (lint-banned; use `Pressable`).
-- **The 25 performance rules** from `performance_reliability_playbook.md` §11A are binding and are
-  copied into `CLAUDE.md`. The key ones:
-  - Per-frame state lives in shared values or refs, never React or Zustand state. No JS work per frame
-    during gameplay.
-  - Animate transform and opacity only.
-  - Motion is time-based (`dt`), correct at 60 and 120 Hz. Set `CADisableMinimumFrameDurationOnPhone`
-    in Info.plist for 120 Hz.
-  - Never stack live Skia + Rive + GL surfaces in one frame unless profiled. At most 2 Skia canvases
-    and 3 animating Rive instances (`.riv` ≤ 200 KB each).
-  - Every image has explicit size or aspectRatio. Game sprites use `transition={0}`.
-  - Nikud text uses lineHeight ≥ 1.5×, and in-game labels are capped by `maxFontSizeMultiplier`.
-  - Fixed logical game resolution scaled into the safe area.
-  - SQLite uses WAL and **async APIs only**, with batched transactions at checkpoints.
-  - Every network call has a timeout plus `AbortController`.
-  - Perf decisions are made only on Release builds on the oldest iPad.
+- **The 25 performance rules** from `performance_reliability_playbook.md` §11A are binding, are
+  copied into `CLAUDE.md`, and are owned as a spec by `14-performance-quality-playbook.md`. This
+  spec maps each to its enforcement point (lint = §2.4, CI = §11.5, device = §12.5, review = PR
+  checklist):
+  | # | Rule (short) | Enforced by |
+  |---|---|---|
+  | 1 | per-frame state in shared values/refs, never React/Zustand | lint `.value` in render; review |
+  | 2 | JS thread idle during play; discrete events only | Time Profiler (§12.5 #5); `app.perf.jsMsP95` |
+  | 3 | gestures as UI-thread worklets; `scheduleOnRN` only on end/hit | review; lint `runOnJS` in `onUpdate` |
+  | 4 | animate transform/opacity only | lint `olam/perf-bans` (layout props in `withTiming`) |
+  | 5 | time-based motion (`dt`), 60/120 Hz; `CADisableMinimumFrameDurationOnPhone` | app.config; sim fixed step (§4.9) |
+  | 6 | Reanimated `IOS_SYNCHRONOUSLY_UPDATE_UI_PROPS` + `USE_COMMIT_HOOK_ONLY_FOR_REACT_COMMITS` | app.config `expo-build-properties` ⟂VERIFY no conflict with Skia 2.14 |
+  | 7 | React Compiler on, zero bail-outs in `src/games/**`, `src/world/**`; atomic selectors | CI `react-compiler-healthcheck` |
+  | 8 | no `InteractionManager`; `requestIdleCallback`/`startTransition` | lint |
+  | 9 | one Skia Canvas per scene; atlases ≤ 2048²; paints/shaders/paths created once | review; asset linter |
+  | 10 | Rive Nitro, one file per character, idle `frameRate` capped, ≤ 3 instances | `RiveRegistry` asserts in dev |
+  | 11 | R3F `frameloop="demand"` when idle; dpr ≤ 2; ≤ 80/120 draw calls; instancing; no allocation in `useFrame`; dispose on unmount; one GL context | lint `new THREE.*`; `window.__perf` in Playwright (trend); gate #2 |
+  | 12 | never stack live Skia + Rive + GL in one frame unless profiled | `SurfaceBudget` dev assert (≤ 2 Skia, ≤ 3 Rive, 1 GL) |
+  | 13 | audio session once; SFX preloaded/pooled; released on exit | §4.5; lint `createAudioPlayer` in handlers |
+  | 14 | haptics fire with the visual, throttled, iPad no-op | §4.6 |
+  | 15 | fonts via config plugin; splash held until fonts + home essentials, **4 s timeout** | §4.7 (3 s target, 4 s hard) |
+  | 16 | explicit image size/aspectRatio; sprites `transition={0}` | lint |
+  | 17 | RTL set natively; world never mirrored; LTR isolation for numbers/math | §4.14 |
+  | 18 | nikud: lineHeight ≥ 1.5×, vertical padding, tested at max scale; in-game labels capped | R-11; Playwright at 150 %/AX3 |
+  | 19 | fixed logical game resolution scaled into the safe area; orientation locked per route | §4.9 orientation |
+  | 20 | error boundary at root and per scene; scenes rebuild from persisted state | §4.11 |
+  | 21 | pause everything on `inactive`; persist; resume to "tap to continue" | §4.5 interruptions; §4.18 |
+  | 22 | memory-warning handler clears caches; per-scene memory budget | §4.7 |
+  | 23 | SQLite WAL, async only, batched transactions at checkpoints | repositories; lint `*Sync(` from expo-sqlite outside `boot/` |
+  | 24 | offline-first; timeout + `AbortController` on every call; never block UI on network | `apiClient` wrapper is the only `fetch` (lint) |
+  | 25 | perf decisions only on Release builds on the oldest iPad | §12.5 |
 - **Startup:** cold start to interactive picker ≤ 2.5 s on the oldest iPad. Only the core fonts and
   the picker Rive load before first paint; the hub GLB is preloaded while the picker is shown.
 - **Tap-to-feedback:** visual response in the same frame (worklet), haptic ≤ 20 ms, sound p95 ≤ 50 ms.
@@ -978,6 +1216,39 @@ polyfill if that fails.
 - **Safety:** every movement activity has a seated alternative (same learning action via tap). The
   parent sets the space checklist once. Each activity has a max of 90 s of continuous movement.
 - **Web/testing:** DeviceMotion is simulated via `window.__olam.motion.feed(samples)` in Playwright.
+
+### 4.18 Edge-case walk (binding rules + acceptance tests)
+
+Each row is one rule, one owner section, and one test id (`E-xx` appears in the test name). The
+child-facing outcome always follows 09 §9.4 ("silence or a mascot sneeze"; details only in the
+parent area).
+
+| Id | Situation | Rule | Kid sees | Parent sees | Test |
+|---|---|---|---|---|---|
+| E-01 | First launch offline | §4.8: existing device boots and plays; new device needs network to pair; `bootstrapping` state plays bundled content with the `familySnapshot` picker | picker or "צריך אינטרנט" (setup only) | — | Maestro `offline-first-launch`; Playwright route-intercept |
+| E-02 | DB migration fails at boot | §6.3 ladder: retry once → backup file → fresh DB → restore from server (cursor 0) → if also offline: play with bundled content in `bootstrapping`; `local_only` lost, parent told | splash ≤ 4 s, then picker | banner "המכשיר שוחזר מהענן; צ'ק-אינים מקומיים לא שוחזרו" + `app.error{kind:'migration_failed'}` | jest fixture DBs v-1..v-3 + a poisoned migration |
+| E-03 | Corrupted local DB | boot runs `PRAGMA quick_check(1)` (≤ 50 ms at our size); on failure or `SQLITE_CORRUPT` at any time → same ladder as E-02 after an attempt to salvage unpushed events (`SELECT` from the corrupt file in a try; on success they are pushed first) | as E-02 | as E-02 | unit: corrupt header fixture |
+| E-04 | Storage full | §4.7: no new packs (`pending_storage`), purge caches, in-memory event buffer on `SQLITE_FULL` | plays what is installed | "אין מקום באייפד" + AL-11 | unit: injected `SQLITE_FULL` |
+| E-05 | OTA update ready mid-session | §3.3 `UpdateGate`: applied only at cold start, idle picker (≥ 60 s), or parent action; never in `(child)`/co-op | nothing | "עדכון זמין" in parent area | unit: gate with mounted child route |
+| E-06 | 7-day free-signing expiry | §3.3 walk; app never deleted; data stays; re-sign restores | iOS "Unable to Verify App" (system) | email day 6, banner ≤ 1 day, devices list | routine smoke; acceptance #2 |
+| E-07 | Pairing code brute force | §9.2: 6 digits, 10 min TTL, 5 attempts per pairing then the pairing is **burned** (new one required, audit `pairing.burned`), 5/min/IP, ≤ 3 open pairings per family, QR carries a 128-bit nonce | — | "הקוד בוטל אחרי 5 ניסיונות" | worker test: 6th attempt → 410 + burned |
+| E-08 | Lost/stolen device, wipe | §5.3 S5: unpair revokes the token now; `wipe` runs on next contact (push events → delete DB, packs, Keychain → ack); `wipe_pending` auto-revokes after 7 days; PIN hashes on the device are scrypt-hardened (N=2^15) and grant only the local parent gate; guardian refresh tokens are Face ID/passcode-bound in Keychain | setup screen after revoke ("המכשיר נותק מהמשפחה") | device status `unpaired`/`wipe_pending` with timestamps | worker test S5; Maestro `wipe` |
+| E-09 | Worker down / AI vendor down / $ cap hit | §4.11 table | plays; companion silently scripted | last-snapshot banners, AL-11, cost alerts | worker tests with fetch mocks: 529, 503 |
+| E-10 | R2 asset missing | §4.11 Integrity row: version `failed{asset_missing}`, previous stays, agent notified; missing VO at play → generic line + text | generic VO line | approvals tab shows pack `failed` | worker test 404 on presign target; unit `vo_missing` |
+| E-11 | Two parents edit settings at once | §6.5 **field-level** LWW for `child_settings`, `family_prefs`, `device_settings`, `reward` docs: each field carries its own HLC; concurrent edits of different fields both survive; same field → higher HLC wins and the loser's screen shows "עודכן על ידי {name} לפני רגע" with the new value (TanStack refetch on `docs` pull). Identity rows are server-authoritative with `If-Match: hlc` → 409 `conflict` + reload | — | toast + merged values | fast-check: two writers, any interleaving → converged map |
+| E-12 | Audio interrupted (call, Siri, alarm, BT route) | §4.5 interruptions | "לגעת כדי להמשיך"; VO replays | — | device checklist #14; unit on interruption events |
+| E-13 | Orientation change during 3D; Split View / Stage Manager | §4.9: resize without context loss; landscape lock on iPhone game routes; multitasking disabled (`UIRequiresFullScreen`) | 200 ms HUD cross-fade | — | Playwright viewport rotate ×5; device checklist |
+| E-14 | Dynamic Type extremes with nikud | R-11 | child text unaffected by system size (profile slider only) | AX3 parent screens, no clipping | Playwright 150 % / AX3 + `UX-AC-03b` |
+| E-15 | VoiceOver in Hebrew | R-12 | labels in unpointed Hebrew, English islands in en-US | fully accessible parent area | axe + a11y-tree snapshot |
+| E-16 | App backgrounded mid-episode (home button, Control Center, lock) | playbook rule 21: pause loops on `inactive`, persist `child_resume` + flush events; on `active` show "לגעת כדי להמשיך"; if away > 10 min the episode ends cleanly (`session.ended{reason:'background'}`), the chest/receipt earned so far is kept (no loss) and the next launch opens the picker | tap-to-continue, or picker | — | Maestro background/foreground; unit timer |
+| E-17 | Low Power Mode | §4.7 | nothing | — | device protocol pass 2 |
+| E-18 | Thermal throttling | §4.7 | nothing (30 fps cap) | ops tab: thermal histogram | 30-min soak |
+| E-19 | Clock set wrong / far-future device | §6.4 server clamp +5 min; §6.5 skew telemetry; daily caps use `DayKey` from the device clock but the server recomputes `daily_usage` from `received_at` when skew > 2 h and the device adopts it on the next pull | may get an extra episode once | skew noted in device detail | worker test: ts = now + 1 y |
+| E-20 | Same child on two devices at once | allowed (C5: no punishment). Each device opens its own `session`; caps merge at sync (overrun tolerated); economy double-spend → `econ.overdraft`, balance shown as `max(0, coins)` | both play | usage per device | fast-check convergence |
+| E-21 | Child deleted while a device is offline with that child's events | server accepts the events (soft-deleted child keeps 30 days), projections skip deleted children; device drops the child from the picker on the next pull | child vanishes from picker after sync | audit row | worker test |
+| E-22 | Pack approved while the child is mid-episode | catalog pull after the episode only (`ContentPackLoader` holds downloads while `useSession().active`); the atomic switch happens at the picker | nothing mid-episode | approvals → "יורד למכשירים" | unit: loader paused during session |
+| E-23 | Guardian removed / role downgraded while signed in on a device | next API call → 403 `forbidden` → app clears the guardian session on that device (device token stays), parent area falls back to local mode L | — | "ההרשאה שונתה" | worker + client test |
+| E-24 | Memorial day / Shabbat starts mid-episode | `RestGate` lets the current episode finish (≤ 20 min) with celebrations downgraded to `calm` register from the moment the window starts; new episodes are blocked by `rest.tsx` | wind-down as usual, then rest screen | — | unit with fake clock around candle lighting |
 
 ---
 
@@ -1076,7 +1347,9 @@ Guardian device (signed in)                 Worker/D1                      New d
  shows QR + code (big digits, Hebrew instructions)                         welcome → "צירוף מכשיר למשפחה"
                                                                             scan QR (expo-camera) or type code
                                         ◄─ POST /v1/pairings/claim {pairingId?+nonce | code, deviceInfo} ─┤
-   rate-limit (5/10min/IP; 5 attempts per pairing); verify; create device + device_children;
+   rate-limit (5/10min/IP; 5 attempts per pairing, then the pairing is BURNED: cancelled_at set,
+   audit(pairing.burned), guardian screen says "הקוד בוטל אחרי 5 ניסיונות — צרו קוד חדש"; ≤ 3 open
+   pairings per family); verify; create device + device_children;
    issue device token; pairing.claimedBy; audit(device.paired by guardian)
                                         ── {deviceId, deviceToken, familySnapshot} ────────────────►
  guardian screen live-updates (poll 2s) "המכשיר צורף ✓"                    stores token in Keychain,
@@ -1088,13 +1361,23 @@ ID gate locally. If a guardian wants admin actions from that device, they sign i
 
 **S4 — Parent gate on any device**
 ```
-child taps hidden-corner gear (hold 2s) → ParentGate
-  ├─ capabilities.faceId → LocalAuthentication.authenticateAsync({promptMessage:"כניסת הורים", disableDeviceFallback:false})
-  │     success → if guardian session present: unlock Keychain refresh → access JWT → (parent) routes
-  │                else: local-only parent mode (settings that are device-local + docs LWW sync via device token
-  │                      with guardian attribution = "device-local parent", restricted set; see RBAC)
-  └─ PIN pad (6 digits, scrypt verify against synced guardian pin hashes; 5 fails → 60s cooldown, doubling)
-No arithmetic gates (E7).
+child taps hidden-corner "adults" icon (hold 2s, 09 CMP-25) → ParentGate
+  ├─ capabilities.faceId && device_settings.gate.biometrics !== 'off'
+  │     → LocalAuthentication.authenticateAsync({promptMessage:"כניסת הורים",
+  │         disableDeviceFallback: mode === 'shared_kids' || mode === 'single_child' ? true : false })
+  │       ·  shared/kid devices: NO fallback to the iPad passcode (kids know it; 10 §18.2) — a Face ID
+  │          miss goes straight to the PIN pad
+  │       ·  parent_only devices: fallback allowed (the phone passcode is the parent's)
+  │       ·  ON-06 "ילדים רשומים ב-Face ID / מכירים את הקוד" → device_settings.gate.biometrics='off' → PIN only
+  │     success → guardian picker ("מי נכנס? אמא / אבא", 2 big cards; skipped when only 1 guardian) so the
+  │               audit log records who entered (10 SEC-02) →
+  │               if that guardian's session is present on this device: unlock Keychain refresh → access JWT → (parent) routes
+  │               else: local-only parent mode L (device-local settings + docs LWW via the device token with
+  │                     actor = 'device-local:<guardianId>'; restricted set; see RBAC)
+  └─ PIN pad (6 digits, scrypt verify against synced guardian pin hashes, which also identifies the guardian;
+       5 fails → 60 s cooldown, doubling each round (60→120→240…), reset after a success; the cooldown is
+       stored in kv-store so a restart doesn't skip it; the calm "בקשו מאבא או מאמא" screen, 09 CMP-25)
+No arithmetic gates (E7). `sfx.parent.gate` plays on success; nothing on failure (no "error" sound for a child who tapped by mistake).
 ```
 
 **S5 — Remote bedtime lock / unpair / wipe**
@@ -1209,18 +1492,26 @@ type EventEnvelope = {
 
 | Type | cls | Payload (abridged) |
 |---|---|---|
-| `session.started` / `session.ended` | learn | `{mode:'solo'\|'coop'\|'lap', reason?}` |
+| `session.started` / `session.ended` | learn | `{mode:'solo'\|'coop'\|'lap', reason?:'cap'\|'switch'\|'background'\|'inactivity'\|'parent'\|'done'}` |
+| `episode.completed` | learn | `{episodeId, coop:boolean, participants[], durationMs, celebrationMs}` (02 `episode_completed`; 09 UX-AC-08 budget uses `celebrationMs/durationMs`) |
 | `placement.step` | learn | `{probeId, skill, outcome, rtMs}` |
-| `item.presented` / `item.answered` | learn | `{packId, packVer, itemId, skill, template, answer, correct, rtMs, hintsUsed, attempt}` |
-| `hint.shown` | learn | `{itemId, level}` |
-| `skill.mastered` | learn | `{skill, evidence:{n, acc}}` (emitted by engine, deterministic) |
-| `world.trigger` / `world.rescue` / `world.collect` | learn | `{zoneId, triggerId, friendId?, pieceId?}` |
-| `econ.earn` / `econ.spend` / `chest.earned` / `chest.opened` | econ | `{currency, amount, reasonEventId}` / `{itemId, price}` / `{chestId, contents[] fixed}` |
-| `inventory.equip` | econ | `{slot, itemId}` |
+| `item.presented` / `item.answered` | learn | `{packId, packVer, itemId, skill, template, answer, correct, firstTry, hintUsed, workedExample, isReview, stretch, embodied, rtMs, attempt}` (fields = 02 §2.1 `item_answered` + 08 §4 RT filters) |
+| `hint.shown` | learn | `{itemId, level, source:'scripted'\|'ai'}` |
+| `skill.level_changed` | learn | `{skill, from:LevelId, to:LevelId, evidence:{n, acc}}` (emitted by the engine reducer, deterministic; 08 §1.1 LevelId `new…master`; 02's `skill_state_changed` uses the `packages/shared/levels.ts` mapping) |
+| `skill.delayed_check` | learn | `{skill, gapDays, passed}` (02 `delayed_check_passed`) |
+| `world.trigger` / `world.rescue` / `world.collect` / `world.secret` / `world.boss` | learn | `{zoneId, levelId, triggerId, friendId?, pieceId?, secretId?, bossId?, first?}` (02 `friend_rescued`, `puzzle_piece_found`, `secret_level_cleared`, `boss_defeated`, `region_boss_defeated`) |
+| `focus.span` | learn | `{start, end, focusedSec, screenType:'episode'\|'world'\|'hub'\|'shop'\|'base'\|'collection'\|'coop'\|'move'}` — **computed on the device** by `src/services/telemetry/focus.ts` from the raw tap stream (which stays in memory and is never stored); one event per screen visit ≥ 10 s; 10 §4 M-01 reads it. Raw taps never leave the device (10 §18.2) |
+| `mission.confirmed` / `mentor.completed` / `holiday.completed` | learn | `{missionId, confirmedBy}` / `{mentorId, menteeId}` / `{eventId}` (02 §2.1) |
+| `econ.spend` / `chest.opened` / `inventory.equip` / `wishlist.set` / `econ.overdraft` | econ | `{itemId, price, currency}` / `{chestId}` / `{slot, itemId}` / `{itemId\|null}` / `{coins}` — **user actions and anomalies only**. Earnings, chest contents and grants are **not stored as events**: they are a deterministic fold of `learn` events by `packages/engine/economy` (02 §2.1), so two devices can never double-pay. Chest contents are fixed by `chestId = hash(sourceEventId)` (D2) |
 | `coop.joined` / `coop.contribution` | learn | `{roomId, role, contribution}` |
-| `motion.activity` | learn | `{activity, counts:{jumps:n}}` (aggregates only) |
-| `app.error` / `app.perf` / `app.start` | telemetry | `{route, message, stack≤4KB}` / `{fpsP95, jsMsP95, coldStartMs}` / `{runtimeVersion, updateId}` |
-| `checkin.mood` | local_only | `{mood}` (never synced) |
+| `motion.activity` | learn | `{activity, counts:{jumps:n}, seated:boolean}` (aggregates only) |
+| `app.error` / `app.perf` / `app.start` / `app.update` / `app.storage_full` / `app.resigned` | telemetry | `{route, message, stack≤4KB, kind?}` / `{fpsP95, jsMsP95, coldStartMs, memPeakMb, thermal:{nominal,fair,serious,critical}, scene}` / `{runtimeVersion, updateId, signedAt}` / `{fromUpdateId, toUpdateId, where:'cold'\|'picker'\|'parent'}` / `{freeMb}` / `{signedAt}` |
+| `checkin.mood` | local_only | `{mood}` (never synced; only the derived boolean `EMO_CHECKIN` flag may sync, and only with consent T4b, per 10 00-Δ3 / 08 §9.2) |
+
+**Naming contract:** wire `type` is dotted and lower-case; `packages/shared/events.ts` exports
+`toEngineEvent(envelope): EngineEvent` which maps to the snake_case `t` names 02 §2.1 and 08 use
+(`item.answered` ↔ `item_answered`, `world.rescue` ↔ `friend_rescued`, …). One mapping, one test that
+every 02 `LearnEvent.t` has exactly one wire type.
 
 ### 5.9 Retention policy
 
@@ -1345,9 +1636,13 @@ CREATE INDEX event_unpushed ON event(pushed_at) WHERE pushed_at IS NULL AND orig
 CREATE UNIQUE INDEX event_device_seq ON event(device_id, seq);
 
 -- projections (derived; rebuildable from events)
+CREATE TABLE app_meta (                   -- schema/version bookkeeping for the recovery ladder (§6.3)
+  key TEXT PRIMARY KEY, value TEXT NOT NULL  -- 'schema_version', 'last_quick_check_at', 'restored_from_cloud_at', 'engine_version'
+) STRICT;
 CREATE TABLE skill_state (
   child_id TEXT NOT NULL, skill TEXT NOT NULL, elo REAL NOT NULL, n INTEGER NOT NULL,
   correct INTEGER NOT NULL, box INTEGER NOT NULL, due_at INTEGER, last_at INTEGER,
+  level TEXT NOT NULL DEFAULT 'new' CHECK (level IN ('new','beginner','advancing','proficient','master')), -- 08 §1.1 LevelId
   mastered_at INTEGER, PRIMARY KEY (child_id, skill)
 ) STRICT;
 CREATE TABLE item_state (
@@ -1599,14 +1894,74 @@ CREATE TABLE child_skill_month (
   PRIMARY KEY (child_id, month, skill)
 ) STRICT;
 CREATE TABLE reports (
-  id TEXT PRIMARY KEY, family_id TEXT NOT NULL, week TEXT NOT NULL,   -- ISO week starting Sunday
-  body_json TEXT NOT NULL, summary_he TEXT, emailed_at INTEGER, created_at INTEGER NOT NULL
+  id TEXT PRIMARY KEY,                       -- weekly: `${familyId}:${isoWeek}` (idempotent send, 10 §11.1)
+  family_id TEXT NOT NULL, kind TEXT NOT NULL CHECK (kind IN ('weekly','monthly')),
+  period_from TEXT NOT NULL, period_to TEXT NOT NULL,   -- DayKey; weekly period is rolling (previous snapshot → now)
+  send_at INTEGER NOT NULL,                  -- computed per family: clamp(candleLighting − 3h, 12:00, 14:00) Friday / erev chag (10 §11.1)
+  body_json TEXT NOT NULL, summary_he TEXT, sent_at INTEGER, created_at INTEGER NOT NULL
 ) STRICT;
+CREATE INDEX reports_due ON reports(send_at) WHERE sent_at IS NULL;
 CREATE TABLE coop_rooms (
   id TEXT PRIMARY KEY, family_id TEXT NOT NULL, created_by_device TEXT NOT NULL,
   created_at INTEGER NOT NULL, ended_at INTEGER, summary_json TEXT
 ) STRICT;
+
+-- 0005_parent_area.sql (tables requested by 10 §15.1; owned here, consumed by 10) ---------------
+CREATE TABLE alerts (
+  id TEXT PRIMARY KEY, family_id TEXT NOT NULL, child_id TEXT, rule TEXT NOT NULL,   -- 'AL-01'…'AL-14'
+  key TEXT NOT NULL,                          -- dedupe key (rule + skill/device/…)
+  payload_json TEXT NOT NULL, created_at INTEGER NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('queued','sent','report','expired')),
+  feedback TEXT CHECK (feedback IN ('up','down')), feedback_at INTEGER
+) STRICT;
+CREATE INDEX alerts_family_status ON alerts(family_id, status, created_at);
+CREATE UNIQUE INDEX alerts_dedupe ON alerts(family_id, child_id, rule, key);
+
+CREATE TABLE deliveries (
+  id TEXT PRIMARY KEY, ref_type TEXT NOT NULL CHECK (ref_type IN ('alert','report')), ref_id TEXT NOT NULL,
+  guardian_id TEXT NOT NULL, channel TEXT NOT NULL CHECK (channel IN ('push','email','telegram','inbox')),
+  scheduled_for INTEGER NOT NULL, sent_at INTEGER, error TEXT, attempts INTEGER NOT NULL DEFAULT 0
+) STRICT;
+CREATE INDEX deliveries_due ON deliveries(scheduled_for) WHERE sent_at IS NULL;
+
+CREATE TABLE report_feedback (report_id TEXT NOT NULL, guardian_id TEXT NOT NULL, vote TEXT NOT NULL, at INTEGER NOT NULL, PRIMARY KEY (report_id, guardian_id)) STRICT;
+CREATE TABLE observation_feedback (observation_id TEXT NOT NULL, guardian_id TEXT NOT NULL, vote TEXT NOT NULL, correction TEXT, at INTEGER NOT NULL, PRIMARY KEY (observation_id, guardian_id)) STRICT;
+CREATE TABLE external_evidence (
+  id TEXT PRIMARY KEY, family_id TEXT NOT NULL, child_id TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('paperProbe','teacherNote','transfer')), subject TEXT,
+  value_json TEXT NOT NULL, created_by TEXT NOT NULL, ts INTEGER NOT NULL
+) STRICT;
+CREATE TABLE approvals (                      -- unified queue over packs + photos + stories + SEL + creations + share cards (10 API-18)
+  id TEXT PRIMARY KEY, family_id TEXT NOT NULL,
+  kind TEXT NOT NULL CHECK (kind IN ('photo','pack','story','sel','creation','share','viewerVoice')),
+  child_ids_json TEXT NOT NULL DEFAULT '[]', payload_ref TEXT NOT NULL,   -- packs.pack_id:version | photos.id | R2 key
+  status TEXT NOT NULL CHECK (status IN ('pending','approved','approved_some','rejected','expired')),
+  created_at INTEGER NOT NULL, decided_by TEXT, decided_at INTEGER, reasons_json TEXT
+) STRICT;
+CREATE INDEX approvals_family_status ON approvals(family_id, status, created_at);
+CREATE TABLE share_cards (
+  id TEXT PRIMARY KEY, family_id TEXT NOT NULL, child_id TEXT NOT NULL, type TEXT NOT NULL, r2_key TEXT NOT NULL,
+  consent TEXT NOT NULL CHECK (consent IN ('child','parent')), status TEXT NOT NULL, created_at INTEGER NOT NULL
+) STRICT;
+CREATE TABLE viewer_feed (viewer_id TEXT NOT NULL, card_id TEXT NOT NULL, reaction TEXT, at INTEGER, PRIMARY KEY (viewer_id, card_id)) STRICT;
+CREATE TABLE push_tokens (                    -- phase 2 only (no APNs on a free team); kept empty in phase 1
+  guardian_id TEXT NOT NULL, device_id TEXT NOT NULL, token TEXT NOT NULL, updated_at INTEGER NOT NULL,
+  PRIMARY KEY (guardian_id, device_id)
+) STRICT;
+CREATE TABLE telegram_links (guardian_id TEXT PRIMARY KEY, chat_id TEXT NOT NULL, linked_at INTEGER NOT NULL) STRICT;   -- P2, flag `channels.telegram`
+CREATE TABLE child_skill_week (               -- weekly rollup next to child_skill_month (10 M-* metrics)
+  family_id TEXT NOT NULL, child_id TEXT NOT NULL, iso_week TEXT NOT NULL, skill_id TEXT NOT NULL,
+  n_first INTEGER NOT NULL, c_first INTEGER NOT NULL, hints INTEGER NOT NULL,
+  pae_num REAL NOT NULL, pae_den REAL NOT NULL, focused_sec INTEGER NOT NULL, level_end TEXT NOT NULL,
+  PRIMARY KEY (child_id, iso_week, skill_id)
+) STRICT;
 ```
+Tables that 10 lists as "belonging to 08/02" (`SkillState`, `ReviewSchedule`, `InterestMap`,
+`DispositionMap`, `FlagState`, `ClassTopics`, wallet, chests, purchases, family goal, `real_rewards`)
+are **not D1 tables**: they are projections (device, rebuilt from events) and server-side projections
+rebuilt nightly into `child_skill_month`/`child_skill_week` plus LWW docs (`class_topics/<childId>`,
+`reward/<rewardId>`, `interests/<childId>`). `FlagState` is computed by `evaluateFlags` nightly and
+stored as doc `flags/<childId>` (never in the weekly payload).
 
 ### 6.3 Migration strategy
 
@@ -1624,6 +1979,29 @@ CREATE TABLE coop_rooms (
   - Migrations must be **backward compatible with pulled data** and idempotent.
   - Every app migration must have a test that migrates a fixture DB from each of the last 3 schema
     versions.
+  - **Recovery ladder (E-02/E-03), `src/boot/dbRecovery.ts`, total budget 4 s before the splash
+    must hide (playbook rule 15):**
+    1. Open `olam.db`; run `PRAGMA quick_check(1)` if `app_meta.last_quick_check_at` is > 24 h old or
+       the previous run did not reach `boot_ok` (a `kv-store` flag set at the end of boot and cleared
+       at the start).
+    2. Run migrations inside one transaction per migration. On any throw: roll back, retry **once**
+       (covers a transient lock).
+    3. On a second failure, or `quick_check ≠ ok`, or `SQLITE_CORRUPT`/`SQLITE_NOTADB`: rename the
+       file to `olam.db.broken-<ts>` (plus `-wal`/`-shm`), **try to salvage** unpushed events
+       (`SELECT * FROM event WHERE pushed_at IS NULL` in a separate best-effort connection, ≤ 500 ms),
+       create a fresh DB at the current schema, write `app_meta.restored_from_cloud_at = null`.
+    4. If `device_self` could be read from the broken file or from `expo-secure-store` (the device
+       token and `deviceId`/`familyId` are **also** kept in the Keychain for this purpose), mark
+       `sync_state.pull_cursor = 0` and boot into `bootstrapping` (§4.8): the picker works from the
+       next pull; projections rebuild after it. Salvaged events are pushed first.
+    5. If neither exists → setup screen ("המכשיר צריך צירוף מחדש"), which the parent does via S3.
+    6. The parent gate shows "המכשיר שוחזר מהענן ב-<date>; צ'ק-אינים מקומיים ופקודת שינה מקומית
+       לא שוחזרו" until dismissed; `app.error{kind:'db_recovered', step}` is emitted. Broken files
+       are deleted after 14 days or when storage is low; the agent may ask the parent to export one
+       (debug screen → share sheet) for diagnosis.
+    - Acceptance: a poisoned migration fixture and a corrupt-header fixture both reach the picker in
+      ≤ 6 s with the server copy present; with no network they reach `bootstrapping` and still play
+      bundled content.
   - Projections can be dropped and rebuilt from events (the engine version is stored in
     `projection_checkpoint`; a bump triggers a rebuild per child, at about 5k events/child/year, well
     under 1 s).
@@ -1693,8 +2071,16 @@ Response:
   - **Events never conflict.** They're facts, and projections are recomputed in canonical order.
     When a pull delivers events whose `ts` is older than the projection checkpoint for that child,
     the device runs `rebuildProjections(childId)`.
-  - **Docs:** last-writer-wins by HLC per document. Server and client both keep max(hlc). A
-    tombstone (`deleted:true`) wins only if its HLC is higher.
+  - **Docs:** last-writer-wins by HLC. Two granularities:
+    - **Whole-doc LWW** for `child_resume` (one writer: the device the child plays on).
+    - **Field-level LWW (E-11)** for `child_settings`, `family_prefs`, `device_settings`, `reward`,
+      `class_topics`, `interests`: `body` is `{ [field]: { v, hlc } }`; the merge takes, per field,
+      the entry with the higher HLC, so two parents changing different settings at the same time
+      both win, and the same setting goes to the later writer. The client sends only changed fields;
+      the server merges and returns the merged body plus `updated_by_guardian`, and the loser's
+      screen shows "עודכן על ידי {name} לפני רגע" (10 PA-CSET). Nested objects are one field
+      (e.g. `bedtime`), never deep-merged.
+    - A tombstone (`deleted:true`) wins only if its HLC is higher than every field.
   - **Identity rows** (family, guardians, children, devices) are **server-authoritative**. Clients
     change them only via admin REST routes (§7), never through docs.
   - **Economy double-spend** (same child offline on two devices): purchases are never revoked, since
@@ -1792,16 +2178,34 @@ export { CoopRoom } from './do/CoopRoom';
     { "name": "RL_API",  "namespace_id": "1003", "simple": { "limit": 120, "period": 60 } },
     { "name": "RL_AI",   "namespace_id": "1004", "simple": { "limit": 20, "period": 60 } }
   ],
-  "triggers": { "crons": ["10 0 * * *", "41 4 * * 0", "0 */6 * * *"] },
+  "triggers": { "crons": ["10 0 * * *", "*/15 * * * *"] },
   "vars": { "APP_ENV": "production", "SIGNING_MODE": "free", "EMAIL_FROM": "olam@<domain>" }
   // secrets (wrangler secret put): ANTHROPIC_API_KEY, SESSION_SIGNING_KEY, PACK_SIGNING_KEY,
   // RESEND_API_KEY, TTS_API_KEY, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, IP_HASH_SALT, OPS_TOKEN
 }
 ```
-Cron times are UTC:
-- `10 0 * * *` = 02:10/03:10 Israel: nightly backup, purge, content batch submit and collect.
-- `41 4 * * 0` = Sunday about 06:41/07:41: weekly parent report.
-- `0 */6 * * *`: batch polling, plus expiry nudges for free-signing installs.
+Cron times are UTC (`src/cron/index.ts` dispatches on `ev.cron`):
+- `10 0 * * *` = 02:10/03:10 Israel: nightly backup, purge (§5.9), rollups into `child_skill_week`/
+  `child_skill_month`, `evaluateFlags` (08 §9.3) → docs `flags/<childId>`, alert candidates
+  AL-02..06 (10 §10.1), monthly report preparation on the 1st, and content batch **submit** (§8.1).
+- `*/15 * * * *` — one 15-minute job with four idempotent steps, in this order:
+  1. **Alert queue** (10 §10.2): for each guardian, bundle due `deliveries` (quiet hours 21:00–07:30,
+     Shabbat/holiday window from `@hebcal/core` with the family city, Friday rule Q-3, caps CAP-1/2,
+     expiry EXP-1 = 5 days → `status:'report'`). Phase 1 channels: `inbox` (always) and `email`
+     (Resend); `push`/`telegram` are flag-gated for phase 2.
+  2. **Weekly report** (10 §11.1): for each family with `reports.sent_at IS NULL AND send_at ≤ now`
+     → render + send (idempotent by `reports.id = family:isoWeek`). `send_at` is computed when the
+     row is created at 09:00 Israel on the send day: `clamp(candleLighting − 3h, 12:00, 14:00)`
+     Israel time on **Friday**; if Friday (or Thursday evening) is a holiday, the first erev-chag of
+     that week; with Shabbat mode off, Friday 12:00. The payload contains **no `flags[]`** (§7.10).
+  3. **Batch polling** (§8.1): `batches.retrieve` for `ai_jobs.status='submitted'`; collect when
+     ended (12 §5 also says every 15 min). Skipped when there are no submitted jobs.
+  4. **Expiry nudges**: once per day (first run after 06:00 Israel) for devices with
+     `signed_at + 6d < now` and `signing='free'` → `AL-11` inbox + email "צריך לחבר את האייפד למק".
+- This **replaces** the earlier `41 4 * * 0` (Sunday report) and `0 */6 * * *` triggers, per 10 §18.2.
+  Workers allow up to 5 cron triggers per Worker (⟂VERIFY current limit); we use 2.
+- Every cron step is wrapped: a throw in one step is logged (`cron.error`, `ops/notify` after 3
+  consecutive failures of the same step) and the next step still runs.
 
 The `ratelimits` binding and its exact config syntax should be checked against the current Workers
 docs at scaffold time (*verify*).
@@ -1961,10 +2365,31 @@ JPEG and rejecting any APP1/EXIF segment.
 
 | Method & path | Auth | Notes |
 |---|---|---|
-| GET `/reports/weekly?week=` | child.reports.read (viewer: celebrations only) | `{week, children:[{childId, minutes, sessions, highlights[], skills:{mastered[], practicing[], suggested[]}, eveningIdeas[], flags[] (non-diagnostic)}], summaryHe}` |
+| GET `/reports/weekly?week=` | child.reports.read (viewer: celebrations only) | `{week, periodFrom, periodTo, sentAt, children:[{childId, minutes, sessions, highlights[], skills:{mastered[], practicing[], suggested[]}, eveningIdeas[]}], summaryHe}` — **no `flags[]`** (10 §18.2, 08 §9.1): flags are served only by `GET /children/:id/flags` (PA-FLAG) and inside the monthly view |
+| GET `/reports/monthly?month=` · POST `/reports/:id/feedback` | child.reports.read | 10 API-25 |
 | GET `/reports/children/:id/skills` | child.reports.read | per-skill state from server projections (rebuilt nightly from events) |
-| GET `/reports/devices/usage?from&to` | family.read (O/C) | minutes per device × child, last sync |
+| GET `/reports/children/:id/overview?period=&device=` · GET `/reports/children/:id/skills/:skillId` · GET `/reports/children/:id/sessions?from&to&device=&subject=&mode=` · GET `/reports/sessions/:id` · GET `/reports/children/:id/economy?week=` | child.reports.read | 10 API-10, 11, 13, 20 (web + report rendering; the app computes the same from local SQLite via `packages/engine/metrics`, 10 AC-34) |
+| GET `/reports/devices/usage?from&to&child=` | family.read (O/C) | minutes per device × child, last sync (10 API-08) |
 | POST `/reports/weekly/:id/email` | O/C | re-send email |
+
+### 7.10a Parent-area endpoints requested by 10 §15.2 (all guardian-scoped, audit-logged, zod from `@olam/shared`)
+
+| 10 id | Method & path | Perm | Storage |
+|---|---|---|---|
+| API-12 | POST `/children/:id/skills/:skillId/actions` `{action:'classTaught'\|'prefer'\|'lock'\|'unlock'\|'skipChallenge'\|'notRelevant'\|'interfaceIssue', reason?}` | child.settings | doc `skill_prefs/<childId>` (field-level LWW) |
+| API-14 | GET/PATCH `/children/:id/interests[/:topicId]`, POST `…/interests/seeds` | child.settings | doc `interests/<childId>` |
+| API-15 | GET `/children/:id/observations`, POST `/observations/:id/feedback` | child.reports.read | nightly projection + `observation_feedback` |
+| API-16 | GET `/children/:id/assessments`, POST `/children/:id/evidence` | child.reports.read / child.settings | projection + `external_evidence` |
+| API-17 | GET `/children/:id/flags`, POST `/flags/:id/action {talkedToTeacher\|notRelevant\|snooze\|print}` | child.reports.read (**403 for device tokens and viewers**, 10 AC-18) | doc `flags/<childId>` |
+| API-18 | GET `/approvals?status=`, GET `/approvals/:id`, POST `/approvals/:id/decision {approve\|reject\|approveSome, itemIds?, edits?[], reasons?[]}` | content.approve | `approvals` (unifies §7.6 pack approve/reject and §7.9 photos; those routes stay as thin aliases) |
+| API-19 | GET/POST/PATCH `/rewards`, POST `/children/:id/appreciation` | rewards.manage | doc `reward/<id>`; appreciation = event `mission.confirmed`-class admin event (**no coins/gems from the parent area**, 10 AC-37) |
+| API-20 | POST `/econ/refund/:purchaseId`, POST `/children/:id/sticker`, POST `/missions/:id/confirm` | child.settings | admin events `econ.refund`, `sticker.granted`, `mission.confirmed` (cls `admin`, pulled by devices and folded by the economy) |
+| API-22 | GET/PUT `/children/:id/settings`, GET/PUT `/family/calendar`, POST `/family/calendar/import` | child.settings / family.update | docs `child_settings/<id>`, `family_calendar` |
+| API-23 | GET/POST/PATCH/DELETE `/children/:id/class-topics`, POST `/class-topics/map` (Sonnet 5.5, structured output, parent confirms nodes) | child.settings | doc `class_topics/<childId>`; AI route rules §7.7 |
+| API-24 | GET `/alerts?child=`, POST `/alerts/:id/feedback`, POST `/alerts/mute` | guardian | `alerts` |
+| API-26 | POST `/notifications/push-token` *(phase 2)*, PUT `/notifications/prefs`, POST `/telegram/link` *(P2)*, POST `/telegram/webhook` *(secret, P2)* | guardian / secret | `push_tokens`, doc `guardian_prefs/<id>`, `telegram_links` |
+| API-27 | POST `/share-cards`, GET `/viewer/feed`, POST `/viewer/feed/:id/react` | O/C; viewer | `share_cards`, `viewer_feed`; PNG without EXIF, K1 consent flag (10 AC-28) |
+| API-28 | GET `/system/health` | O/C | aggregates §13 ops data (sync lag, backup, AI spend, expiry) |
 
 ### 7.11 Co-op
 
@@ -1985,6 +2410,7 @@ JPEG and rejecting any APP1/EXIF segment.
 | POST `/admin/backup/run` | admin.ops | run the backup now |
 | POST `/ops/notify` | `OPS_TOKEN` (Mac resign script, CI) | `{kind:'resign_overdue'\|'ci_failed'\|…, deviceId?, text}` → emails O/C, rate-limited 1/kind/12 h |
 | POST `/ops/bootstrap` | `OPS_TOKEN` (CI only) | `{email}` → `{setupCode}` (used by `tools/ops/bootstrap-owner`) |
+| GET `/health` | none (RL_API) | `{ok, version, d1:'ok'\|'error', r2:'ok'\|'error', cron:{lastNightly, last15m}}`; used by CI smoke and the 6-hourly uptime check (§13); returns 503 when D1 is unreachable so the client treats it as "Worker down" (E-09) |
 
 ---
 
@@ -2003,7 +2429,7 @@ JPEG and rejecting any APP1/EXIF segment.
    - `custom_id = jobId:childId:skill:template`
    - No `temperature` (rejected since 2026-10-21) and no prefill. The `fallbacks` param isn't allowed
      on Batch.
-3. **Collect** (6-hourly): `batches.retrieve(id)` until `processing_status === 'ended'`, then
+3. **Collect** (every 15 min, step 3 of the 15-minute cron, §7.1; 12 §5 agrees): `batches.retrieve(id)` until `processing_status === 'ended'`, then
    `for await (const r of await client.messages.batches.results(id))`. Results are keyed by
    `custom_id`.
 4. **Validate in code** (`packages/content/validate`):
