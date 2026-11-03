@@ -26,7 +26,7 @@
 
 - **רצועת הילד** היא `bandOf(child)` מ-`packages/shared/bands.ts` (08 §1.1, 00-A6): נגזרת מה**כיתה** שההורה הזין (`toddler`/`gan_trom` → T, `gan_chova` → G, אחרת S), לא מתאריך הלידה; הגילים בטבלה תיאוריים. מחושב מחדש ביום הולדת, ב-`grade_rollover` וב-`profile.paused` (08 §10.5.7–8).
 - **תת-רצועות:** 07 לא מגדיר. אם יידרשו, משתמשים בשמות של 08 `Skill.subBand` (`T+`, `G+`, `S-R`, `S+`; 03 §1.2, F3 #26) ולא בשמות חדשים.
-- **היקף הגרף (ספירה שנוצרת, AC-40):** **72 מיומנויות** — `AI` 21 · `TK` 19 · `SE` 19 · `SD` 13 — בדיוק כמספר הכרטיסים `### \`XX.YYY.n\`` ב-§3–§6 וכמספר השורות בטבלאות §3.1/§4.1/§5.1/§6.1. המספר ב-13 §5.6 ("72", ⟂VERIFY) מאומת.
+- **היקף הגרף (ספירה שנוצרת, AC-40):** **72 מיומנויות** — `AI` 21 · `TK` 19 · `SE` 19 · `SD` 13 — בדיוק כמספר הכרטיסים `### \`XX.YYY.n\`` ב-§3–§6 וכמספר השורות בטבלאות §3.1/§4.1/§5.1/§6.1. המספר ב-13 §5.6 ("72") אומת בסבב 2 (R4-3) ובסבב הסופי.
 
 ### 0.3 מגדר דקדוקי (מימוש של B3)
 - בתסריטים במסמך: `{זכר|נקבה}` או `{זכר|נקבה|רבים}`. בקובצי התוכן זה הופך ל-`{m:"…", f:"…", pl:"…"}`.
@@ -152,7 +152,7 @@
 | `SD.STRETCH` ניסיון בפלפלים 2–3 | S: 02 `stretchAttempt` (3, גם אם שגוי, ≤10 ביום). **G: אין מטבע על ניסיון** (02 §2.3) — רק תג "ניסיון חריף" | — | כן | — |
 | K3 | מדבקות בלבד (D5) | — | — | כן |
 
-**סטטוס מול 02 (סבב 2, ⟂VERIFY):** 00-D1a כבר מחייב את השורות האלה, אבל 02 §2.7 / config `neverEarns` עדיין לא רושם את `checkin_done`, `kindness_confirmed`, `journal_entry`, `wonder.asked` ואת שלבי הסולם, ואין ב-02 אירוע `braveryLadderComplete` (יהלום אחד בסוף סולם) או `enabledFor` ל-`stretchAttempt` (K1/S בלבד). עד שיתווספו, המנוע של 07 **לא פולט** אירועי כלכלה על הפעילויות האלה (`economy: 'badge_only' | 'family_garden'`), כך שהתוצאה זהה; AC-13 בודק את זה. הועבר לבעלי 02 (round2-R4).
+**סטטוס מול 02 (נסגר בסבב הסופי):** 00-D1a מחייב את השורות האלה, ו-02 §2.2/§2.7 + config `neverEarns` כבר רושמים אותן (סבב 2, R2: `checkinDone`, `kindnessConfirmed`, `braveryStepDone`, `journalEntry`, `wonderAsked`; `braveryLadderComplete` = תיבת כסף K1 עם יהלום אחד; `stretchAttemptEnabledFor: ["K1"]`; `offlineMission` מותנה ב-`requiresMissionEconomy`; ≤1 תיבת משימה ליום). הנוסח ההיסטורי של הבקשה: 02 §2.7 לא רשם את `checkin_done`, `kindness_confirmed`, `journal_entry`, `wonder.asked` ואת שלבי הסולם, ואין ב-02 אירוע `braveryLadderComplete` (יהלום אחד בסוף סולם) או `enabledFor` ל-`stretchAttempt` (K1/S בלבד). עד שיתווספו, המנוע של 07 **לא פולט** אירועי כלכלה על הפעילויות האלה (`economy: 'badge_only' | 'family_garden'`), כך שהתוצאה זהה; AC-13 בודק את זה. הועבר לבעלי 02 (round2-R4).
 
 ### 2.7 סכמות נתונים (`packages/content`, `packages/engine`)
 
@@ -225,7 +225,7 @@ export interface RedFlagRule { id: string; signal: string; windowDays: number; t
 
 - **אחסון:** צ'ק-אין רגשי חי בזיכרון של הפרק בלבד. על החוט הוא `behavior.signal{kind:'emotion_checkin', value}` עם סיווג `local_only` (08 §1.9; 11 §5.8): האירוע **לא נכתב ליומן האירועים ולא מסונכרן**; מסך הצ'ק-אין של 07 לא כותב את התווית לשום doc, resume או טלמטריה (`FSSkill.storesAffect: false`; AC-10).
   - **חריג יחיד (00-C8a):** מונים מצרפיים מקומיים לחלון של 14 יום עבור כללי הדגל (`EMO_CHECKIN`, `SEL_LADDER_PAUSE`; §10). הם נשמרים בטבלת SQLite נפרדת (`fs_local_counters`), מוחרגת מיומן האירועים ומהסנכרון (E6).
-  - אל השרת עולה רק האירוע `rf_raised {ruleId, week}`, ורק אם ההורה בחר בסנכרון דגלים בין מכשירי ההורים.
+  - אל השרת עולה רק `rf_raised {ruleId, week}` — והוא **שדה בתוך ה-doc המוצפן `flags/<childId>`** (00-C8a; 11 §5.7/§9.8), **לא אירוע** ביומן האירועים ולא ב-`events.ts`; ה-doc מסונכרן רק אם ההורה בחר בסנכרון דגלים בין מכשירי ההורים (סבב סופי, R6-5).
 - **טלמטריה מותרת:** שימוש בכלי (`tool_used {toolId, context}`), השלמת פעילות, בחירה עצמאית, אישור אופליין.
 - **טלמטריה אסורה:** תווית רגש, רמת פחד, תוכן סולם האומץ, הקלטות קול, טקסט חופשי.
 - **הודעות בין אחים (00-C7a; 01 §12.1 CO-4; 15 GAP-46):** כל הודעה שילד מחבר לאח — מכתב אסינכרוני (CO-4), "מסר-אני" של `SE.COMM.2` שנשלח לאח, משימת חסד ש-K1 מתכננת לאח (`ACT-SE.KIND.3b`), תפקיד במצב "מפקדת משימה" (`AI.AGENT.2`) — היא **מובנית בלבד**: צ'יפים מאוצר מילים סגור (`chipSets`), מספרים, מדבקות ותמונות מהחבילה; בלי שדה טקסט חופשי ובלי הכתבה. ההודעה נשמרת כ-doc `coop_letter {fromChildId, toChildId, chips[], pictureIds[], createdAt}` (סכמה ב-11), **לא עוברת LLM**, ומוצגת לאח המקבל רק אחרי "אגודל" של הורה כשהשולח הוא K1 והמקבל K2/K3 (ההורה רואה את ההרכבה המלאה; דחייה שקטה). הקלטת קול מצורפת (אם ההורה הפעיל, P-05) נשארת במכשיר, לא מנותחת (C8a) ונמחקת אחרי 30 יום. בדיקה: AC-41.
@@ -1541,7 +1541,7 @@ export interface RedFlagRule { id: string; signal: string; windowDays: number; t
 
 ### 7.3 תור T2 (v1)
 - **זרימה:**
-  1. בקשת צ'יפים מגיעה ל-Worker `POST /fs/t2/request` עם `{childId, activityId, chips[]}`, בלי טקסט חופשי (⟂VERIFY סבב 2: 11 §7 עדיין לא רושם את הנתיב ואת סכמת ה-`chipSets`; fable-issues-F4 #30 הועבר שוב ב-round2-R4).
+  1. בקשת צ'יפים מגיעה ל-Worker `POST /fs/t2/request` עם `{childId, activityId, chips[]}`, בלי טקסט חופשי (11 §7.7 רושם את הנתיב: כל צ'יפ חייב להיות ב-`chipSets[activityId]`, אחרת 400 `chip_invalid` + audit — סבב 2 R6; אומת בסבב הסופי).
   2. בדיקת רשימה סגורה: כל צ'יפ מאומת מול `chipSets` של הפעילות; מחרוזת שאינה ברשימה → 400 ונרשמת (AC-32).
   3. תור לילה (Cron).
   4. מודל ותבנית.
@@ -1891,3 +1891,10 @@ export interface RedFlagRule { id: string; signal: string; windowDays: number; t
 - **§10 (15 GAP-32, F5 answers #3):** `EMO_CHECKIN` (14 יום, בלי `watch`) ו-`SEL_LADDER_PAUSE` (`watch` מיידי, הודעה אחרי 28 יום) לפי 08 §9.2; `NOTE_*` = 10 AL-17; `family.calmMode` לפי 00-B8b (⟂VERIFY הוסר); EC-22.
 - **§2.6:** 02 עדיין לא רושם `kindness_confirmed`/`braveryLadderComplete`/`neverEarns` של 07 — המנוע של 07 לא פולט אירועי כלכלה על הפעילויות האלה; הועבר ל-02.
 - **§7.3:** `POST /fs/t2/request` + `chipSets` חסרים ב-11 — הועבר שוב; **§12.1:** תקציב אומץ ב-08 §6.8 (S-8 = AC-35); **AC-39:** `family.hasChildUnder36m` לפי 00-C13 (דריסה מבוקרת).
+
+### Final sweep changelog
+
+סבב סופי (2026-11-02; פירוט ב-`docs/review/final-sweep.md`).
+
+- **§2.7 אחסון:** `rf_raised {ruleId, week}` הוא **שדה בתוך ה-doc המוצפן `flags/<childId>`** (00-C8a; 11 §5.7/§9.8), לא אירוע ביומן (round2-R6-5).
+- **סימוני אימות שנסגרו:** §0.2 ("72" אומת ב-13 §5.6); §2.6 (02 §2.2/§2.7 רושמים את שורות `neverEarns`, `braveryLadderComplete`, `stretchAttemptEnabledFor`, `requiresMissionEconomy`, תקרת תיבת המשימה); §7.3 (11 §7.7 רושם את `POST /fs/t2/request` עם ולידציית `chipSets`).

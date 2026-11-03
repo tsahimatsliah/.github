@@ -124,7 +124,7 @@
 |---|---|---|---|---|
 | **W. אבות-טיפוס בווב** (Safari באייפד) | C1, ‏C2, ובכל פעם שצריך להראות רעיון לפני build | Expo web export, או עמוד HTML עצמאי. מתפרסם כ-Artifact פרטי, וההורה פותח קישור ב-Safari באייפד | ‏UI, ‏RTL, ניקוד (במנוע של WebKit, שהוא לא CoreText של RN), אנימציה, ‏three.js/R3F על WebGL, צליל אחרי נגיעה | אין רטט ב-iOS Safari. אודיו מוגבל. ביצועים שונים מנייטיב. **זה לא תחליף לבדיקה על מכשיר** |
 | **B. dev build ו-release build דרך ה-Mac (Personal Team, חינם)** | **מהיום הראשון של Phase 0.** זה הערוץ העיקרי | ההורה מחבר את ה-Mac ל-Claude Remote Control. הסוכן מריץ על ה-Mac `npx expo prebuild`, אחר כך `npx expo run:ios --device` (dev-client), או `--configuration Release` ו-`xcrun devicectl device install app`, עם Apple ID חינמי | הכול: ‏Rive, ‏expo-gl/R3F, ‏`forcesRTL`, רטט, אודיו. ה-dev-client מקבל JS מ-Metro שרץ על ה-Mac. ה-release מגיע עם bundle מוטמע, ועדכוני OTA מגיעים דרך EAS Update (חשבון Expo חינמי, ערוץ `family`) | **החתימה פגה אחרי 7 ימים.** עד 3 אפליקציות למכשיר, עד 10 App IDs ב-7 ימים, ואולי עד 3 מכשירים (לאמת). כנראה לא זמינים: Sign in with Apple, ‏Push, ‏App Attest, ‏iCloud (לאמת ב-P0-E2-S6) |
-| **C. Apple Developer Program בתשלום** ($99 לשנה) | רק אם ההורה יחליט לשדרג (§3.4) | אותו ערוץ B עם פרופיל לשנה, או EAS internal distribution דרך קישור, או `eas go` (Expo Go ב-TestFlight), או TestFlight להורים | חתימה לשנה, ‏Push, ‏Sign in with Apple, ‏App Attest, התקנה מרחוק | — |
+| **C. Apple Developer Program בתשלום** ($99 לשנה) | רק אם ההורה יחליט לשדרג (§3.4) | אותו ערוץ B עם פרופיל לשנה, או EAS internal distribution דרך קישור, או TestFlight להורים (Expo Go / `eas go` אינם מסלול גם בשלב 2 — חסרים Rive/Nitro, 11 §3.1) | חתימה לשנה, ‏Push, ‏Sign in with Apple, ‏App Attest, התקנה מרחוק | — |
 
 **שני builds בערוץ B.**
 - ‏`family`: ‏release עם `expo-updates`. הילדים משחקים בו, והוא לא צריך שרת פיתוח.
@@ -2110,3 +2110,9 @@ AI $x · TTS $y · תמונות $z · Cloudflare $5
 - **§5.6 / §7.1 (R4-3):** מספר מיומנויות 06 = **134** (נספר מהקבצים שנוצרו; ה-⟂VERIFY הוסר), 07 = 72 (אומת).
 - **§10.1 (R3 #8):** שורת קריטריוני הקבלה כוללת `MATH-AC-26` (לינט מרחב שמות `EM.*`/`EH.*` + מזהים קפואים) ו-`HEB-AC-24`/`HEB-AC-31`.
 - **§10.1 Maestro (R6-6):** נתיב הזרימות `apps/mobile/e2e-maestro/*.yaml` וקישורי `olam://dev/fixture` / `olam://dev/setNow` לפי 11 §4.1/§12.1 (במקום `tools/e2e/maestro` ו-`olam://test/fixture`).
+
+### Final sweep changelog
+
+סבב סופי (2026-11-02; פירוט ב-`docs/review/final-sweep.md`).
+
+- **§3.1 טבלת המסלולים, שורה C (תוכנית בתשלום):** `eas go` / Expo Go הוסרו מהאפשרויות גם לשלב 2 (חסרים Rive/Nitro; 11 §3.1); נשארו EAS internal distribution ו-TestFlight.

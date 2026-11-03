@@ -221,7 +221,7 @@
 | EH.FLU.SUB / EH.FLU.OMIT / EH.FLU.INS | החלפה, השמטה, הוספה | — |
 | EH.FLU.SELFCORR | תיקון עצמי. **לא** שגיאה; נרשם כאות חיובי | — |
 
-**ט. מיפוי לקודי 12 (`HE_*`/`NIK_*`, צינור הצילום והמסיחים, 12 §3.7/§12.2).** הקטלוג כאן (`packages/content/hebrew/errors.json`) הוא מקור האמת; 12 (§12.2, F7) מחזיק את טבלת הכינויים ב-`packages/content/errors/aliases.json`, ו-`classifyError` מקבל את שני השמות ומחזיר את הקוד הקנוני. **סבב 2:** הקידומת שונתה מ-`E.` ל-`EH.` (§2.1); שמות היעד שרשם 12 בטיוטה (`E.SPL.T_TET`, `E.SPL.K_Q`, `E.SPL.K_CH`, `E.SPL.S_SIN`, `E.SPL.B_V`) **מוחלפים** בשמות שבטבלה כאן (`EH.SPL.TET_TAV`, `EH.SPL.KUF_KAF`, `EH.SPL.KAF_HET`, `EH.SPL.SAMEKH_SIN`, `EH.SPL.VET_VAV`); קוד חדש נולד רק כאן.
+**ט. מיפוי לקודי 12 (`HE_*`/`NIK_*`, צינור הצילום והמסיחים, 12 §3.7/§12.2).** הקטלוג כאן (`packages/content/hebrew/errors.json`) הוא מקור האמת; 12 (§12.2, F7) מחזיק את טבלת הכינויים ב-`packages/content/errors/aliases.json`, ו-`classifyError` מקבל את שני השמות ומחזיר את הקוד הקנוני. **סבב 2:** הקידומת שונתה מ-`E.` ל-`EH.` (§2.1); שמות היעד שרשם 12 בטיוטה (חמישה שמות `SPL.*` בקידומת הישנה — `T_TET`, `K_Q`, `K_CH`, `S_SIN`, `B_V` — שמעולם לא היו בקטלוג) **הוחלפו** (12 §3.7/§12.2, סבב 2) בשמות שבטבלה כאן (`EH.SPL.TET_TAV`, `EH.SPL.KUF_KAF`, `EH.SPL.KAF_HET`, `EH.SPL.SAMEKH_SIN`, `EH.SPL.VET_VAV`); קוד חדש נולד רק כאן.
 
 | 12 | כאן | הערה |
 |---|---|---|
@@ -1118,11 +1118,11 @@ function chooseLevel(child: ChildState, date: Date): FadeLevel {
 
  {"templateId":"T.CO.Q.MIX","skillId":"H.CO.*","kind":"tap|free-text","mechanic":"question-forge",
   "params":{"mix":{"locate":0.4,"infer":0.4,"evaluate":0.2},"freeTextMax":1},
-  "scoring":"MC auto; free-text by rubric with Sonnet judge + parent-visible, never shown as a grade"},
+  "scoring":"MC auto; free-text stays on device (00 C7a): rubric proxy computed in code (keyword/lexicon match vs. the question's answer key), parent-visible, never shown as a grade; no LLM"},
 
  {"templateId":"T.WC.PROMPT","skillId":"H.WC.*","kind":"write-paper|free-text","mechanic":"quest-log",
   "params":{"genre":"narr|info|proc|let|opin|poem","organizer":"§11.3","lengthTarget":"40-150 words"},
-  "feedback":"code spell-hints (root-based, no autocorrect) + 1-2 revision questions from fixed bank (Haiku selects, structured output)"}
+  "feedback":"code spell-hints (root-based, no autocorrect) + 1-2 revision questions from fixed bank selected in code (genre + empty organizer slots; §11.3); composition never leaves the device (00 C7a) — LLM only on a parent-initiated photo upload (12 P2)"}
 ]
 ```
 
@@ -1463,8 +1463,8 @@ function chooseLevel(child: ChildState, date: Date): FadeLevel {
 - **כללי AI (C7):**
   - ה-AI **לעולם לא כותב או משכתב** את הטקסט של הילדה.
   - רמזי כתיב מגיעים מקוד: מילה שאינה בלקסיקון מסומנת בקו נקודות, ונגיעה בה פותחת את "רמז השורש". **אין** תיקון אוטומטי.
-  - שאלות השכתוב נבחרות מבנק סגור (Haiku בוחר מזהה שאלה ומצביע על משפט, בפלט מובנה).
-  - ציון המחוון (Sonnet) גלוי **להורה בלבד**, וההורה רשאי לשנות אותו.
+  - **הטקסט של הילדה לא יוצא מהמכשיר (00-C7a, סבב סופי: "אין טקסט חופשי מילד לשרת, גם לא K1").** שאלות השכתוב נבחרות **בקוד** מבנק סגור (`revision-questions.json`, לפי סוגה, משבצות הארגונית שנשארו ריקות, מספר המשפטים ומילות הקישור שזוהו מהלקסיקון) — לא דרך Haiku.
+  - **ציון המחוון** מחושב **במכשיר, בקוד** (מדדי proxy: כיסוי לקסיקון, אורך ומספר משפטים, משבצות הארגונית, מילות קישור, שיעור מילים מחוץ ללקסיקון), גלוי **להורה בלבד** (10 W-CH, "הערכה אוטומטית — לא ציון"), וההורה רשאי לשנות אותו. **LLM נוגע בחיבור רק אם ההורה מצלם/מעלה אותו בעצמו** דרך אזור ההורה (צינור הצילום של 12 P2: העלאה של הורה, אישור הורה, תווית `{CHILD}` בלי שם) — ואז Sonnet מציע ציון מחוון וההורה מאשר; אף פעם לא מתוך המסך של הילדה.
 - **לוח סוגות:** ראו §13.1 בטבלת השנה.
 
 ### 11.4 K2: כתיבה משותפת (Aram & Levin), החלק החזק ביותר בראיות
@@ -1925,3 +1925,10 @@ function chooseLevel(child: ChildState, date: Date): FadeLevel {
 - **§15:** `HEB_K1_FADE_STALL` ו-`HEB_K1_HANDWRITING` נרשמו ב-08 §9.2 (`maxStatus:'watch'`, `provisional`) (F5 → F3 #6).
 - **כבר פתור (ללא שינוי):** `OPD-nn` ו-OPD-33 ב-§17 (F1 #8, #21), תגי בטיחות C13 על דפי הגזירה (`adult-required`, `choking-hazard-T`) ב-§14.1 (F1 #30, F4 #41).
 - **לא שונה:** הגרף (§3), רצף האותיות והניקוד (§4), הלקסיקון (§5), אלגוריתם הדהייה (§6 מלבד מקור הספירה), השטף (§8), ההבנה (§9), המורפולוגיה (§10), הכתיבה (§11), הפעוט/ה (§12).
+
+### Final sweep changelog
+
+סבב סופי (2026-11-02; פירוט ב-`docs/review/final-sweep.md`).
+
+- **§2.3ט:** חמשת שמות הטיוטה של 12 (שמעולם לא היו בקטלוג) כבר לא נכתבים כמזהים בקידומת `E.`; הנוסח אומר שהוחלפו (12 §3.7/§12.2 מעודכן).
+- **§11.3 כללי AI (00-C7a, "אין טקסט חופשי מילד לשרת, גם לא K1"):** החיבור של הילדה לא יוצא מהמכשיר; שאלות השכתוב נבחרות **בקוד** מבנק סגור; ציון המחוון מחושב במכשיר (מדדי proxy) וגלוי להורה בלבד; LLM נוגע בחיבור רק דרך העלאה/צילום של ההורה (12 P2). **§12 תבניות `T.CO.Q.MIX` ו-`T.WC.PROMPT`** עודכנו בהתאם (היה "Sonnet judge"/"Haiku selects").

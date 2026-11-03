@@ -92,7 +92,7 @@ export type ExtraGateId = 'O.REP' | 'O.STEP';   // שכבות-על ממקצוע 
 
 ```ts
 export interface StrandMeta { id: StrandId; subject: SubjectId; placementRole: 'primary' | 'continuation';
-  priorFrom?: StrandId;                       // לציר continuation: הציר-האח שממנו נגזר ה-prior (§3.7). בלי זה: pos
+  priorFrom?: StrandId;                       // לציר continuation: הציר-האח שממנו נגזר ה-prior (§3.7). בלי זה: pos. ערכים (סבב סופי): מתמטיקה (03 §6.0א) `math.facts ← math.operations`, `math.fractions ← math.number`, ואין priorFrom ל-`math.geometry`/`math.measurement`/`math.patterns_data`; עברית (04 §2.7) `hebrew.oral ← hebrew.listening`, `hebrew.writing ← hebrew.spelling_morph`, `hebrew.ran ← hebrew.letters`; `hebrew.fluency` = wcpm בלי prior
   scoring: 'elo' | 'wcpm';                    // 'wcpm' = ערך מדוד בבנצ'מרק בלבד (hebrew.fluency), בלי θ, בלי fringe
   scaleOverride?: number }                    // SCALE לציר (§2.1)
 ```
@@ -170,7 +170,7 @@ export interface Skill {
   fluencyTargetMs?: number;                 // למשל עובדות כפל: 3000 (ברירת מחדל עיצובית)
   ageMinMonths: number;
   curriculumSource: 'moe_new_2026' | 'moe_old' | 'evidence' | 'unknown'; // gap audit §4.8
-  errorTags?: Record<string, SkillId>;      // תג טעות אבחוני → קדם-דרישה חשודה (למשל 'place_value_reversal' → 'math.pv.tens')
+  errorTags?: Record<string, SkillId>;      // תג טעות אבחוני → קדם-דרישה חשודה (למשל 'EM.REVERSE_DIGITS' → 'M.PV.TENS100'; הקודים `EM.*` של 03 §4.2 / `EH.*` של 04 §2.3, לינט MATH-AC-26 / HEB-AC-24)
   placementEligible: boolean;
   discriminationPairs?: SkillId[];          // לשזירה מבחינה (ב/כ, ד/ר)
   extraGates?: ExtraGateId[];               // 03 §17.2: 'O.REP' = שער ייצוגים ל-proficient (§5.1). 'O.STEP' = ניקוד שלבים (§4.1)
@@ -249,9 +249,10 @@ export interface Attempt {
 | `isReview`, `stretch` | `context.role` (`review` / `stretch`; אחרת לפי `blockId` בתוכנית) | §5.2, §6 |
 | `embodied` | לא נצרך במנוע (02 בלבד) | — |
 | `skill`, `template`, `itemId`, `packId/packVer` | `skillId`, `templateId`, `itemId` (+ גרסת חבילה לאיתור β) | §2 |
-| **עדיין חסרים ב-11 ומבוקשים** (fable-issues-F5): `outcome:'too_tricky'\|'timeout'\|'abandoned'`, `chosenErrorTag`, `touchesBeforeAnswer`, `idleMaxMs`, `appBackgrounded`, `context.{mode, assisted, wrapperTopic}`, `steps`, `representation`, `answerableAt`, `firstResponseAt` | — | בלעדיהם: "קשה לי" לא ניתן להבחנה מטעות, אין תגי טעות (§5.5), אין גלאי זעם (§6.7), אין O.STEP/O.REP |
+| **שדות v2 — נוספו ב-11 §5.8 בסבב 2** (היו מבוקשים ב-fable-issues-F5): `outcome:'too_tricky'\|'timeout'\|'abandoned'`, `chosenErrorTag`, `touchesBeforeAnswer`, `idleMaxMs`, `appBackgrounded`, `context.{mode, assisted, wrapperTopic}`, `steps`, `representation`, `answerableAt`, `firstResponseAt` | כנ"ל | בלעדיהם (יומני v1): "קשה לי" לא ניתן להבחנה מטעות, אין תגי טעות (§5.5), אין גלאי זעם (§6.7), אין O.STEP/O.REP |
+| `levelMode`, `provenance` (02 §2.1; 01 §6.6) | לא נצרכים במנוע (02 בלבד). המתכנן ממלא `levelMode` על החוט מ-`EpisodePlan.mode` (`placement`→`placement`, `benchmark`→`benchmark`, `boss`→`boss`, אחרת `normal`/`review`/`event` לפי השלב) — מאושר (R2 → 08, סבב סופי) | — |
 
-עד שהשדות מתווספים, `toEngineEvent` ממלא ברירות מחדל בטוחות (`outcome` מ-`correct`, `touchesBeforeAnswer=1`, `idleMaxMs=0`, `assisted:'none'`), והמנוע עובד בפונקציונליות מופחתת (בלי O.STEP/O.REP, בלי תגי טעות).
+ליומני v1 (בלי שדות v2), `toEngineEvent` ממלא ברירות מחדל בטוחות (`outcome` מ-`correct`, `touchesBeforeAnswer=1`, `idleMaxMs=0`, `assisted:'none'`), והמנוע עובד בפונקציונליות מופחתת (בלי O.STEP/O.REP, בלי תגי טעות).
 // נגזר, לא נשמר:
 export interface ScoredObservation { x: number; w: number; useRt: boolean; excluded?: ExclusionReason; responseMs?: number }
 export type ExclusionReason = 'rapid_guess' | 'timeout' | 'idle' | 'backgrounded' | 'abandoned' | 'not_scored_template' | 'disengaged_block';
@@ -415,7 +416,7 @@ export type ParentInput = { type: 'parent_input'; id: string; deviceId: string; 
 ```ts
 export interface Session {
   id: SessionId; childId: ChildId; startedAt: EpochMs; endedAt?: EpochMs; dayKey: DayKey;
-  mode: 'episode' | 'mini' | 'placement' | 'boss' | 'benchmark' | 'reentry' | 'playroom' | 'coop';
+  mode: 'episode' | 'mini' | 'placement' | 'boss' | 'benchmark' | 'reentry' | 'playroom' | 'coop';   // `safe_room` (09 SCR-16) הוא מצב-חוט בלבד: 11 §5.8 `session.started{mode:'safe_room'}` מופל ב-`toEngineEvent`, לא פותח Session, לא צורך תקרה (§6.1) ולא נכנס לכאן (סבב סופי, R6-4)
   plannedMinutes: number; focusedMs: number; coPlay: boolean;
   plan: EpisodePlan; blocksCompleted: number;
   endReason?: SessionEndReason;
@@ -684,7 +685,8 @@ K_tmpl = 0.01;                           τ_T ← clamp(τ_T − K_tmpl·w·(x �
 | G13 `english.oral_vocab` | `E.VO.COL.REC`, `E.VO.NUM.REC`, `E.VO.ANI.REC` (05 §3; `english.oral_vocab` = `E.VO.*.REC`) |
 | S13 `english.letter_sounds` | `E.PH.SAT.GPC` (05; `english.letter_sounds` = `E.PH.*.GPC`, היחידה הראשונה) |
 | S14 `english.decoding_cvc` | `E.PH.SAT.BLEND` (05; `english.decoding_cvc` = `E.PH.*.BLEND`) |
-| T1–T5, T8–T9, G1–G6, G12, G14, S1–S6 | `H.*` (04), `lang.*`/`motor.*`/`world.*` (06) — ⟂VERIFY: 04 ו-06 טרם פרסמו טבלת מיפוי. עד אז הקובץ מחזיק את המזהה הזמני, והטעינה מציגה אזהרת dev "unmapped questionId" (לא כשל) |
+| T1–T4, T8, G1–G6, G12, G14, S1–S3, S5–S6 | **04 §2.7** (`questionnaire-map.json` עם משקלים): `lang.vocab_expressive` (T1), `lang.combinations` (T2), `lang.receptive` (T3), `lang.receptive_body` (T4) → `H.OL.*`; `motor.name_writing` (G4) → `H.HW.PRINT.NAME`, `H.SP.NAME`; `motor.tracing` (G14) → `H.HW.PRE` (06 מוסיף `A.SHAPE.01` במשקל 0.35 בלבד); שאר השורות → `H.*` לפי הטבלה שם. S4 אינו מיומנות (אין מיפוי) |
+| T5, T9 (+T6/G14 משניים) | **06 §2.7**: `world.animals` (T5) → `S.INQ.01`/`S.LIFE.01`; `motor.fine` (T9) → `L.SPAT.02`; T6 גם `A.COLOR.01`/`L.SPAT.01` (משני ל-03). הבעלות (סבב 2, R3 #7 / R4-4): `lang.*` ו-`motor.name_writing`/`motor.tracing` הם של 04, לא של 06. הפריסה: `ContentIndex.aliases[questionId]` (למטה). `questionId` שאינו ממופה באף קובץ → אזהרת dev "unmapped questionId" (לא כשל) — הכלל נשאר כרשת ביטחון; נכון לסבב הסופי כל 35 המזהים ממופים |
 
 * **צירי מיקום באנגלית** (05 §3): ‏`english.oral_vocab` = עמוד שדרה מ-`E.VO.*.REC`; ‏`english.listening` = `E.OR.L.*.REC`; ‏`english.letter_sounds` = `E.PH.*.GPC` לפי סדר היחידות; ‏`english.decoding` = `E.PH.*.BLEND`. השם `english.listening_vocab` שהופיע בטבלת E3 של K1 הוחלף ב-`english.listening`.
 * **בדיקה:** `questionnaire-map.json` עובר ולידציה מול `ContentIndex` ב-CI (כל מיומנות קיימת, או מסומנת `provisional`). כל מיומנות שבשאלון ואינה `placementEligible` עדיין מקבלת תצפית-פסאודו.
@@ -1877,7 +1879,7 @@ export const DEFAULT_CONFIG: EngineConfig = {
 | U-STEP-2 | אותו דבר, correct 3 | x = 1, נקי |
 | U-STEP-3 | θ=0, β=0, a=1.5, u=1, x=0.667 | Δθ = 0.5·(0.667−0.5) = +0.0833 |
 | U-STEP-4 | תיקון עצמי: ניסיון 2 עם 3/3 | x = 0.5 |
-| U-STEP-5 | `firstErrorTag='E.NO_CARRY'` ממופה ל-j | `j.checkSoon=true` |
+| U-STEP-5 | `firstErrorTag='EM.NO_CARRY'` ממופה ל-j | `j.checkSoon=true` |
 | U-REP-1 | `O.REP`: last8 = 7/8 נקיים, 2 ימים, P̂=0.86, ייצוגים: 6 pictorial + 2 concrete | נשאר `advancing`, reason `needs_abstract` |
 | U-REP-2 | אותו דבר + 2 abstract נקיים (במקום 2 pictorial) | `proficient` |
 | U-REP-3 | `pickItem` כשחסר abstract ויש מועמד abstract עם \|P−pTarget\| = 0.10 | נבחר abstract |
@@ -2066,3 +2068,13 @@ export const DEFAULT_CONFIG: EngineConfig = {
 * **§6.9 תאריך מבחן (15 GAP-72):** פריסה כך שהחזרה האחרונה 1–2 ימים לפני; מבחן בעוד < 3 ימים → בלוק `review` אחד בפרק הבא (`near_test`), בלי AL-13; `cfg.classTopics`.
 * **§9.2 בדיקת איחוד הכללים הרגשיים (15 GAP-32):** אומת שהכלל קיים פעם אחת (08), הנוסח ב-07 §10, 10 מפנה; נוספה הערה על תדירות הצ'ק-אין (S כל פרק / G כל יום שני) והתאמת חלון "7 האחרונים ב-14 יום" לשני הקצבים.
 * **כבר פתור מסבב 1 (אומת, בלי שינוי):** F1 #4/#9/#10/#11/#13/#16; F2 #9c (`assisted` ×0.3); F3 #1–9; F4 #1–6; F6 #3–5.
+
+### Final sweep changelog
+
+סבב סופי (2026-11-02; פירוט ב-`docs/review/final-sweep.md`; round2-R2/R3/R6 → 08).
+
+- **§1.1 `StrandMeta.priorFrom`:** הערכים המחייבים נרשמו — מתמטיקה (03 §6.0א): `math.facts ← math.operations`, `math.fractions ← math.number`, בלי prior לגאומטריה/מדידה/דפוסים; עברית (04 §2.7): `hebrew.oral ← hebrew.listening`, `hebrew.writing ← hebrew.spelling_morph`, `hebrew.ran ← hebrew.letters`.
+- **§1.2 `errorTags`:** הדוגמה בקודים הקנוניים (`'EM.REVERSE_DIGITS' → 'M.PV.TENS100'`). **§12.10ב U-STEP-5:** `EM.NO_CARRY`.
+- **§1.4 טבלת חוט→מנוע:** שורת "עדיין חסרים ב-11" עודכנה — שדות v2 קיימים ב-11 §5.8 מסבב 2; שורה חדשה ל-`levelMode`/`provenance` (02 בלבד; המתכנן ממלא `levelMode` מ-`EpisodePlan.mode` — אישור לבקשת R2).
+- **§1.10 `Session.mode`:** הערה ש-`safe_room` הוא מצב-חוט בלבד (09 SCR-16; 11 §5.8), מופל ב-`toEngineEvent`, לא צורך תקרה ולא נכנס ל-`Session.mode` (R6-4). `nikud_lens` כבר ב-§1.9 (סבב 2).
+- **§3.3א מפת השאלון:** השורה "04 ו-06 טרם פרסמו" הוחלפה בבעלות הסופית — `lang.*` (T1–T4), `motor.name_writing` (G4), `motor.tracing` (G14) ושאר `H.*` ב-**04 §2.7**; `world.animals` (T5), `motor.fine` (T9) ב-**06 §2.7** (R3 #7 / R4-4). כל 35 המזהים ממופים; אזהרת ה-dev נשארת כרשת ביטחון.

@@ -275,7 +275,7 @@ S0 and S1 are 8 weekly chapters, each ending in a family boss (§9.3).
   - Final: a custom design (Meshy/Tripo → Blender ≤5k tris → rig). Prompts use "soft toy lantern, stitched fabric, glowing core"; the words "robot/mech/android" are banned in prompts (AC-HERO-1).
 - **Mandatory animation clips (8):** `idle`, `walk`, `run`, `jump`, `celebrate`, `wave`, `found_it`, `oops_cute` (a cute stumble, never "sad").
 
-### 3.3 Avatar: a child who looks like themselves without a photo (00 D14 rules, Mii approach)
+### 3.3 Avatar: a child who looks like themselves without a photo (00 A4 self-like avatars; privacy per 00 E10 / OPD-10; Mii approach)
 
 - The avatar is a 2D/2.5D face plus upper body (Rive/Skia; it is the face seen through the dome) and appears **full-body** in the hub (camp mode, walking next to the פנסון).
 - **Face parts:**
@@ -291,7 +291,7 @@ S0 and S1 are 8 weekly chapters, each ending in a family boss (§9.3).
   2. The child gets to edit only the cosmetics (clothes, hair color for a party, accessories).
   3. Structural changes (skin tone, face shape) are parent-only, so a child doesn't "become someone else" by accident.
   4. K3 does not edit at all.
-- **No photos, no face scanning, no image generation from a photo** (00 D14).
+- **No photos, no face scanning, no image generation from a photo** (00 E10: no child photos in any image prompt unless OPD-10 consents; the avatar builder never uses the camera).
 - **Avatar emotions:** `happy`, `proud`, `surprised`, `thinking`, `silly`, `sleepy`. The avatar never "cries" in the game.
 - **Gender:** no item is gender-locked. The catalog is never filtered by gender (`gap_audit` §4.14).
 
@@ -728,7 +728,7 @@ Every level must include ≥4 of the following 8 types (CI lint on the level fil
 | Min target size (physical, gap §4.7) | ≥20 mm (≈120pt iPhone / ≈104pt iPad) | ≥15 mm (≈90/80pt) | ≥10 mm (≈60/52pt) |
 | Handedness | — | Toggle to mirror the jump button | Toggle to mirror joystick/buttons |
 
-- The world is **not mirrored in RTL** (E1b). Only the 2D HUD is RTL. Number lines, equations and math expressions inside the HUD are always LTR (00 B9d); coding/arrow strips for band G flow RTL (00 B9a); movement arrows mean absolute screen direction (00 B9b).
+- The world is **not mirrored in RTL** (E1b). Only the 2D HUD is RTL. Number lines, equations and math expressions inside the HUD are always LTR (00 B9 (d)); coding/arrow strips for band G flow RTL (00 B9 (a)); movement arrows mean absolute screen direction (00 B9 (b)).
 - **Game controller (00 E3):** optional after the vertical slice (C4); stick = move, X = jump, haptics → rumble. Never required by any mechanic; every control scheme above stays fully playable by touch (AC-CTRL-1).
 - **"Forward" progression in the hub and regions is right to left.** For example, the first gate is on the right, and progress on the Lost Friends Board runs right to left (Apple HIG RTL).
 
@@ -1317,7 +1317,7 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
 - **Compact form:** one "another way?" prompt after any MX-M01/M04/M05 item (07 `another-way` hook).
 
 #### MX-M18 `light-duel` (מי חזק יותר?) — 03 `MECH.DUEL`
-- **Ages · Skills · Input:** K2 compare two quantities (more/fewer, 1–10), then numerals (`M.NUM.COMP.*`); K1 numerals to 1000, <, >, = symbols, fractions (`M.NUM.COMP.*`, `M.FRAC.COMP`). Input: tap the stronger torch / drag the crocodile mouth (the symbol).
+- **Ages · Skills · Input:** K2 compare two quantities (more/fewer, 1–10), then numerals (`M.NUM.COMP.*`); K1 numerals to 1000, <, >, = symbols, fractions (`M.NUM.COMP.*`, `M.FRAC.COMPARE.*`). Input: tap the stronger torch / drag the crocodile mouth (the symbol).
 - **Rules:** two torches of fireflies face a shadowling; the brighter one warms it. "Which torch is stronger: 7 or 9?" Tapping the bigger one sends its light. Twist: the quantities are shown in different representations (dots vs numeral). K1: drag the "mouth" (<, >) to point at the bigger number.
 - **Learning = action:** only the correct comparison lights the shadowling; a wrong tap makes the weaker torch sputter (visible magnitude).
 - **Feedback:** the two torches briefly show their quantities side by side after the answer (always informative).
@@ -1335,7 +1335,7 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
 - **Offline:** a printable tangram (03 `PRN.K2.08`).
 
 #### MX-M20 `scout-chart` (דוח הסיירים) — 03 `MECH.SCOUT_CHART`
-- **Ages · Skills · Input:** K2 sort and count into a pictograph (`M.DATA.PICTO`); K1 tables, bar charts, "how many more?" questions (`M.DATA.*`). Input: drag tokens into columns; tap to answer.
+- **Ages · Skills · Input:** K2 sort and count into a pictograph (`M.DATA.PICTO.G`); K1 tables, bar charts, "how many more?" questions (`M.DATA.*`). Input: drag tokens into columns; tap to answer.
 - **Rules:** after an evening, ניצי asks for the scouts' report: "how many shadowlings became friends of each color?" The child builds the pictograph from the actual friends rescued in this episode (real data, no fake numbers), then answers 1–2 questions from the chart.
 - **Learning = action:** the report is pinned on the camp board and the chart *is* the decoration; the question's answer opens the mailbox.
 - **Knobs:** categories (2–5), scale (1 token = 1 / 2 / 5), question type (read / compare / difference).
@@ -1412,7 +1412,7 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
 - **Rules:** a CV rune (pre-baked glyph, §2.3) blocks a gate. Tap the sound button of its first sound → the rune **splits** into a consonant half and a vowel half with a satisfying crack; the gate opens. Shō: "which vowel is inside?" (drag the vowel tile to rebuild a different rune: מָ → מִ, the picture changes from "מָה?" to "מִי?"). Ten: Elkonin boxes — a CVC word's picture sits on 3 boxes; tap a box per sound in order (RTL); each box lights with its sound. Ketsu: deletion — "קוֹף without /k/" → the rune loses its first half and becomes אוֹף (nonsense is fine; ניצי giggles, the friend comes out anyway).
 - **Learning = action:** the split *is* the key; a correct first sound physically breaks the rune. Blending (MX-H02) is the reverse motion, so the two mechanics share the anvil/rune art and the child sees "build" and "break" as one idea.
 - **Feedback:** every sound button plays the human-recorded phoneme (00 E9 HREC, never TTS for isolated consonants); after a correct split both halves say their sound, then the whole rune says the CV again (segment → blend check). Wrong button: the rune hums its real first sound (informative), no buzzer.
-- **Knobs:** CV set (from 04's letter blocks B1–B5 and vowel order), number of sound buttons (2 → 4), whole-CV vs. first-sound distractors (`E.PA.CVWHOLE`, `E.PA.ADDVOWEL` from 04's catalog), CVC length (2–3 boxes), deletion position (initial only for K2).
+- **Knobs:** CV set (from 04's letter blocks B1–B5 and vowel order), number of sound buttons (2 → 4), whole-CV vs. first-sound distractors (`EH.PA.CVWHOLE`, `EH.PA.ADDVOWEL` from 04's catalog), CVC length (2–3 boxes), deletion position (initial only for K2).
 - **Failure:** after 2 errors the correct button pulses while ניצי stretches the sound ("mmm… מָ"); after 3, a worked example with the mouth-shape card (04) and an easier CV. Never more than 3 in a row (AC-LV-6).
 - **Movement/Evening:** MV-02 clap variant for CV count; evening compact form: a shadowling shows a rune, tap its first sound to light it.
 - **Priority:** Tier B, shipped in S0 — the first non-MVP mechanic to build.
@@ -1423,12 +1423,12 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
 - **Learning = action:** only the real twin lifts under the glass; a wrong one "slides" and shows its own sound + its feature.
 - **Feedback:** a found rune says its sound (sound-first, 00 B6); a wrong tap plays the distractor's sound and highlights the feature difference side by side for 1.0s.
 - **Knobs:** pair (from 04 §2.3א), row length (4–8), number of targets (1–4), feature animation on/off, K1 handwriting fonts (2 hands).
-- **Failure:** after 2 errors the feature animation stays on; after 3, ניצי points at one target and the row shrinks to 4. Pair-specific errors feed 04's `E.VIS.<PAIR>` (never a merged "visual" error).
+- **Failure:** after 2 errors the feature animation stays on; after 3, ניצי points at one target and the row shrinks to 4. Pair-specific errors feed 04's `EH.VIS.<PAIR>` (never a merged "visual" error).
 - **Evening:** compact form — a shadowling wears a letter mask; tap the matching twin on the sign.
 
 #### MX-H14 `writing-studio` (סטודיו כתיבה) — 04 `writing-studio`; not tracing (04 P8)
 - **Ages · Skills · Input:** K2: invented spelling with letter tiles (`H.SP.INV`: "how do we write מָה?" → the first sound's letter, then a letter per CV), short decodable words with final forms (`H.SP.CVC`: יָם, דָּג, שָׁם), labelling a drawing (`H.WC.EM.LABEL`), **joint writing with a parent** (`H.WC.EM.JOINT`, Aram & Levin: 7 weeks × 3/week). Input: drag tiles into slots; parent prompts on screen (same layer as K3 lap prompts, §15.3).
-- **Rules:** a studio tent in the neighborhood. A purpose first, never "write this word": a birthday card for a friend, a shopping list for Shabbat, a sign for the room, a "letter to the campfire" (04 §14.4). The child **says** the word, taps the sound button per sound, then drags a tile for each sound. The parent-mediation script runs on screen for the adult ("שאלו: מה הצליל הראשון? תנו לו למצוא את האות"), one prompt per step, 04 §14.4 wording. **Invented spelling is expected and accepted** (`E.SPL.PHON` is logged as "expected", never marked wrong in gan). The finished card/sign appears **in the world** (on the tent, in the mailbox of the friend, on the campfire).
+- **Rules:** a studio tent in the neighborhood. A purpose first, never "write this word": a birthday card for a friend, a shopping list for Shabbat, a sign for the room, a "letter to the campfire" (04 §14.4). The child **says** the word, taps the sound button per sound, then drags a tile for each sound. The parent-mediation script runs on screen for the adult ("שאלו: מה הצליל הראשון? תנו לו למצוא את האות"), one prompt per step, 04 §14.4 wording. **Invented spelling is expected and accepted** (`EH.SPL.PHON` is logged as "expected", never marked wrong in gan). The finished card/sign appears **in the world** (on the tent, in the mailbox of the friend, on the campfire).
 - **Learning = action:** the written word *is* the object (the sign is readable in the neighborhood; the shopping list fills the camp kitchen).
 - **Feedback:** the studio reads the child's tiles back exactly as written (phonetically, from the HREC bank) so the child hears what they wrote; no red marks. For K2-advanced CVC items with a final-form slot, the slot shape hints the final letter.
 - **Knobs:** tile set (letters known ≥70%, plus 2 unknowns), slots shown/hidden, parent-mediated vs. solo (solo only after ≥3 mediated sessions), purpose template.
@@ -1441,7 +1441,7 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
 - **Learning = action:** the transformed word is what appears in the world (many children run out; the bridge holds).
 - **Feedback:** the machine always says the full pair ("יֶלֶד — יְלָדִים") after the answer; K2 never sees text for this mechanic (oral skill), only pictures + voice. All forms come from the approved lexicon (00 B3/B4), never generated.
 - **Knobs:** lever set, regular/irregular ratio, options (2–3), K1 sentence length, punctuation items.
-- **Failure:** after 2 errors the correct output is said slowly and the child just taps it; after 3, worked example. `E.MO.PLURAL_IRREG`, `E.MO.GENDER_AGR` from 04's catalog.
+- **Failure:** after 2 errors the correct output is said slowly and the child just taps it; after 3, worked example. `EH.MO.PLURAL_IRREG`, `EH.MO.GENDER_AGR` from 04's catalog.
 - **Evening:** compact form — a shadowling holds "one"; feed it "many" to light it.
 
 #### Names used by 06/07 that are not catalog IDs (mapping, F4 #15)
@@ -1455,7 +1455,7 @@ That is **68 mechanics** (51 original + 8 math from 03, 3 English from 05, 1 fro
 | `breath-mic` | `MX-S02:mic` | Lantern breath with optional microphone onset (RMS only, no recording; AC-MV-4 applies) |
 | `ladder` (bravery) | `MX-S06` | Parent-ticked steps; end-of-ladder gem per 02 (`braveryLadderComplete`, never announced) |
 | `build-sim` | `MX-X05` | Adopted |
-| `code-strip` / `code-stack` | `MX-T02:strip` (band G, RTL per 00 B9a) / `MX-T02:stack` (band S, vertical); simple 3-card strips in K3/K2 = `MX-A01` | Arrows are absolute screen directions (B9b) |
+| `code-strip` / `code-stack` | `MX-T02:strip` (band G, RTL per 00 B9 (a)) / `MX-T02:stack` (band S, vertical); simple 3-card strips in K3/K2 = `MX-A01` | Arrows are absolute screen directions (00 B9 (b)) |
 | `map-place` | `MX-X03:place` | Place a card on the Israel/world diorama |
 | `shelf-3`, `route-planner`, `passport`, `season-track`, `rule-builder` | **FS screens** (`FS-SHELF3`, `FS-ROUTE`, `FS-PASSPORT`, `FS-SEASON`, `FS-RULES`), owned by 07 | Not level gimmicks; they appear inside `ritual_mid` / FS episodes and in the hub. A screen that later carries a level gets an `MX-*` id in this catalog first |
 
@@ -1787,7 +1787,7 @@ What this document still **requires** of the economy (game-design intent, all al
 | CO-1 | **"שני צדי השולחן"** (Face-to-face) | 1 iPad landscape, split into 2 halves, each half **rotated toward its player** (180°) | K1+K2, K2+K3 (with a parent), K1+K3 | 5–8 min | Campfire evening, boss finale, building together |
 | CO-2 | **"כתף אל כתף"** (Side-by-side) | 1 iPad, one shared screen, roles with separate zones (right/left) | Any pair or three, + a parent | 5–8 min | The runner (one runs, one lights), the evening, a level in co-op |
 | CO-3 | **"מכשירים מחוברים"** (Multi-device) | 2–3 devices on the same family account, a session over WebSocket (see Proposed change to 00) | K1+K2(+K3 on a parent's phone/iPad) | 5–10 min | The weekly boss, the evening, Mission Control (K1 commander → K2 artist-bot) |
-| CO-4 | **"מכתב לאח"** (Async) | Any | K1 → K2 | — | K1 builds a riddle or puzzle for her brother (Walkington problem-posing); K2 solves it in his episode. A heart emote goes back. **Structured authoring only (00 C7, F9 GAP-46):** the letter is composed from closed chips (question frames), numbers, and pictures/items from the installed pack — **no free text, no keyboard, no drawing** in the letter; it is stored as a `coop_letter` doc `{from, to, templateId, slots[], createdAt}` (11 §6.1) and rendered from the template on K2's device, so nothing unreviewed can reach him |
+| CO-4 | **"מכתב לאח"** (Async) | Any | K1 → K2 | — | K1 builds a riddle or puzzle for her brother (Walkington problem-posing); K2 solves it in his episode. A heart emote goes back. **Structured authoring only (00 C7a; 15 GAP-46):** the letter is composed from closed chips (question frames), numbers, and pictures/items from the installed pack — **no free text, no keyboard, no drawing** in the letter; it is stored as a `coop_letter` doc `{from, to, templateId, slots[], createdAt}` (11 §6.1) and rendered from the template on K2's device, so nothing unreviewed can reach him |
 | CO-5 | **"הורה בחדר"** (Parent co-pilot) | 1 device + a parent prompt on screen | Every child (K3 always) | — | Lap-mode / co-play prompts (§15.3) |
 
 - **Drop-in / drop-out** in every mode (LEGO, R5):
@@ -1976,7 +1976,7 @@ sharedGoal(evening) = Σ_activeChildren(activeMinutes × 100) × 0.85
 |---|---|---|---|---|
 | Sun | The playroom (3 toys) + peekaboo | Onboarding (§14.2) + **expedition E1 "מספרים"** (08 §3.2) as the level slot, in R-05 scenery + camp Show (3 endowed friends) | Onboarding + **expedition E1 "חשבון א'"** in R-05 scenery + diary | — |
 | Mon | + a 4th toy, "copy me" | **Expedition E2 "צלילים ואותיות"** in R-03 scenery + the collection room opens (3 friends from onboarding, endowed) | **Expedition E2 "עברית א'"** in R-03 scenery + the collection room | — |
-| Tue | Peekaboo with colors | **Expedition E3 "סיפור"** (+ optional E4 tracing) + first movement moment (MV-02 clapping syllables) | **Expedition E3 "חשבון ב' + אנגלית"** (English strands per 08/05 timing) + the first Build Mission | — |
+| Tue | Peekaboo with colors | **Expedition E3 "סיפור"** (+ optional E4 tracing) + first movement moment (MV-02 clapping syllables) | **Expedition E3 "חשבון ב' + אנגלית"** (`english.listening` + `english.letter_sounds` probes run **here**, 08 §3.2; 05's week-3 bottle "המכתב של Sunny" (05 §14.1/§15.1) is the story wrapper for the lazy probes of `english.oral_vocab`/`english.decoding`, 08 §3.7 — one timing, reconciled in the final sweep) + the first Build Mission | — |
 | Wed | Rest / playroom | First regular episode: LV R-03 #1 (rune lens) + lantern breath (MX-S02) + first pet egg (known in advance) + **first evening** | **Expedition E4 "עברית ב'"** + a short first regular level (R-05 #1 array hammer) + first evening defense with towers + egg | — |
 | Thu | Family: "lighter" role | **First family evening: the "ענן ההפתעות" boss** (CO-2, short, 5 min, guaranteed win) | Same + optional guide mode | Fire level 1→2, the first family treasure |
 | Fri | Optional (before Shabbat) | Short episode: daily surprise + Build | Same | Recorded "Shabbat shalom" from a parent (optional) |
@@ -2231,7 +2231,7 @@ The UX spec is the canonical owner of the phrase list (00 C4). **The lines below
 - **AC-MX-8:** MX-E01 `pairs`: no pronunciation score is ever computed or stored; the speaker pool rotates among the 4 adult voices + the human recording (test).
 - **AC-MX-9:** Tool belt: `toolState` transitions follow 07 §2.2 (`chosen` requires ≥3 independent choices over ≥2 weeks; `transferred` requires a parent confirmation event).
 - **AC-CO-7:** Touch zones: in CO-1/CO-2 a tap outside a child's own zone never produces an `item_answered` for another child (gesture test with synthetic taps per zone); `assisted:'sibling'` appears only after a parent mark event (engine test).
-- **AC-MX-10:** MX-H12: PA items (`H.PA.*`) render sound buttons only, never letter text (snapshot); every isolated phoneme comes from the HREC recording list (test, as AC-MX-3 for Hebrew). MX-H13: a pair is served only when both letters are ≥70% known; errors are logged per pair (`E.VIS.<PAIR>`). MX-H14: no accuracy score is computed for `H.SP.INV`/`H.WC.EM.*` items (`E.SPL.PHON` logged as expected). MX-H15: K2 items show no text (snapshot).
+- **AC-MX-10:** MX-H12: PA items (`H.PA.*`) render sound buttons only, never letter text (snapshot); every isolated phoneme comes from the HREC recording list (test, as AC-MX-3 for Hebrew). MX-H13: a pair is served only when both letters are ≥70% known; errors are logged per pair (`EH.VIS.<PAIR>`). MX-H14: no accuracy score is computed for `H.SP.INV`/`H.WC.EM.*` items (`EH.SPL.PHON` logged as expected). MX-H15: K2 items show no text (snapshot).
 - **AC-MX-11:** MX-H06 emits `hint:lens` on every lend; the engine's lens-tap rate per 100 words is derivable from the log (test).
 - **AC-CTRL-1:** Every mechanic is completable with touch only; the optional controller never appears in any tutorial or prompt (snapshot).
 - **AC-STOP-4:** Every offline mission card has ≥1 safety tag from 00 C13; the small-parts rule is enforced while `youngestChildAge < 3` (content lint).
@@ -2475,3 +2475,12 @@ Disposition of every issue targeting this file is in `docs/review/round2-R2.md`.
 - **Chests:** `chest_earned` is a derived fold output with `chestId = hash(sourceEventId)`; only `chest_opened` is persisted (F6 #2).
 - **Praise:** §16.3 now points to 09 §9.2 P19–P25 per row; new lines go to 09 first (F6 #1). **Routes:** AC-WORLD-1 cites 11 §4.1 route names and 09 SCR ids (F6 #2).
 - **DD-20:** iPhone hub portrait-first per 09 §8.1 (GAP-29). **§20 #1:** Durable Objects marked accepted (00 E5). **§4.10/§14.1:** parent voice clips per 12 §6.11 (GAP-67).
+
+### Final sweep changelog
+
+Final consistency sweep, 2026-11-02 (one editor for all files; details in `docs/review/final-sweep.md`, register in `16-verify-register-and-index.md`).
+
+- **§7.3 MX-H12…MX-H15 cards and AC-MX-10:** Hebrew error codes renamed to 04's final namespace — `EH.PA.CVWHOLE`, `EH.PA.ADDVOWEL`, `EH.VIS.<PAIR>`, `EH.SPL.PHON`, `EH.MO.PLURAL_IRREG`, `EH.MO.GENDER_AGR` (round2-R3 #2; `E.*` is reserved for 05's skill ids).
+- **§7.3 MX-M14 / MX-M19 skill ids:** `M.FRAC.COMPARE.*` (was a truncated id) and `M.DATA.PICTO.G` (03's id).
+- **§14.3 K1 Tuesday row:** English placement timing reconciled with 05 §14.1 — `english.listening` + `english.letter_sounds` probes run in 08's E3 (week 1); 05's week-3 "המכתב של Sunny" bottle wraps the lazy probes.
+- **Decision references:** §3.3 `00 D14` (no such decision) → `00 A4` + `E10`/OPD-10; §12.1 CO-4 "00 C7, F9 GAP-46" → "00 C7a; 15 GAP-46"; §6.4 and §7.3 cite B9's sub-rules as `00 B9 (a)/(b)/(d)`.

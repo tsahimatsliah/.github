@@ -132,7 +132,7 @@
 - **הטורקיז `#19B7B0` + צהוב של 01 נשאר צבע הדמות בלבד:** נרשם כטוקן `color.char.sunny = #19B7B0` (+ `sun.500`) למלווה האנגלית ולתלבושותיה, ולמים/אור של האי (`#A8F0E9` כבר בראמפ). **אסור** על כפתורים, מסגרות, אריחים או אייקוני מקצוע. 01 §2.2 מצביע לכאן במקום להגדיר ערך משלו (נשלח ל-01).
 
 ### 2.6 פרומפטים ללוח השראה ולייצור נכסים
-לשימוש עם Nano Banana / GPT Image (E10, לא Gemini API לפי E8a), Recraft ל-SVG, ו-Meshy/Tripo לתלת-ממד (tech_3d_world). כל תוצר נרשם ב-`LICENSES/assets.json`.
+לשימוש עם GPT Image (E10; **לא** Gemini / Nano Banana, E8a), Recraft ל-SVG, ו-Meshy/Tripo לתלת-ממד (tech_3d_world). כל תוצר נרשם ב-`LICENSES/assets.json`.
 
 **סיומת חובה לכל פרומפט:**
 `original character design, no text, no letters, no logos, no existing franchise, not Astro Bot, not PlayStation, not Nintendo, not Supercell characters, child-friendly, soft vinyl toy aesthetic, toon shading with 3-step light ramp, rounded bevelled shapes, top-front key light, soft pill-shaped contact shadow, saturated but warm palette`
@@ -955,7 +955,7 @@ Reanimated `withSpring` מקבל **פיזיקה מפורשת**. לא מסתמכ�
 - **בעולם תלת-ממדי:** מעוגנת לנקודת הטלה (`CMP-33`).
 
 **`CMP-09 CharacterRig`** (חוזה מצבים לדמות)
-- **ממשק אחיד** לשני מימושים: Rive (state machine `Main` עם view-model/inputs) ו-Skia-sprite או Lottie כגיבוי (E1a; ווב ו-Expo Go).
+- **ממשק אחיד** לשני מימושים: Rive (state machine `Main` עם view-model/inputs) ו-Skia-sprite או Lottie כגיבוי (E1a; ווב — Expo Go אינו מסלול, 11 §3.1).
 - **קלטים:**
   - `mood ∈ {idle, happy, think, surprised, sleepy, cheer, wave, point}`
   - `isSpeaking: bool`
@@ -1873,3 +1873,10 @@ SCR-03 בגרסת `time.night` ← אייקון "מדורה" ← SCR-13 לובי
 - **שעת שינה (R5, 10 §6.13):** מצב כרטיס `preBedtime` "הגיבור כבר מתכונן לשינה" (לא נעילה) ומצב "מחנה ישן" אחרי חלון 30 הדקות של השער (SCR-01).
 - **נגישות וליטוש:** הגדרת "פתיחה אוטומטית של תיבות", `handedness`, קוד Guided Access נפרד (GAP-60), פריט צ'קליסט 17 `testID` (§10, §12).
 - **שערים:** G4b תחת `GATE-UX-6` והפניה ל-13 §16.7 כלוח הזמנים היחיד (§14).
+
+### Final sweep changelog
+
+סבב סופי (2026-11-02; פירוט ב-`docs/review/final-sweep.md`).
+
+- **§2.5 (הנחיה אמנותית):** "Nano Banana" הוסר מרשימת כלי התמונה — GPT Image (E10) בלבד; Gemini/Nano Banana אסורים (00 E8a).
+- **§6 (Rive):** הגיבוי Skia/Lottie הוא לווב בלבד; "Expo Go" אינו מסלול (11 §3.1).

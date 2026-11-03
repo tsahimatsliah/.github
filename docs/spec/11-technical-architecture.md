@@ -1685,7 +1685,7 @@ type EventEnvelope = {
 | `episode.completed` | learn | `{episodeId, coop:boolean, participants[], durationMs, celebrationMs}` (02 `episode_completed`; 09 UX-AC-08 budget uses `celebrationMs/durationMs`) |
 | `placement.step` / `placement.finished` | learn | `{probeId, skill, outcome, rtMs}` / `{subject, strand, theta, se, reason:'completed'\|'interrupted'\|'resumed_later'\|'lazy', quality}` (08 §3, §10.5.1; 10 W-ASM) |
 | `benchmark.result` | learn | `{window:'BOY'\|'MOY'\|'EOY', strand, theta, se, wordsCorrect45s?, wcpm?, errors?, pointed?}` (08 §8; 10 M-11) |
-| `item.presented` / `item.answered` (**v2**) | learn | v1 fields `{packId, packVer, itemId, skill, template, answer, correct, firstTry, hintUsed, workedExample, isReview, stretch, embodied, rtMs, attempt}` (02 §2.1 `item_answered` + 08 §4 RT filters) **plus v2** (08 §1.4 `Attempt`, imported from `packages/engine`): `outcome:'correct'\|'wrong'\|'too_tricky'\|'timeout'\|'abandoned'`, `chosenErrorTag?`, `touchesBeforeAnswer`, `idleMaxMs`, `appBackgrounded:boolean`, `context:{mode, role, assisted:'parent'\|'sibling'\|'none', wrapperTopic?}`, `steps?:{total, correct}` (O.STEP partial credit), `representation?:'concrete'\|'pictorial'\|'abstract'` (O.REP), `answerableAt`, `firstResponseAt`. The reducer reads v1 rows through 08's safe defaults (`outcome` from `correct`, `touchesBeforeAnswer=1`, `idleMaxMs=0`, `assisted:'none'`) so old logs replay unchanged |
+| `item.presented` / `item.answered` (**v2**) | learn | v1 fields `{packId, packVer, itemId, skill, template, answer, correct, firstTry, hintUsed, workedExample, isReview, stretch, embodied, rtMs, attempt}` (02 §2.1 `item_answered` + 08 §4 RT filters) **plus v2** (08 §1.4 `Attempt`, imported from `packages/engine`): `outcome:'correct'\|'wrong'\|'too_tricky'\|'timeout'\|'abandoned'`, `chosenErrorTag?`, `touchesBeforeAnswer`, `idleMaxMs`, `appBackgrounded:boolean`, `context:{mode, role, assisted:'parent'\|'sibling'\|'none', wrapperTopic?}`, `steps?:{total, correct}` (O.STEP partial credit), `representation?:'concrete'\|'pictorial'\|'abstract'` (O.REP), `answerableAt`, `firstResponseAt`, and for 02 only: `levelMode?:'normal'\|'placement'\|'benchmark'\|'review'\|'boss'\|'event'` (the level instance's `mode`, 01 §6.6, set by the planner from `EpisodePlan.mode`; 02 §2.7 `levelModeNeverEarns`) and `provenance?:'placement'\|'benchmark'\|'paper'` (02 §2.1); `toEngineEvent` ignores both (08 reads `context.mode`). The reducer reads v1 rows through 08's safe defaults (`outcome` from `correct`, `touchesBeforeAnswer=1`, `idleMaxMs=0`, `assisted:'none'`) so old logs replay unchanged |
 | `hint.shown` | learn | `{itemId, level, source:'scripted'\|'ai'}` |
 | `behavior.signal` | learn (**`local_only` when `kind='emotion_checkin'`**) | payload = 08 §1.9 `BehaviorSignal` (`kind` ∈ `error, hint_request, hint_available_unused, challenge_choice, topic_choice, revisit, i_wonder, optional_extra, reaction, dwell_after_complete, early_quit, idle, rage_tap, rapid_guess_burst, break_request, calm_tool, recovery, novelty_offer, not_into_this, want_more, emotion_checkin, parent_correction` + `context`); replaces the earlier `checkin.mood`. The envelope `cls` is derived from `kind` by `makeEvent` (a test asserts `emotion_checkin` can never be `learn`) |
 | `skill.level_changed` / `skill.level_reverted` | learn | `{skill, from:LevelId, to:LevelId, reason:'evidence'\|'delayed_check'\|'parent'\|'rollover', evidence:{n, acc}}` / `{skill, from:LevelId, to:LevelId, cause:'session_reattribute'\|'reset_progress', sessionId?}` (emitted by the engine reducer, deterministic; 08 §1.1 LevelId `new…master`, §10.5.3; 02's `skill_state_changed` uses the `packages/shared/levels.ts` mapping and ignores `level_reverted` for the wallet — coins/gems/badges are never taken back, C5) |
@@ -2508,11 +2508,20 @@ Cron times are UTC (`src/cron/index.ts` dispatches on `ev.cron`):
      `send_at = clamp(candleLighting − 3h, 12:00, 14:00)` Israel time on **Friday**; if Friday (or
      Thursday evening) is a holiday, the first erev-chag of that week; with Shabbat mode off, Friday
      12:00. Sub-steps on the send day (each idempotent, keyed by `reports.id = family:isoWeek`):
-     (a) **06:05** (first run after) — submit the monthly-strengths/weekly **Haiku Batch**
-     (`ai_jobs kind:'parent_summary'`, input = `StrengthsNarrativeInput` progress facts only, 10 §11.7;
-     never `flags`); (b) **11:00** — if the batch has not returned, one realtime Haiku call
-     (≈ $0.002); if that fails too, the template-only report; (c) at `send_at` — render + send when
-     `sent_at IS NULL`. The payload contains **no `flags[]`** (§7.10). GAP-23b: a missed window
+     (a) **06:05** (first run after), **only on the first send day after a month end** — submit the
+     **monthly-strengths Haiku Batch** (`ai_jobs kind:'parent_summary'`, one request per consenting
+     child (T3), input = `StrengthsNarrativeInput` progress facts only, 08 §8.4 / 10 §11.7 / 12 §5;
+     never `flags`). **The weekly report itself has no LLM step** (10 §11.7: templates `T-W-*`,
+     deterministic; a network test asserts 0 Anthropic calls in an ordinary Friday job, 12 §10 P4);
+     (b) **11:00**, month-end send day only — if the batch has not returned, one realtime Haiku call
+     (≈ $0.002); if that fails too, the `T-M-FALLBACK` template (10 §11.7); the weekly report never
+     waits on AI; (c) at `send_at` — render + send when `sent_at IS NULL`. **Email delivery
+     failures** (Resend error / 5xx; 10 §11.2, GAP-49b): 3 retries with growing delay inside 2 h
+     (+10, +30, +80 min; each attempt logged in `deliveries.error`), then the report stays inbox +
+     web only and SET-07 shows "המייל של {date} לא נשלח" with "לשלוח שוב" (`POST
+     /reports/weekly/:id/email`); retries never cross the Shabbat window (then Sunday 07:30, like
+     the late-send rule) and are idempotent on `sent_at`. The payload contains **no `flags[]`**
+     (§7.10). GAP-23b: a missed window
      (Worker down) sends at the next run the same day if ≥ 3 h before candle lighting, else Sunday
      07:30 with "(באיחור)" in the subject.
   3. **Batch polling** (§8.1): `batches.retrieve` for `ai_jobs.status='submitted'`; collect when
@@ -2573,7 +2582,7 @@ The access JWT is signed with jose, HS256 using `SESSION_SIGNING_KEY`:
 | GET `/invites` · DELETE `/invites/:id` | guardian.invite | list / revoke |
 | POST `/invites/accept` | none (RL_AUTH) | `{code}` → 200 `{familyName, role, next:'email_verify'}` (the email step completes) |
 | GET `/children` | family.read | → `{children[]}` (device scope: allowed only) |
-| POST `/children` | child.create | `{name, nickname?, birthdate, grammaticalGender:'f'\|'m'\|'n', grade, dominantHand?:'left'\|'right', avatar}` → 201 `{child}` (server derives `tier` from birthdate+grade; `band` T/G/S is computed by `packages/shared/bands.ts` on read, A6) |
+| POST `/children` | child.create | `{name, nickname?, birthdate, grammaticalGender:'f'\|'m'\|'n', grade, dominantHand?:'left'\|'right', avatar}` → 201 `{child}` (server derives `tier` from birthdate+grade; `band` T/G/S is computed by `packages/shared/bands.ts` on read, A6). **v1 limit: 3 children per family** (01 §10.1, 10 FAM-03): a 4th active-or-paused child (archived ones do not count) → `409 child_limit` |
 | PATCH `/children/:id` | child.update | partial → `{child}` |
 | PUT `/children/:id/picture-pin` | child.settings | `{hash, salt}` or `{clear:true}` → 204 (`clear` triggers the one-time "בחרי 3 תמונות" step, §4.16) |
 | POST `/children/:id/cap-bonus` (10 API-29) | child.settings, or **L** (local gate) | `{minutes:10, dayKey}` → 201 `{eventId}`; writes `cap.bonus_granted{childId, minutes, grantedBy, dayKey}` (admin event); 422 `bonus_used` on a second grant for the same `DayKey`; audit. From mode L the device writes the event locally with `grantedBy:'device-local:<guardianId>'` and pushes it at the next sync; a duplicate arriving from another device for the same `DayKey` is accepted but ignored by the fold (01 DD-09, §4.16) |
@@ -2651,7 +2660,7 @@ Every AI route runs these steps:
 | *(internal step of `POST /photo-jobs`, §7.9)* photo extract | job runner | Sonnet 5.5 (vision, realtime, `fallbacks:"default"`; Opus 5.5 in parallel only behind `photo.dualRoute`, 12 §3.5.1) | per page: `{extraction (schema §8.3), proposedPack}` → `photo_jobs.status = 'needs_confirm'` |
 | *(internal step of `POST /photo-jobs/:id/confirm`)* photo build | job runner | templates in code; Haiku 5.5 for per-child variants/hints (12 §3.1 #10) | `{items (edited), childIds}` → pack `ready` (approved by the confirm); pages deleted |
 | POST `/ai/companion/turn` | device | Haiku 5.5 realtime | `{childId, sessionId, itemId, context:{template, skill, attemptHistory[≤5], childAnswer?}, turnIndex}` → 200 `{hint:{textKey?, text, nikudText, level:1..3}, revealsAnswer:false, safety:{ok:true}}` |
-| POST `/ai/reports/summary` | Cron / guardian | Haiku 5.5 (Friday batch 06:05 → realtime fallback 11:00, §7.1) | `{familyId, week}` → `{reportId}` |
+| POST `/ai/reports/monthly-strengths` (alias kept: `/ai/reports/summary`) | Cron / guardian | Haiku 5.5 **monthly only** (Batch 06:05 on the first Friday send day after month end → realtime fallback 11:00 → `T-M-FALLBACK`, §7.1 step 2; 12 §5 job `parent.monthly_strengths`). **The weekly report never calls this route** (template-only, 10 §11.7) | `{familyId, childId, month}` → `{narrativeId}`; attached to the first weekly report after month end (10 W-STR-01) |
 | POST `/fs/t2/request` | device (K1 only, 07 §7.3) | Haiku 5.5 **batch** (nightly) + Sonnet 5.5 judge | `{childId, activityId, chips: string[]}` — **chips only** (00 C7a): every chip must belong to the closed `chipSets[activityId]` list in `packages/content/fs/chipSets.json`; any other string → 400 `chip_invalid` + audit (07 AC-32). → 202 `{jobId}` (`ai_jobs kind:'fs_t2'`); the answer lands in the parent approval queue, never live |
 | GET `/ai/log` | ai.log.read | — | `?childId&from&to&cursor` → `{entries[]}` |
 | POST `/ai/log/:id/pin` · POST `/ai/log/:id/flag` | ai.log.read | — | retention pin / flag for review |
@@ -3025,7 +3034,7 @@ stored on the server **only as ciphertext**:
 - **Reading:** guardian devices and the web dashboard decrypt in the client (web: the private key is
   entered once per browser via QR scan with the phone camera or pasted phrase, kept in
   `sessionStorage` only).
-- **Never to AI vendors:** `/ai/reports/summary` receives the progress facts only (10 §11), never
+- **Never to AI vendors:** `/ai/reports/monthly-strengths` receives the progress facts only (10 §11), never
   `flags`, dispositions or check-in counters; a worker test asserts the request body schema has no
   such keys. Lost key (both guardian devices wiped): the flags are recomputed from the kids' devices'
   local 14-day counters after a new keypair is generated; older history is gone by design.
@@ -4017,3 +4026,11 @@ DD-34/DD-37/DD-38, 07 §2.7/§7.3, 06 §12.6. Disposition table: `docs/review/ro
 - **Rejected / deferred:** GAP-44 04:00 cap boundary — rejected by 00 C3 rev 3 / OPD-26 (one `DayKey`,
   midnight in the family city). F9's 4-job/48 h capture-queue numbers → 12 §3.16's 20 pages / 60 MB /
   7 days (12 owns the pipeline).
+
+### Final sweep changelog
+
+Final consistency sweep, 2026-11-02 (details in `docs/review/final-sweep.md`; round2-R7-1, R7-2, R2 → 08/11).
+
+- **§7.1 cron step 2 (a)/(b):** the Haiku Batch is **monthly only** (`parent.monthly_strengths`, first send day after month end, one request per consenting child, `StrengthsNarrativeInput`); the weekly report has no LLM step (10 §11.7 templates; 12 §5; network test = 0 Anthropic calls on an ordinary Friday). **Step 2 (c):** Resend retry schedule mirrored from 10 §11.2 (3× in 2 h: +10/+30/+80 min, logged in `deliveries.error`, then inbox + web only, "לשלוח שוב"; never across the Shabbat window; idempotent on `sent_at`).
+- **§7.3:** `POST /ai/reports/summary` → `POST /ai/reports/monthly-strengths` (alias kept), payload `{familyId, childId, month}` → `{narrativeId}`; §9.8 reference updated. `POST /children`: v1 limit of 3 children → `409 child_limit` (01 §10.1, 10 FAM-03).
+- **§5.8 `item.answered` v2:** adds `levelMode?` (01 §6.6 level-instance mode, set by the planner from `EpisodePlan.mode`) and `provenance?` for 02 §2.1/§2.7; `toEngineEvent` ignores both (08 reads `context.mode`).

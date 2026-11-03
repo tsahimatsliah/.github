@@ -1992,7 +1992,7 @@ met      = goal > 0 && progress ≥ goal
 | מנוע כלכלה (טהור) | `packages/engine/economy/{apply.ts, levels.ts, chests.ts, jars.ts, familyGoal.ts, season.ts, collection.ts}` | בלי תלות ב-React; 100% כיסוי ענפים בכללים |
 | לוח שנה | `packages/content/calendar/5787.json` | שבתות, ימים טובים, ימים רגועים, עוגני עונות; נוצר מ-Hebcal ונבדק ידנית |
 | קטלוג ומסלולים | `packages/content/economy/{catalog.json, tracks.json, capsules.json, seasons/*.json}` | כל פריט: `id`, `category`, `band`, `price`, `unlockLevel`, `profiles`, `assetRef`; בלי שדות stat |
-| UI | `packages/ui/economy/*` | Rive לתיבות ולחיות (fallback: Skia/Reanimated ב-Expo Go, E1a); מחרוזות בווריאנטים m/f/pl |
+| UI | `packages/ui/economy/*` | Rive לתיבות ולחיות (fallback: Skia/Reanimated בווב, E1a; Expo Go אינו מסלול — 11 §3.1); מחרוזות בווריאנטים m/f/pl |
 | סימולציה | `tools/economy-sim/` | מריצה את ה-config, מדפיסה את טבלאות §12, נכשלת על אינווריאנטים |
 | טלמטריה | אירועי D1 בטבלה `econ_events` | הורה בלבד, בלי צד שלישי |
 
@@ -2091,3 +2091,9 @@ met      = goal > 0 && progress ≥ goal
 - **מדורה (F9 GAP-21, F2 #28):** "(1–10)" הוסר (בלי תקרה); עלייה רק מארבעת האירועים / אירוע ה-DO; `levelUpSources` ב-config.
 - **מדבקות (F9 GAP-28):** "תן מדבקה" ל-K3 בלבד.
 - **config:** `neverEarns` מורחב, `enabledFor`, `offlineMissionChestsPerDayMax`, `braveryLadderComplete`, `makerProjectComplete`, `saveBonus.basis` clamped, `pausedChildTarget`, `dayKey: familyCityCalendarDay`, `edgeRules` חדשים; אינווריאנטים 13–15; קריטריוני קבלה חדשים ב-§14.1.
+
+### Final sweep changelog
+
+סבב סופי (2026-11-02; פירוט ב-`docs/review/final-sweep.md`).
+
+- **§14 (מפת מימוש), שורת UI:** ה-fallback ל-Rive הוא Skia/Reanimated **בווב** (E1a); "Expo Go" אינו מסלול (11 §3.1) והוסר מהנוסח. ללא שינוי במספרים.

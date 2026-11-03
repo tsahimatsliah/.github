@@ -216,7 +216,7 @@ SAFETY CORE v1 (applies to everything you write):
 3. **פלט:** `bannedContent()` (מילון מנורמל עם קידומות, §1.6.4), `praiseLint()` (C4), `genderCheck()`, `numberCheck()`, `answerLeak()` (P3).
 4. **שופט:** קריטריון `safety` הוא hard-fail (§1.7).
 5. **אדם:** תור אישור הורה + כפתור "מוזר לי" בצד הילד שמעביר פריט להסגר מיידי.
-6. **תמונות שהורה מעלה (P2):** על המכשיר — טשטוש פנים וחיתוך; בשרת — אין שמירה מעבר לנדרש, אין הפצה לאחרים. (המדריך של Anthropic ממליץ על hash-matching כשמשתמשים מעלים תמונות; כאן המעלה הוא הורה מאומת ב-Sign in with Apple בלבד, והתמונות לא נחשפות לאיש מלבד המשפחה. נרשם כהחלטה מודעת ב-ADR.)
+6. **תמונות שהורה מעלה (P2):** על המכשיר — טשטוש פנים וחיתוך; בשרת — אין שמירה מעבר לנדרש, אין הפצה לאחרים. (המדריך של Anthropic ממליץ על hash-matching כשמשתמשים מעלים תמונות; כאן המעלה הוא הורה מאומת (session של אפוטרופוס: קוד במייל בשלב 1, Sign in with Apple רק בשלב 2 — 00 E7, 11 §5.2) בלבד, והתמונות לא נחשפות לאיש מלבד המשפחה. נרשם כהחלטה מודעת ב-ADR.)
 
 #### 1.3.3 גילוי AI (דרישת Anthropic)
 - כל תוכן שנוצר ע"י AI ומוצג להורה מסומן "נוצר בעזרת AI" בתור האישור ובדוחות.
@@ -1574,7 +1574,7 @@ interface TtsEngine {
 
 ### 6.6 פרוטוקול ה-bake-off (סקריפט הרצה)
 
-`tools/pipelines/bakeoff/` — `config.yaml` (מנועים וקולות זמינים לפי E8a), `lines.he.yaml`, `lines.en.yaml`, `run.py`, `score.py`, ודף הקשבה עיוור (`/review/bakeoff` ב-Worker, מאחורי Sign in with Apple).
+`tools/pipelines/bakeoff/` — `config.yaml` (מנועים וקולות זמינים לפי E8a), `lines.he.yaml`, `lines.en.yaml`, `run.py`, `score.py`, ודף הקשבה עיוור (`/review/bakeoff` ב-Worker, מאחורי session של אפוטרופוס — קוד במייל בשלב 1, 11 §5.2).
 
 **מנועים (עברית):** Azure Hila, Azure Avri, Cartesia Sonic 3.6 (2 קולות), MiniMax 2.8 HD (2 קולות); ElevenLabs v4 + v4 Turbo (2 קולות) **רק אם יש אישור**; Chirp 3 HD **רק אם התנאים אושרו**. **אנגלית:** אותם ספקים, en-US, 2 קולות כל אחד.
 
@@ -1812,7 +1812,7 @@ afade=t=in:d=0.02,areverse,afade=t=in:d=0.03,areverse" -ar 48000 -ac 1 -c:a aac 
 | **G6 Rive rigs** | דמויות מונפשות בכל מצבי ה-state machine + קולות + FX רובוט | אישור | הפצה |
 | **G7 Audio review** | נגן לכל SFX/מוזיקה בהקשר (לולאה, ducking) | אישור; דחיית כל צליל דמוי צפירה/פיצוץ (B8) | הפצה |
 
-דף האישור: `/review/assets` ב-Worker (מאחורי Sign in with Apple), נגיש מכל מכשיר; כל החלטה נרשמת ב-D1 `asset_reviews`.
+דף האישור: `/review/assets` ב-Worker (מאחורי session של אפוטרופוס — קוד במייל בשלב 1, 11 §5.2), נגיש מכל מכשיר; כל החלטה נרשמת ב-D1 `asset_reviews`.
 
 ### 7.2 נעילת סגנון (Style Lock)
 
@@ -1918,7 +1918,7 @@ prompt: >
 - **בסיס:** Kenney CC0 (UI clicks, pops) — ללא חובת ייחוס.
 - **SFX מותאמים / מוזיקה:** ElevenLabs SFX/Music **רק אם יש אישור כתוב** (E8a; ראו §13). ברירת מחדל ללא אישור: Freesound עם מסנן CC0 בלבד; ספריות בתשלום עם רישיון ברור (לבדוק בזמן בנייה); הקלטה עצמית (פולי ביתי — מטבעות, פופ, רשרוש עלים) ע"י ההורה; Stable Audio — **לא** עד שהרישיון יאומת (סתירה במקורות).
 - **אסור (B8):** צפירות, אזעקות, פיצוצים, ירי, נפילות פצצה, צלילי מלחמה, sweep עולה-יורד דמוי צפירה. בדיקה: תגיות אסורות בשם/מטא-דאטה + האזנת G7 חובה ל-100% מה-SFX.
-- **מוזיקה:** 3–5 לולאות 60–90 ש׳ (מחנה בערב, בנייה, הרפתקה, שקט/שינה, ג'ינגל כניסה לאי האנגלית — B2) + סטינגרים קצרים. לולאות: חיתוך לגבול תיבה + crossfade 50 ms, −23 LUFS.
+- **מוזיקה:** 3–5 לולאות 60–90 ש׳ (מחנה בערב, בנייה, הרפתקה, שקט/שינה, ג'ינגל כניסה לאי האנגלית — B2) + סטינגרים קצרים. לולאות: חיתוך לגבול תיבה + crossfade 50 ms, −26 LUFS integrated (§6.9; 09 §6.7).
 
 **`assets/LICENSES.json` — רשומה לכל נכס:**
 
@@ -2184,3 +2184,10 @@ GPT Image ~300 תמונות ≈ $10–25 (מחירים מאגרגטורים, ל�
 - **§3.7 / §12.2 — מרחב השמות של קודי הטעויות (R3 סבב 2, `round2-R3.md`; F3 #10, F5 → 04 #2 / 05 #3):** יעדי הכינויים עודכנו ל-`EM.*` (מתמטיקה) ו-`EH.*` (עברית); שמות היעד העבריים הזמניים (`E.SPL.T_TET`, `E.SPL.K_Q`, `E.SPL.K_CH`, `E.SPL.S_SIN`, `E.SPL.B_V`) הוחלפו בשמות הקנוניים של 04 §2.3ט (`EH.SPL.TET_TAV`, `EH.SPL.KUF_KAF`, `EH.SPL.KAF_HET`, `EH.SPL.SAMEKH_SIN`, `EH.SPL.VET_VAV`, `EH.SPL.HE_ALEF_END`, `EH.FIN.WRITE_BASE/MID`, `EH.SPL.KM_*`, `EH.NK.SAME_SOUND`, `EH.NK.VOWEL_SWAP`); `MATH_TABLE_NEIGHBOR`→`EM.MUL_NEIGHBOR`, `MATH_ADD_FOR_MULT`→`EM.MUL_ADD`. `E.*` שמור למזהי מיומנויות באנגלית. ה-⟂VERIFY של P0-E1-S6 הפך לבדיקת CI שכל יעד ב-`aliases.json` קיים בקטלוג.
 - **יישור ל-00 רוויזיה 3 (R1):** §6.9 מוזיקה −26 LUFS (09 §6.7 בעל טבלת המיקס; VO −18 כבר תואם E9); §5.1 כלל החלון שהוחמץ (B7 / GAP-23b); §11 — OPD-35 אומץ (רשימת "לא-משפחה"), טווח OPD-01…36, OPD-08 בנוסח 00.
 - **יישור ל-11 סבב 2 (R6):** §6.11 — API/אחסון/הפצה של קליפי ההורה לפי 11 §7.13 (`POST /voice-clips`, ≤ 10 ש׳/≤ 200 KB, `olam-private/voice/…`, חבילת `family.voice`, `packs.source='family_voice'`, יצוא כקבצים); §1.9 — שם השדה `families.prefs.consoleCapCents`; §3.1/§3.3/§3.16 תואמים את 11 §7.9/§8.3 (blur במכשיר → orientation bake → EXIF strip → 2,576 px q0.88, `POST /photo-jobs` עם `clientJobId`, pHash, מחיקה אוטומטית 24 ש׳) — ללא שינוי. **חדש ל-R6:** 11 §7.1 צעד 2(a) ו-§7.3 `POST /ai/reports/summary` עדיין מתארים Batch Haiku "שבועי" — לפי 10 §11.7 ו-§5 כאן ה-Batch הוא חודשי בלבד (ראו `round2-R7.md`).
+
+### Final sweep changelog
+
+סבב סופי (2026-11-02; פירוט ב-`docs/review/final-sweep.md`).
+
+- **§8 (מוזיקה, לולאות):** −23 → **−26 LUFS** integrated (§6.9; 09 §6.7 בעל טבלת המיקס) — השריד האחרון של הערך הישן.
+- **§1.3 / §6.4 (`/review/bakeoff`) / §7.2 (`/review/assets`):** "מאחורי Sign in with Apple" → session של אפוטרופוס (קוד במייל בשלב 1; Sign in with Apple רק בשלב 2 — 00 E7, 11 §5.2).
